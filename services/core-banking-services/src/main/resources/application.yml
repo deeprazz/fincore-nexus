@@ -1,0 +1,16 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name: core-banking-services
+  datasource:
+    url: jdbc:postgresql://localhost:5432/fincore
+    username: fincore
+    password: fincore_dev
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+  flyway:
+    enabled: true
