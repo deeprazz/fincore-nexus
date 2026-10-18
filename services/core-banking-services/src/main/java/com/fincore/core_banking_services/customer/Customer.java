@@ -3,7 +3,10 @@ package com.fincore.core_banking_services.customer;
 import jakarta.persistence.*;
 import java.time.Instant;
 import java.util.UUID;
-
+import com.fincore.core_banking_services.customer.Customer;
+import com.fincore.core_banking_services.customer.CustomerRepository;
+import com.fincore.core_banking_services.account.AccountStatus;
+import java.util.UUID;
 @Entity
 @Table(name = "customer")
 public class Customer {

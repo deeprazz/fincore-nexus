@@ -6,11 +6,7 @@ import java.util.UUID;
 public class CreateAccountRequest {
     private BigDecimal initialBalance;
     private UUID customerId;
-    private String accountNumber;
 
-    public void setAccountNumber(String accountNumber) {
-        this.accountNumber = accountNumber;
-    }
 
     public void setInitialBalance(BigDecimal initialBalance) {
         this.initialBalance = initialBalance;
@@ -21,9 +17,6 @@ public class CreateAccountRequest {
     }
 
 
-    public String getAccountNumber() {
-        return accountNumber;
-    }
 
     public BigDecimal getInitialBalance() {
         return initialBalance;

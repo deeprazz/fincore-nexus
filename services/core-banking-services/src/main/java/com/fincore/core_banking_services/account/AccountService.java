@@ -1,18 +1,15 @@
 package com.fincore.core_banking_services.account;
 
 import com.fincore.core_banking_services.customer.Customer;
-import jakarta.transaction.Transactional;
+import com.fincore.core_banking_services.customer.CustomerRepository;
 import org.springframework.stereotype.Service;
-import java.util.List;
-import java.util.stream.Collectors;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import com.fincore.core_banking_services.customer.CustomerRepository;
-import java.util.Optional;
-import java.util.UUID;
-import java.math.BigDecimal;
+import java.util.stream.Collectors;
 @Service
 public class AccountService {
 
@@ -30,7 +27,8 @@ public class AccountService {
 
     @Transactional
     public AccountResponse withdraw(UUID accountId, BigDecimal amount) {
-        Optional<Account> accountOptional = repository.findById(accountId);
+        Optional<Account> accountOptional =
+                repository.findByIdForUpdate(accountId);
         if (accountOptional.isEmpty()){
             throw new IllegalArgumentException("account does not exist");
         }
@@ -59,7 +57,8 @@ public class AccountService {
     @Transactional
     public AccountResponse deposit(UUID accountId, BigDecimal amount) {
 
-        Optional<Account> accountOptional = repository.findById(accountId);
+        Optional<Account> accountOptional =
+                repository.findByIdForUpdate(accountId);
 
         if (accountOptional.isEmpty()) {
             throw new IllegalArgumentException("Account does not exist");
@@ -83,6 +82,80 @@ public class AccountService {
                 account.getAccountNumber(),
                 account.getBalance()
         );
+    }
+
+    @Transactional
+    public void transfer(TransferRequest request) {
+
+        if (request == null) {
+            throw new IllegalArgumentException(
+                    "Transfer request is required"
+            );
+        }
+
+        if (request.getFromAccountId() == null) {
+            throw new IllegalArgumentException(
+                    "Source account ID is required"
+            );
+        }
+
+        if (request.getToAccountId() == null) {
+            throw new IllegalArgumentException(
+                    "Destination account ID is required"
+            );
+        }
+
+        BigDecimal amount = request.getAmount();
+
+
+        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException(
+                    "Transfer amount must be greater than zero"
+            );
+        }
+
+        //  this will Prevent transferring to the same account
+        if (request.getFromAccountId().equals(request.getToAccountId())) {
+            throw new IllegalArgumentException(
+                    "Cannot transfer to the same account"
+            );
+        }
+
+        UUID fromId = request.getFromAccountId();
+        UUID toId = request.getToAccountId();
+
+        Account fromAccount;
+        Account toAccount;
+
+        if (fromId.compareTo(toId) < 0) {
+            fromAccount = repository.findByIdForUpdate(fromId)
+                    .orElseThrow(() ->
+                            new IllegalArgumentException("Source account does not exist"));
+
+            toAccount = repository.findByIdForUpdate(toId)
+                    .orElseThrow(() ->
+                            new IllegalArgumentException("Destination account does not exist"));
+        } else {
+            toAccount = repository.findByIdForUpdate(toId)
+                    .orElseThrow(() ->
+                            new IllegalArgumentException("Destination account does not exist"));
+
+            fromAccount = repository.findByIdForUpdate(fromId)
+                    .orElseThrow(() ->
+                            new IllegalArgumentException("Source account does not exist"));
+        }
+        // sufficient balance will be checked here
+        if (fromAccount.getBalance().compareTo(amount) < 0) {
+            throw new IllegalArgumentException("Insufficient balance");
+        }
+
+        // new balance calculation
+        fromAccount.setBalance(fromAccount.getBalance().subtract(amount));
+        toAccount.setBalance(toAccount.getBalance().add(amount));
+
+        // saving both accounts
+        repository.save(fromAccount);
+        repository.save(toAccount);
     }
 
 
@@ -144,12 +217,29 @@ public class AccountService {
                         account.getBalance()
                 ));
     }
+    @Transactional
     public Account createAccount(CreateAccountRequest request) {
+        if (request == null) {
+            throw new IllegalArgumentException("Account request is required");
+        }
+
+        if (request.getCustomerId() == null) {
+            throw new IllegalArgumentException("Customer ID is required");
+        }
+
         Customer customer = customerRepository.findById(request.getCustomerId())
-                .orElseThrow(() -> new IllegalArgumentException("Customer not found"));
+                .orElseThrow(() ->
+                        new IllegalArgumentException("Customer not found"));
+
+        validateInitialBalance(request.getInitialBalance());
+
+        String accountNumber = String.format(
+                "%012d",
+                repository.getNextAccountNumber()
+        );
 
         return createAccount(
-                request.getAccountNumber(),
+                accountNumber,
                 request.getInitialBalance(),
                 customer
         );

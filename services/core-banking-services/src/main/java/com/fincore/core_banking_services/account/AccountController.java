@@ -71,4 +71,13 @@ public class AccountController {
         return ResponseEntity.ok(response);
     }
 
+    @PostMapping("/transfer")
+    public ResponseEntity<String> transfer(
+            @RequestBody TransferRequest request) {
+
+        accountService.transfer(request);
+
+        return ResponseEntity.ok("Transfer successful");
+    }
+
 }

@@ -1,3 +1,4 @@
+
 package com.fincore.core_banking_services.account;
 
 import java.math.BigDecimal;
@@ -20,11 +21,20 @@ public class AccountResponse {
         return accountNumber;
     }
 
-
-
     public AccountResponse(UUID id, String accountNumber, BigDecimal balance) {
         this.id = id;
-        this.accountNumber = accountNumber;
+        this.accountNumber = formatAccountNumber(accountNumber);
         this.balance = balance;
+    }
+
+    private String formatAccountNumber(String accountNumber) {
+        if (accountNumber != null && accountNumber.matches("\\d{12}")) {
+            return accountNumber.replaceAll(
+                    "(\\d{4})(\\d{4})(\\d{4})",
+                    "$1-$2-$3"
+            );
+        }
+
+        return accountNumber;
     }
 }
