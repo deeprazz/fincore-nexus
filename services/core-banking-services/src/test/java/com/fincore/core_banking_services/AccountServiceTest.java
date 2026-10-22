@@ -1,12 +1,14 @@
-
 package com.fincore.core_banking_services;
-
+import com.fincore.core_banking_services.transaction.BankingTransactionRepository;
 import com.fincore.core_banking_services.customer.CustomerRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import com.fincore.core_banking_services.transaction.BankingTransaction;
+import org.mockito.ArgumentCaptor;
+import java.util.List;
 import org.mockito.junit.jupiter.MockitoExtension;
 import com.fincore.core_banking_services.account.Account;
 import com.fincore.core_banking_services.account.AccountRepository;
@@ -30,6 +32,8 @@ class AccountServiceTest {
 
     @Mock
     private CustomerRepository customerRepository;
+    @Mock
+    private BankingTransactionRepository transactionRepository;
 
     @InjectMocks
     private AccountService accountService;
@@ -332,6 +336,25 @@ class AccountServiceTest {
         // Both accounts must be saved
         verify(accountRepository, times(1)).save(sender);
         verify(accountRepository, times(1)).save(receiver);
+
+        // Verify both transfer transaction records were saved
+        ArgumentCaptor<BankingTransaction> captor =
+                ArgumentCaptor.forClass(BankingTransaction.class);
+
+        verify(transactionRepository, times(2)).save(captor.capture());
+
+        List<BankingTransaction> transactions = captor.getAllValues();
+
+        assertEquals(2, transactions.size());
+
+        assertEquals("TRANSFER_OUT", transactions.get(0).getTransactionType());
+        assertEquals("TRANSFER_IN", transactions.get(1).getTransactionType());
+
+        assertNotNull(transactions.get(0).getReferenceId());
+        assertEquals(
+                transactions.get(0).getReferenceId(),
+                transactions.get(1).getReferenceId()
+        );
     }
 
 

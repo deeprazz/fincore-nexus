@@ -4,7 +4,8 @@ import com.fincore.core_banking_services.customer.Customer;
 import com.fincore.core_banking_services.customer.CustomerRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
+import com.fincore.core_banking_services.transaction.BankingTransaction;
+import com.fincore.core_banking_services.transaction.BankingTransactionRepository;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
@@ -15,10 +16,12 @@ public class AccountService {
 
     private final AccountRepository repository;
     private final CustomerRepository customerRepository;
+    private final BankingTransactionRepository transactionRepository;
 
-    public AccountService(AccountRepository repository,CustomerRepository customerRepository) {
+    public AccountService(AccountRepository repository,CustomerRepository customerRepository,    BankingTransactionRepository transactionRepository) {
         this.repository = repository;
         this.customerRepository = customerRepository;
+        this.transactionRepository = transactionRepository;
     }
 
     public Optional<Account> getAccountById(UUID id) {
@@ -45,6 +48,17 @@ public class AccountService {
         BigDecimal newBalance = account.getBalance().subtract(amount);
         account.setBalance(newBalance);
         repository.save(account);
+
+        transactionRepository.save(
+                new BankingTransaction(
+                        account.getId(),
+                        "WITHDRAWAL",
+                        amount,
+                        newBalance,
+                        null
+                )
+        );
+
         return new AccountResponse(
                 account.getId(),
                 account.getAccountNumber(),
@@ -77,6 +91,16 @@ public class AccountService {
 
         repository.save(account);
 
+        transactionRepository.save(
+                new BankingTransaction(
+                        account.getId(),
+                        "DEPOSIT",
+                        amount,
+                        newBalance,
+                        null
+                )
+        );
+
         return new AccountResponse(
                 account.getId(),
                 account.getAccountNumber(),
@@ -84,29 +108,23 @@ public class AccountService {
         );
     }
 
+
     @Transactional
     public void transfer(TransferRequest request) {
 
         if (request == null) {
-            throw new IllegalArgumentException(
-                    "Transfer request is required"
-            );
+            throw new IllegalArgumentException("Transfer request is required");
         }
 
         if (request.getFromAccountId() == null) {
-            throw new IllegalArgumentException(
-                    "Source account ID is required"
-            );
+            throw new IllegalArgumentException("Source account ID is required");
         }
 
         if (request.getToAccountId() == null) {
-            throw new IllegalArgumentException(
-                    "Destination account ID is required"
-            );
+            throw new IllegalArgumentException("Destination account ID is required");
         }
 
         BigDecimal amount = request.getAmount();
-
 
         if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
             throw new IllegalArgumentException(
@@ -114,60 +132,87 @@ public class AccountService {
             );
         }
 
-        //  this will Prevent transferring to the same account
-        if (request.getFromAccountId().equals(request.getToAccountId())) {
+        UUID fromId = request.getFromAccountId();
+        UUID toId = request.getToAccountId();
+
+        if (fromId.equals(toId)) {
             throw new IllegalArgumentException(
                     "Cannot transfer to the same account"
             );
         }
 
-        UUID fromId = request.getFromAccountId();
-        UUID toId = request.getToAccountId();
-
+        // Lock accounts in a consistent order to reduce deadlocks.
         Account fromAccount;
         Account toAccount;
 
         if (fromId.compareTo(toId) < 0) {
             fromAccount = repository.findByIdForUpdate(fromId)
                     .orElseThrow(() ->
-                            new IllegalArgumentException("Source account does not exist"));
+                            new IllegalArgumentException(
+                                    "Source account does not exist"
+                            ));
 
             toAccount = repository.findByIdForUpdate(toId)
                     .orElseThrow(() ->
-                            new IllegalArgumentException("Destination account does not exist"));
+                            new IllegalArgumentException(
+                                    "Destination account does not exist"
+                            ));
         } else {
             toAccount = repository.findByIdForUpdate(toId)
                     .orElseThrow(() ->
-                            new IllegalArgumentException("Destination account does not exist"));
+                            new IllegalArgumentException(
+                                    "Destination account does not exist"
+                            ));
 
             fromAccount = repository.findByIdForUpdate(fromId)
                     .orElseThrow(() ->
-                            new IllegalArgumentException("Source account does not exist"));
+                            new IllegalArgumentException(
+                                    "Source account does not exist"
+                            ));
         }
-        // sufficient balance will be checked here
+
+        // Validate available balance.
         if (fromAccount.getBalance().compareTo(amount) < 0) {
             throw new IllegalArgumentException("Insufficient balance");
         }
 
-        // new balance calculation
-        fromAccount.setBalance(fromAccount.getBalance().subtract(amount));
-        toAccount.setBalance(toAccount.getBalance().add(amount));
+        // Calculate both balances before modifying either account.
+        BigDecimal fromBalanceAfter =
+                fromAccount.getBalance().subtract(amount);
 
-        // saving both accounts
+        BigDecimal toBalanceAfter =
+                toAccount.getBalance().add(amount);
+
+        fromAccount.setBalance(fromBalanceAfter);
+        toAccount.setBalance(toBalanceAfter);
+
         repository.save(fromAccount);
         repository.save(toAccount);
-    }
 
+        // Link both transaction records to the same transfer.
 
-    public List<AccountResponse> getAllAccounts() {
-        return repository.findAll()
-                .stream()
-                .map(account -> new AccountResponse(
-                        account.getId(),
-                        account.getAccountNumber(),
-                        account.getBalance()
-                ))
-                .collect(Collectors.toList());
+        UUID referenceId = UUID.randomUUID();
+
+        transactionRepository.save(
+                new BankingTransaction(
+                        fromAccount.getId(),
+                        "TRANSFER_OUT",
+                        amount,
+                        fromBalanceAfter,
+                        referenceId
+                )
+        );
+
+        transactionRepository.save(
+                new BankingTransaction(
+                        toAccount.getId(),
+                        "TRANSFER_IN",
+                        amount,
+                        toBalanceAfter,
+                        referenceId
+                )
+        );
+
     }
 
 
@@ -217,6 +262,18 @@ public class AccountService {
                         account.getBalance()
                 ));
     }
+
+    public List<AccountResponse> getAllAccounts() {
+        return repository.findAll()
+                .stream()
+                .map(account -> new AccountResponse(
+                        account.getId(),
+                        account.getAccountNumber(),
+                        account.getBalance()
+                ))
+                .collect(Collectors.toList());
+    }
+
     @Transactional
     public Account createAccount(CreateAccountRequest request) {
         if (request == null) {
