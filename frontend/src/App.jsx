@@ -43,6 +43,16 @@ function App() {
   const [registerEmail, setRegisterEmail] = useState("");
   const [registerPassword, setRegisterPassword] = useState("");
   const [customerPortal, setCustomerPortal] = useState(null);
+  const [customerTransactions, setCustomerTransactions] = useState([]);
+  const [customerStatement, setCustomerStatement] = useState(null);
+  const [statementFrom, setStatementFrom] = useState("");
+  const [statementTo, setStatementTo] = useState("");
+  const [statementBusy, setStatementBusy] = useState(false);
+  const [customerDestination, setCustomerDestination] = useState("");
+  const [customerTransferAmount, setCustomerTransferAmount] = useState("");
+  const [customerBusy, setCustomerBusy] = useState(false);
+  const [customerMessage, setCustomerMessage] = useState("");
+  const [customerError, setCustomerError] = useState("");
   const [apiLatency, setApiLatency] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -121,7 +131,21 @@ function App() {
       const headers = { Authorization: `Basic ${btoa(`${candidate.username}:${candidate.password}`)}` };
       const portalResponse = await fetch(`${API}/customer-portal/me`, { headers });
       if (portalResponse.ok) {
-        setCustomerPortal(await portalResponse.json());
+        const portalData = await portalResponse.json();
+        setCustomerPortal(portalData);
+        setCustomerTransactions([]);
+        setCustomerMessage("");
+        setCustomerError("");
+        if (portalData.kycStatus === "VERIFIED" && portalData.accounts?.[0]?.id) {
+          const txResponse = await fetch(
+            `${API}/customer-portal/transactions?accountId=${encodeURIComponent(portalData.accounts[0].id)}`,
+            { headers },
+          );
+          if (txResponse.ok) {
+            const txData = await txResponse.json();
+            setCustomerTransactions(Array.isArray(txData) ? txData : []);
+          }
+        }
         setAuth({ ...candidate, role: "CUSTOMER" });
         setLoginPassword("");
         return;
@@ -172,6 +196,11 @@ function App() {
   function logout() {
     setAuth(null);
     setCustomerPortal(null);
+    setCustomerTransactions([]);
+    setCustomerDestination("");
+    setCustomerTransferAmount("");
+    setCustomerMessage("");
+    setCustomerError("");
     setAccounts([]);
     setCustomers([]);
     setTransactions([]);
@@ -489,6 +518,95 @@ function App() {
     }
   }
 
+  async function refreshCustomerPortal() {
+    if (!auth || auth.role !== "CUSTOMER") return;
+    setCustomerBusy(true);
+    setCustomerError("");
+    try {
+      const portalData = await apiRequest("/customer-portal/me");
+      setCustomerPortal(portalData);
+      const selectedAccount = portalData.accounts?.[0];
+      if (selectedAccount?.id && portalData.kycStatus === "VERIFIED") {
+        const txData = await apiRequest(`/customer-portal/transactions?accountId=${encodeURIComponent(selectedAccount.id)}`);
+        setCustomerTransactions(Array.isArray(txData) ? txData : []);
+      } else {
+        setCustomerTransactions([]);
+      }
+    } catch (e) {
+      setCustomerError(e.message || "Could not refresh your banking details.");
+    } finally {
+      setCustomerBusy(false);
+    }
+  }
+
+  async function generateCustomerStatement(event) {
+    event.preventDefault();
+    setCustomerError("");
+    setCustomerMessage("");
+    const selectedAccount = customerPortal?.accounts?.[0];
+    if (!selectedAccount?.id) {
+      setCustomerError("No eligible account is available for a statement.");
+      return;
+    }
+    if (statementFrom && statementTo && statementFrom > statementTo) {
+      setCustomerError("The start date must be on or before the end date.");
+      return;
+    }
+    setStatementBusy(true);
+    try {
+      const params = new URLSearchParams();
+      if (statementFrom) params.set("from", statementFrom);
+      if (statementTo) params.set("to", statementTo);
+      const query = params.toString();
+      const result = await apiRequest(`/customer-portal/accounts/${encodeURIComponent(selectedAccount.id)}/statement${query ? `?${query}` : ""}`);
+      setCustomerStatement(result);
+      setCustomerMessage("Statement generated successfully.");
+    } catch (e) {
+      setCustomerError(e.message || "Could not generate your statement.");
+    } finally {
+      setStatementBusy(false);
+    }
+  }
+
+  async function submitCustomerTransfer(event) {
+    event.preventDefault();
+    setCustomerError("");
+    setCustomerMessage("");
+    const sourceAccount = customerPortal?.accounts?.[0];
+    const value = Number(customerTransferAmount);
+    if (!sourceAccount?.id) {
+      setCustomerError("No eligible account is available for transfers.");
+      return;
+    }
+    if (!customerDestination.trim()) {
+      setCustomerError("Enter the recipient account number.");
+      return;
+    }
+    if (!Number.isFinite(value) || value <= 0 || Math.round(value * 100) !== value * 100) {
+      setCustomerError("Enter a valid amount greater than zero, with at most two decimal places.");
+      return;
+    }
+    setCustomerBusy(true);
+    try {
+      const result = await apiRequest("/customer-portal/transfer", {
+        method: "POST",
+        body: JSON.stringify({
+          sourceAccountId: sourceAccount.id,
+          destinationAccountNumber: customerDestination.trim(),
+          amount: value,
+        }),
+      });
+      setCustomerMessage(result?.message || "Transfer completed successfully.");
+      setCustomerDestination("");
+      setCustomerTransferAmount("");
+      await refreshCustomerPortal();
+    } catch (e) {
+      setCustomerError(e.message || "Transfer failed.");
+    } finally {
+      setCustomerBusy(false);
+    }
+  }
+
   const totalBalance = accounts.reduce(
     (sum, account) => sum + Number(account.balance ?? 0),
     0,
@@ -535,27 +653,111 @@ function App() {
   }
 
   if (auth.role === "CUSTOMER") {
+    const customerAccounts = customerPortal?.accounts || [];
+    const canBank = customerPortal?.kycStatus === "VERIFIED";
+    const primaryAccount = customerAccounts[0];
+    const totalBalance = customerAccounts.reduce((sum, account) => sum + Number(account.balance || 0), 0);
+    const customerNav = [
+      { label: "Overview", href: "#customer-overview", icon: LayoutDashboard },
+      { label: "My accounts", href: "#customer-accounts", icon: Wallet },
+      { label: "Transfer money", href: "#customer-transfer", icon: ArrowLeftRight },
+      { label: "Transactions", href: "#customer-transactions", icon: Activity },
+      { label: "Statements", href: "#customer-statements", icon: FileText },
+    ];
     return (
-      <div className="login-shell">
-        <section className="login-card">
-          <div className="brand-mark login-mark"><Wallet size={24} /></div>
-          <div className="brand-name">Customer Portal</div>
-          <p className="login-subtitle">Welcome, {customerPortal?.name}</p>
-          <div className="panel">
-            <h3>KYC status: {customerPortal?.kycStatus || "PENDING"}</h3>
-            {customerPortal?.kycStatus !== "VERIFIED" ? (
-              <p>Your profile is registered. Banking services become available after teller KYC approval.</p>
-            ) : (
-              <>
-                <p>Your KYC is approved. Your accounts are listed below.</p>
-                {customerPortal?.accounts?.length ? customerPortal.accounts.map(a => (
-                  <div key={a.id} className="table-caption">Account {a.accountNumber} · Balance {money(a.balance)}</div>
-                )) : <p>No bank account has been opened yet. Please contact the teller.</p>}
-              </>
-            )}
+      <div className="customer-app-shell">
+        <header className="customer-topbar">
+          <div className="customer-brand">
+            <div className="customer-brand-mark"><Activity size={21} /></div>
+            <div><strong>FinCore Nexus</strong><span>PERSONAL BANKING</span></div>
           </div>
-          <button className="secondary-button" onClick={logout} type="button">Sign out</button>
-        </section>
+          <div className="customer-topbar-right">
+            <span className="customer-secure-indicator"><span /> Secure connection</span>
+            <div className="customer-user-chip"><span className="customer-avatar">{(customerPortal?.name || auth.username || "C").slice(0, 1).toUpperCase()}</span><span>{customerPortal?.name || auth.username}</span></div>
+            <button className="secondary-button customer-logout-top" onClick={logout} type="button">Sign out</button>
+          </div>
+        </header>
+
+        <div className="customer-workspace">
+          <aside className="customer-sidebar">
+            <div className="customer-sidebar-label">YOUR BANKING</div>
+            <nav aria-label="Customer navigation">
+              {customerNav.map(({ label, href, icon: Icon }, index) => (
+                <a key={label} className="customer-nav-item" href={href}>
+                  <Icon size={17} /><span>{label}</span>
+                </a>
+              ))}
+            </nav>
+            <div className="customer-sidebar-bottom">
+              <ShieldCheck size={18} />
+              <div><strong>Protected banking</strong><span>Your data is securely accessed.</span></div>
+            </div>
+          </aside>
+
+          <main className="customer-main-content">
+            <div className="customer-page-heading" id="customer-overview">
+              <div><div className="customer-eyebrow">PERSONAL BANKING / OVERVIEW</div><h1>Good to see you, {customerPortal?.name || "Customer"}</h1><p>Here’s your account overview and recent banking activity.</p></div>
+              <button className="secondary-button customer-refresh" type="button" onClick={refreshCustomerPortal} disabled={customerBusy}><RefreshCw size={14} />{customerBusy ? "Refreshing…" : "Refresh data"}</button>
+            </div>
+
+            <section className="customer-welcome-strip">
+              <div><span className="customer-welcome-label">CUSTOMER PROFILE</span><h2>Your money, all in one place.</h2><p>Review balances, send money and keep track of your activity.</p></div>
+              <div className="customer-kyc-summary"><span className={`customer-status-pill ${canBank ? "verified" : "pending"}`}>{customerPortal?.kycStatus || "PENDING"}</span><span>KYC verification</span></div>
+            </section>
+
+            {customerError && <div className="alert-error customer-alert" role="alert">{customerError}</div>}
+            {customerMessage && <div className="alert-success customer-alert" role="status">{customerMessage}</div>}
+
+            <section className="customer-metric-grid" aria-label="Account summary">
+              <article className="customer-metric-card customer-metric-primary"><div className="customer-metric-top"><span>Total available balance</span><Wallet size={18} /></div><strong>{money(totalBalance)}</strong><small>Across {customerAccounts.length} account{customerAccounts.length === 1 ? "" : "s"}</small></article>
+              <article className="customer-metric-card"><div className="customer-metric-top"><span>My accounts</span><LayoutDashboard size={18} /></div><strong>{customerAccounts.length}</strong><small>Accounts linked to your profile</small></article>
+              <article className="customer-metric-card"><div className="customer-metric-top"><span>Account status</span><ShieldCheck size={18} /></div><strong className="customer-metric-status">{primaryAccount?.status || (canBank ? "Active" : "Pending")}</strong><small>{canBank ? "Banking access enabled" : "Waiting for Teller approval"}</small></article>
+            </section>
+
+            {!canBank && <section className="customer-section customer-kyc-pending"><div className="customer-panel-heading"><h3>Banking access is pending</h3><span className="customer-status-pill pending">ACTION REQUIRED</span></div><p>Your profile is registered, but banking operations unlock after Teller KYC approval. You can return here to check your status.</p></section>}
+
+            {canBank && <>
+              <section className="customer-section customer-section-wide" id="customer-accounts">
+                <div className="customer-section-heading"><div><span className="customer-section-kicker">YOUR MONEY</span><h3>My accounts</h3></div><span className="customer-muted">{customerAccounts.length} linked</span></div>
+                {customerAccounts.length ? <div className="customer-account-grid">{customerAccounts.map(account => (
+                  <article className="customer-account-card" key={account.id}><div className="customer-account-card-top"><span className="customer-account-icon"><Wallet size={18} /></span><span className="customer-status-pill verified">{account.status || "ACTIVE"}</span></div><span className="customer-muted">ACCOUNT NUMBER</span><strong>{account.accountNumber}</strong><span className="customer-muted">Available balance</span><strong className="customer-balance">{money(account.balance)}</strong></article>
+                ))}</div> : <p className="customer-muted">No bank account has been opened yet. Please contact your Teller.</p>}
+              </section>
+
+              {customerAccounts.length > 0 && <section className="customer-section" id="customer-transfer"><div className="customer-section-heading"><div><span className="customer-section-kicker">PAYMENTS</span><h3>Transfer money</h3></div><span className="customer-muted">Secure transfer</span></div><p className="customer-muted">Confirm the recipient account number before submitting. Transfers are validated by the bank.</p><form className="customer-transfer-form" onSubmit={submitCustomerTransfer}>
+                <label>From account<select value={primaryAccount?.id || ""} disabled>{customerAccounts.map(account => <option key={account.id} value={account.id}>{account.accountNumber} · {money(account.balance)}</option>)}</select></label>
+                <label>Recipient account number<input value={customerDestination} onChange={e => setCustomerDestination(e.target.value)} placeholder="e.g. 1000-0000-0002" required maxLength={30} /></label>
+                <label>Amount (INR)<input type="number" inputMode="decimal" min="0.01" step="0.01" value={customerTransferAmount} onChange={e => setCustomerTransferAmount(e.target.value)} placeholder="0.00" required /></label>
+                <button className="primary-button customer-transfer-submit" type="submit" disabled={customerBusy}>{customerBusy ? "Processing transfer…" : "Review and transfer"}<ArrowLeftRight size={15} /></button>
+              </form></section>}
+
+              <section className="customer-section" id="customer-transactions"><div className="customer-section-heading"><div><span className="customer-section-kicker">ACCOUNT ACTIVITY</span><h3>Transactions</h3></div><span className="customer-muted">Latest activity</span></div>
+                {customerTransactions.length ? <div className="customer-transactions-wrap"><table className="customer-transactions-table"><thead><tr><th>Transaction</th><th>Amount</th><th>Balance after</th><th>Date</th></tr></thead><tbody>{customerTransactions.map(tx => <tr key={tx.id}><td>{String(tx.transactionType || "").replaceAll("_", " ")}</td><td>{money(tx.amount)}</td><td>{money(tx.balanceAfter)}</td><td>{tx.createdAt ? new Date(tx.createdAt).toLocaleString() : "—"}</td></tr>)}</tbody></table></div> : <div className="customer-empty-state"><span><Activity size={20} /></span><strong>No transactions yet</strong><p>Your banking activity will appear here when you make your first transaction.</p></div>}
+              </section>
+
+              <section className="customer-section" id="customer-statements">
+                <div className="customer-section-heading"><div><span className="customer-section-kicker">DOCUMENTS</span><h3>Account statement</h3></div><span className="customer-muted">Statement generation</span></div>
+                <p className="customer-muted">Choose an optional date range to view your account activity summary.</p>
+                <form className="customer-transfer-form customer-statement-form" onSubmit={generateCustomerStatement}>
+                  <label>From date<input type="date" value={statementFrom} onChange={e => setStatementFrom(e.target.value)} /></label>
+                  <label>To date<input type="date" value={statementTo} onChange={e => setStatementTo(e.target.value)} min={statementFrom || undefined} /></label>
+                  <button className="primary-button customer-transfer-submit" type="submit" disabled={statementBusy}>{statementBusy ? "Generating statement…" : "Generate statement"}<FileText size={15} /></button>
+                </form>
+                {customerStatement && <div className="customer-statement-result">
+                  <div className="customer-statement-metrics">
+                    <div><span>Opening balance</span><strong>{money(customerStatement.openingBalance)}</strong></div>
+                    <div><span>Total deposits</span><strong>{money(customerStatement.totalDeposits)}</strong></div>
+                    <div><span>Total withdrawals</span><strong>{money(customerStatement.totalWithdrawals)}</strong></div>
+                    <div><span>Closing balance</span><strong>{money(customerStatement.closingBalance)}</strong></div>
+                  </div>
+                  <p className="customer-muted">{customerStatement.totalTransactions ?? customerStatement.transactions?.length ?? 0} transactions in this period</p>
+                  {customerStatement.transactions?.length ? <div className="customer-transactions-wrap"><table className="customer-transactions-table"><thead><tr><th>Transaction</th><th>Amount</th><th>Balance after</th><th>Date</th></tr></thead><tbody>{customerStatement.transactions.map(tx => <tr key={tx.id}><td>{String(tx.transactionType || "").replaceAll("_", " ")}</td><td>{money(tx.amount)}</td><td>{money(tx.balanceAfter)}</td><td>{tx.createdAt ? new Date(tx.createdAt).toLocaleString() : "—"}</td></tr>)}</tbody></table></div> : <div className="customer-empty-state"><strong>No transactions in this date range</strong></div>}
+                </div>}
+              </section>
+            </>}
+            <footer className="customer-footer"><span>© FinCore Nexus · Milestone 1</span><span><ShieldCheck size={13} /> Secure personal banking</span></footer>
+          </main>
+        </div>
       </div>
     );
   }

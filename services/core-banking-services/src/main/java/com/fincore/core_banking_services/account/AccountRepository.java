@@ -19,6 +19,8 @@ public interface AccountRepository extends JpaRepository<Account, UUID> {
 
      boolean existsByAccountNumber(String accountNumber);
 
+    java.util.Optional<Account> findByAccountNumber(String accountNumber);
+
      @Query(value = "SELECT nextval('account_number_seq')", nativeQuery = true)
      Long getNextAccountNumber();
 
