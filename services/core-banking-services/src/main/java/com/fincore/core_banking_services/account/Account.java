@@ -1,4 +1,6 @@
+
 package com.fincore.core_banking_services.account;
+
 import com.fincore.core_banking_services.customer.Customer;
 import jakarta.persistence.*;
 
@@ -7,14 +9,12 @@ import java.time.OffsetDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name="account")
+@Table(name = "account")
 public class Account {
+
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID   id;
-    public UUID getId() {
-        return id;
-    }
+    private UUID id;
 
     @Column(name = "account_number", nullable = false, unique = true, length = 30)
     private String accountNumber;
@@ -26,51 +26,59 @@ public class Account {
     @Column(nullable = false, length = 20)
     private AccountStatus status;
 
-
-
     @ManyToOne
     @JoinColumn(name = "customer_id", nullable = false)
     private Customer customer;
 
-    @Column(name = "created_at",nullable = false, updatable = false)
+    @Column(name = "created_at", nullable = false, updatable = false)
     private OffsetDateTime createdAt;
 
-    @Column(name = "updated_at",nullable = false)
+    @Column(name = "updated_at", nullable = false)
     private OffsetDateTime updatedAt;
 
-
-    public Account(){
-
+    public Account() {
     }
-    // getter for balance
-    public BigDecimal getBalance(){
+
+    public UUID getId() {
+        return id;
+    }
+
+    public BigDecimal getBalance() {
         return balance;
     }
 
-    // setter for balance
     public void setBalance(BigDecimal balance) {
+        if (balance == null || balance.signum() < 0) {
+            throw new IllegalArgumentException(
+                    "Account balance cannot be negative or null");
+        }
         this.balance = balance;
     }
 
-    // getter for account number
-    public String getAccountNumber(){
+    public String getAccountNumber() {
         return accountNumber;
     }
 
-    // setter for account number
-    public void  setAccountNumber(String accountNumber){
+    public void setAccountNumber(String accountNumber) {
         this.accountNumber = accountNumber;
     }
 
-    // getter and setter for customer
-    public Customer getCustomer(){
+    public Customer getCustomer() {
         return customer;
     }
 
-    public void setCustomer(Customer customer){
+    public void setCustomer(Customer customer) {
         this.customer = customer;
     }
+
+    public AccountStatus getStatus() {
+        return status;
+    }
+
     public void setStatus(AccountStatus status) {
+        if (status == null) {
+            throw new IllegalArgumentException("Account status is required");
+        }
         this.status = status;
     }
 
@@ -85,5 +93,4 @@ public class Account {
     protected void onUpdate() {
         updatedAt = OffsetDateTime.now();
     }
-
 }

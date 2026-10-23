@@ -1,0 +1,1 @@
+ALTER TABLE customer ADD COLUMN IF NOT EXISTS password_hash VARCHAR(255);

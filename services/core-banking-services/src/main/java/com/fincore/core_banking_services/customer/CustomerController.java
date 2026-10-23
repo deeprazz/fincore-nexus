@@ -1,3 +1,4 @@
+
 package com.fincore.core_banking_services.customer;
 
 import jakarta.validation.Valid;
@@ -6,9 +7,9 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.UUID;
-
 @RestController
 @RequestMapping("/api/customers")
+@CrossOrigin(origins = "http://localhost:5173")
 public class CustomerController {
 
     private final CustomerService service;
@@ -19,7 +20,8 @@ public class CustomerController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public CustomerResponse create(@Valid @RequestBody CreateCustomerRequest req) {
+    public CustomerResponse create(
+            @Valid @RequestBody CreateCustomerRequest req) {
         return service.create(req);
     }
 
@@ -31,5 +33,12 @@ public class CustomerController {
     @GetMapping
     public List<CustomerResponse> list() {
         return service.list();
+    }
+
+    @PatchMapping("/{id}/kyc")
+    public CustomerResponse updateKyc(
+            @PathVariable UUID id,
+            @RequestParam KycStatus status) {
+        return service.updateKycStatus(id, status);
     }
 }

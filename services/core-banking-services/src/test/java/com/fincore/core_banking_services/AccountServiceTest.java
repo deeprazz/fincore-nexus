@@ -1,6 +1,9 @@
 package com.fincore.core_banking_services;
+
+import jakarta.persistence.EntityManager;
 import com.fincore.core_banking_services.transaction.BankingTransactionRepository;
 import com.fincore.core_banking_services.customer.CustomerRepository;
+import org.springframework.context.ApplicationEventPublisher;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -34,6 +37,12 @@ class AccountServiceTest {
     private CustomerRepository customerRepository;
     @Mock
     private BankingTransactionRepository transactionRepository;
+
+    @Mock
+    private EntityManager entityManager;
+
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
 
     @InjectMocks
     private AccountService accountService;

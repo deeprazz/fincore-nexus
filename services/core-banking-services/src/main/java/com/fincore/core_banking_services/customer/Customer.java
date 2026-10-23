@@ -1,12 +1,10 @@
+
 package com.fincore.core_banking_services.customer;
 
 import jakarta.persistence.*;
 import java.time.Instant;
 import java.util.UUID;
-import com.fincore.core_banking_services.customer.Customer;
-import com.fincore.core_banking_services.customer.CustomerRepository;
-import com.fincore.core_banking_services.account.AccountStatus;
-import java.util.UUID;
+
 @Entity
 @Table(name = "customer")
 public class Customer {
@@ -20,6 +18,9 @@ public class Customer {
     @Column(nullable = false, unique = true)
     private String email;
 
+    @Column(name = "password_hash")
+    private String passwordHash;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "kyc_status", nullable = false)
     private KycStatus kycStatus;
@@ -27,19 +28,45 @@ public class Customer {
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 
-    protected Customer() { }   // required by JPA
+    protected Customer() {
+    }
 
     public Customer(String name, String email) {
+        this(name, email, null);
+    }
+
+    public Customer(String name, String email, String passwordHash) {
         this.id = UUID.randomUUID();
         this.name = name;
         this.email = email;
+        this.passwordHash = passwordHash;
         this.kycStatus = KycStatus.PENDING;
         this.createdAt = Instant.now();
     }
 
-    public UUID getId() { return id; }
-    public String getName() { return name; }
-    public String getEmail() { return email; }
-    public KycStatus getKycStatus() { return kycStatus; }
-    public Instant getCreatedAt() { return createdAt; }
+    public UUID getId() {
+        return id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public String getPasswordHash() { return passwordHash; }
+
+    public KycStatus getKycStatus() {
+        return kycStatus;
+    }
+
+    public Instant getCreatedAt() {
+        return createdAt;
+    }
+
+    public void updateKycStatus(KycStatus kycStatus) {
+        this.kycStatus = kycStatus;
+    }
 }
