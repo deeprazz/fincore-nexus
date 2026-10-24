@@ -43,6 +43,7 @@ function App() {
   const [registerEmail, setRegisterEmail] = useState("");
   const [registerPassword, setRegisterPassword] = useState("");
   const [customerPortal, setCustomerPortal] = useState(null);
+  const [customerActivePage, setCustomerActivePage] = useState("Overview");
   const [customerTransactions, setCustomerTransactions] = useState([]);
   const [customerStatement, setCustomerStatement] = useState(null);
   const [statementFrom, setStatementFrom] = useState("");
@@ -50,6 +51,11 @@ function App() {
   const [statementBusy, setStatementBusy] = useState(false);
   const [customerDestination, setCustomerDestination] = useState("");
   const [customerTransferAmount, setCustomerTransferAmount] = useState("");
+  const [customerTransferPin, setCustomerTransferPin] = useState("");
+  const [customerPinCurrent, setCustomerPinCurrent] = useState("");
+  const [customerPinNew, setCustomerPinNew] = useState("");
+  const [customerPinConfirm, setCustomerPinConfirm] = useState("");
+  const [customerPinBusy, setCustomerPinBusy] = useState(false);
   const [customerBusy, setCustomerBusy] = useState(false);
   const [customerMessage, setCustomerMessage] = useState("");
   const [customerError, setCustomerError] = useState("");
@@ -94,7 +100,11 @@ function App() {
       ...options,
       headers: {
         ...(options.body ? { "Content-Type": "application/json" } : {}),
-        ...(auth ? { Authorization: `Basic ${btoa(`${auth.username}:${auth.password}`)}` } : {}),
+        ...(auth
+          ? {
+              Authorization: `Basic ${btoa(`${auth.username}:${auth.password}`)}`,
+            }
+          : {}),
         ...options.headers,
       },
     });
@@ -126,17 +136,27 @@ function App() {
   async function login(event) {
     event.preventDefault();
     setLoginError("");
-    const candidate = { username: loginUsername.trim(), password: loginPassword };
+    const candidate = {
+      username: loginUsername.trim(),
+      password: loginPassword,
+    };
     try {
-      const headers = { Authorization: `Basic ${btoa(`${candidate.username}:${candidate.password}`)}` };
-      const portalResponse = await fetch(`${API}/customer-portal/me`, { headers });
+      const headers = {
+        Authorization: `Basic ${btoa(`${candidate.username}:${candidate.password}`)}`,
+      };
+      const portalResponse = await fetch(`${API}/customer-portal/me`, {
+        headers,
+      });
       if (portalResponse.ok) {
         const portalData = await portalResponse.json();
         setCustomerPortal(portalData);
         setCustomerTransactions([]);
         setCustomerMessage("");
         setCustomerError("");
-        if (portalData.kycStatus === "VERIFIED" && portalData.accounts?.[0]?.id) {
+        if (
+          portalData.kycStatus === "VERIFIED" &&
+          portalData.accounts?.[0]?.id
+        ) {
           const txResponse = await fetch(
             `${API}/customer-portal/transactions?accountId=${encodeURIComponent(portalData.accounts[0].id)}`,
             { headers },
@@ -152,9 +172,11 @@ function App() {
       }
       const response = await fetch(`${API}/accounts`, { headers });
       if (!response.ok) {
-        setLoginError(response.status === 401 || response.status === 403
-          ? "Invalid credentials, or your role cannot access this page."
-          : `Backend returned ${response.status}. Make sure Spring Boot is running.`);
+        setLoginError(
+          response.status === 401 || response.status === 403
+            ? "Invalid credentials, or your role cannot access this page."
+            : `Backend returned ${response.status}. Make sure Spring Boot is running.`,
+        );
         return;
       }
       const accountData = await response.json();
@@ -168,7 +190,9 @@ function App() {
       }
       setLoginPassword("");
     } catch {
-      setLoginError("Cannot connect to the backend. Start Spring Boot and PostgreSQL, then try again.");
+      setLoginError(
+        "Cannot connect to the backend. Start Spring Boot and PostgreSQL, then try again.",
+      );
     }
   }
 
@@ -179,15 +203,26 @@ function App() {
       const response = await fetch(`${API}/auth/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: registerName.trim(), email: registerEmail.trim(), password: registerPassword }),
+        body: JSON.stringify({
+          name: registerName.trim(),
+          email: registerEmail.trim(),
+          password: registerPassword,
+        }),
       });
       const data = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(data.message || data.error || `Registration failed (${response.status})`);
+      if (!response.ok)
+        throw new Error(
+          data.message ||
+            data.error ||
+            `Registration failed (${response.status})`,
+        );
       setLoginUsername(registerEmail.trim());
       setLoginPassword("");
       setRegisterPassword("");
       setAuthMode("login");
-      setLoginError("Registration successful. Your KYC is PENDING. Sign in to check your status.");
+      setLoginError(
+        "Registration successful. Your KYC is PENDING. Sign in to check your status.",
+      );
     } catch (e) {
       setLoginError(e.message || "Registration failed.");
     }
@@ -199,6 +234,10 @@ function App() {
     setCustomerTransactions([]);
     setCustomerDestination("");
     setCustomerTransferAmount("");
+    setCustomerTransferPin("");
+    setCustomerPinCurrent("");
+    setCustomerPinNew("");
+    setCustomerPinConfirm("");
     setCustomerMessage("");
     setCustomerError("");
     setAccounts([]);
@@ -527,7 +566,9 @@ function App() {
       setCustomerPortal(portalData);
       const selectedAccount = portalData.accounts?.[0];
       if (selectedAccount?.id && portalData.kycStatus === "VERIFIED") {
-        const txData = await apiRequest(`/customer-portal/transactions?accountId=${encodeURIComponent(selectedAccount.id)}`);
+        const txData = await apiRequest(
+          `/customer-portal/transactions?accountId=${encodeURIComponent(selectedAccount.id)}`,
+        );
         setCustomerTransactions(Array.isArray(txData) ? txData : []);
       } else {
         setCustomerTransactions([]);
@@ -558,13 +599,61 @@ function App() {
       if (statementFrom) params.set("from", statementFrom);
       if (statementTo) params.set("to", statementTo);
       const query = params.toString();
-      const result = await apiRequest(`/customer-portal/accounts/${encodeURIComponent(selectedAccount.id)}/statement${query ? `?${query}` : ""}`);
+      const result = await apiRequest(
+        `/customer-portal/accounts/${encodeURIComponent(selectedAccount.id)}/statement${query ? `?${query}` : ""}`,
+      );
       setCustomerStatement(result);
       setCustomerMessage("Statement generated successfully.");
     } catch (e) {
       setCustomerError(e.message || "Could not generate your statement.");
     } finally {
       setStatementBusy(false);
+    }
+  }
+
+  async function saveCustomerPin(event) {
+    event.preventDefault();
+    setCustomerError("");
+    setCustomerMessage("");
+    if (!/^\d{4}$/.test(customerPinNew)) {
+      setCustomerError("Choose a PIN containing exactly 4 digits.");
+      return;
+    }
+    if (customerPinNew !== customerPinConfirm) {
+      setCustomerError("The new PIN entries do not match.");
+      return;
+    }
+    if (
+      customerPortal?.hasTransactionPin &&
+      !/^\d{4}$/.test(customerPinCurrent)
+    ) {
+      setCustomerError("Enter your current 4-digit transaction PIN.");
+      return;
+    }
+    setCustomerPinBusy(true);
+    try {
+      const result = await apiRequest("/customer-portal/pin", {
+        method: "POST",
+        body: JSON.stringify({
+          currentPin: customerPortal?.hasTransactionPin
+            ? customerPinCurrent
+            : null,
+          pin: customerPinNew,
+        }),
+      });
+      setCustomerPortal((old) =>
+        old ? { ...old, hasTransactionPin: true } : old,
+      );
+      setCustomerPinCurrent("");
+      setCustomerPinNew("");
+      setCustomerPinConfirm("");
+      setCustomerMessage(
+        result?.message || "Transaction PIN saved successfully.",
+      );
+    } catch (e) {
+      setCustomerError(e.message || "Could not save transaction PIN.");
+    } finally {
+      setCustomerPinBusy(false);
     }
   }
 
@@ -578,12 +667,28 @@ function App() {
       setCustomerError("No eligible account is available for transfers.");
       return;
     }
+    if (!customerPortal?.hasTransactionPin) {
+      setCustomerError(
+        "Set your 4-digit transaction PIN before transferring money.",
+      );
+      return;
+    }
+    if (!/^\d{4}$/.test(customerTransferPin)) {
+      setCustomerError("Enter your 4-digit transaction PIN.");
+      return;
+    }
     if (!customerDestination.trim()) {
       setCustomerError("Enter the recipient account number.");
       return;
     }
-    if (!Number.isFinite(value) || value <= 0 || Math.round(value * 100) !== value * 100) {
-      setCustomerError("Enter a valid amount greater than zero, with at most two decimal places.");
+    if (
+      !Number.isFinite(value) ||
+      value <= 0 ||
+      Math.round(value * 100) !== value * 100
+    ) {
+      setCustomerError(
+        "Enter a valid amount greater than zero, with at most two decimal places.",
+      );
       return;
     }
     setCustomerBusy(true);
@@ -594,11 +699,13 @@ function App() {
           sourceAccountId: sourceAccount.id,
           destinationAccountNumber: customerDestination.trim(),
           amount: value,
+          transactionPin: customerTransferPin,
         }),
       });
       setCustomerMessage(result?.message || "Transfer completed successfully.");
       setCustomerDestination("");
       setCustomerTransferAmount("");
+      setCustomerTransferPin("");
       await refreshCustomerPortal();
     } catch (e) {
       setCustomerError(e.message || "Transfer failed.");
@@ -624,29 +731,116 @@ function App() {
   if (!auth) {
     return (
       <div className="login-shell">
-        <form className="login-card" onSubmit={authMode === "register" ? registerCustomer : login}>
-          <div className="brand-mark login-mark"><Activity size={24} /></div>
+        <form
+          className="login-card"
+          onSubmit={authMode === "register" ? registerCustomer : login}
+        >
+          <div className="brand-mark login-mark">
+            <Activity size={24} />
+          </div>
           <div className="brand-name">FinCore Nexus</div>
-          <p className="login-subtitle">{authMode === "register" ? "Create your customer profile" : "Customer or Teller sign in"}</p>
+          <p className="login-subtitle">
+            {authMode === "register"
+              ? "Create your customer profile"
+              : "Customer or Teller sign in"}
+          </p>
           {loginError && <div className="alert-error">{loginError}</div>}
           {authMode === "register" ? (
             <>
-              <label>Full name<input value={registerName} onChange={e => setRegisterName(e.target.value)} required maxLength={100} /></label>
-              <label>Email<input type="email" autoComplete="email" value={registerEmail} onChange={e => setRegisterEmail(e.target.value)} required /></label>
-              <label>Password (at least 8 characters)<input type="password" autoComplete="new-password" value={registerPassword} onChange={e => setRegisterPassword(e.target.value)} minLength={8} required /></label>
-              <button className="primary-button login-submit" type="submit">Register as customer</button>
-              <p className="login-help">Already registered? <button type="button" className="text-button" onClick={() => { setAuthMode("login"); setLoginError(""); }}>Sign in</button></p>
+              <label>
+                Full name
+                <input
+                  value={registerName}
+                  onChange={(e) => setRegisterName(e.target.value)}
+                  required
+                  maxLength={100}
+                />
+              </label>
+              <label>
+                Email
+                <input
+                  type="email"
+                  autoComplete="email"
+                  value={registerEmail}
+                  onChange={(e) => setRegisterEmail(e.target.value)}
+                  required
+                />
+              </label>
+              <label>
+                Password (at least 8 characters)
+                <input
+                  type="password"
+                  autoComplete="new-password"
+                  value={registerPassword}
+                  onChange={(e) => setRegisterPassword(e.target.value)}
+                  minLength={8}
+                  required
+                />
+              </label>
+              <button className="primary-button login-submit" type="submit">
+                Register as customer
+              </button>
+              <p className="login-help">
+                Already registered?{" "}
+                <button
+                  type="button"
+                  className="text-button"
+                  onClick={() => {
+                    setAuthMode("login");
+                    setLoginError("");
+                  }}
+                >
+                  Sign in
+                </button>
+              </p>
             </>
           ) : (
             <>
-              <label>Email / teller username<input autoComplete="username" value={loginUsername} onChange={e => setLoginUsername(e.target.value)} required /></label>
-              <label>Password<input type="password" autoComplete="current-password" value={loginPassword} onChange={e => setLoginPassword(e.target.value)} required /></label>
-              <button className="primary-button login-submit" type="submit">Sign in securely</button>
-              <p className="login-help">New customer? <button type="button" className="text-button" onClick={() => { setAuthMode("register"); setLoginError(""); }}>Register here</button></p>
-              <p className="login-help">Demo teller: <strong>teller</strong> / <strong>Teller@123</strong></p>
+              <label>
+                Email / teller username
+                <input
+                  autoComplete="username"
+                  value={loginUsername}
+                  onChange={(e) => setLoginUsername(e.target.value)}
+                  required
+                />
+              </label>
+              <label>
+                Password
+                <input
+                  type="password"
+                  autoComplete="current-password"
+                  value={loginPassword}
+                  onChange={(e) => setLoginPassword(e.target.value)}
+                  required
+                />
+              </label>
+              <button className="primary-button login-submit" type="submit">
+                Sign in securely
+              </button>
+              <p className="login-help">
+                New customer?{" "}
+                <button
+                  type="button"
+                  className="text-button"
+                  onClick={() => {
+                    setAuthMode("register");
+                    setLoginError("");
+                  }}
+                >
+                  Register here
+                </button>
+              </p>
+              <p className="login-help">
+                Demo teller: <strong>teller</strong> /{" "}
+                <strong>Teller@123</strong>
+              </p>
             </>
           )}
-          <p className="login-warning">New customers start with KYC Pending. Teller approval is required before banking access.</p>
+          <p className="login-warning">
+            New customers start with KYC Pending. Teller approval is required
+            before banking access.
+          </p>
         </form>
       </div>
     );
@@ -656,106 +850,763 @@ function App() {
     const customerAccounts = customerPortal?.accounts || [];
     const canBank = customerPortal?.kycStatus === "VERIFIED";
     const primaryAccount = customerAccounts[0];
-    const totalBalance = customerAccounts.reduce((sum, account) => sum + Number(account.balance || 0), 0);
+    const totalBalance = customerAccounts.reduce(
+      (sum, account) => sum + Number(account.balance || 0),
+      0,
+    );
     const customerNav = [
-      { label: "Overview", href: "#customer-overview", icon: LayoutDashboard },
-      { label: "My accounts", href: "#customer-accounts", icon: Wallet },
-      { label: "Transfer money", href: "#customer-transfer", icon: ArrowLeftRight },
-      { label: "Transactions", href: "#customer-transactions", icon: Activity },
-      { label: "Statements", href: "#customer-statements", icon: FileText },
+      { label: "Overview", icon: LayoutDashboard },
+      { label: "My accounts", icon: Wallet },
+      { label: "Transfer money", icon: ArrowLeftRight },
+      { label: "Transactions", icon: Activity },
+      { label: "Statements", icon: FileText },
     ];
+    const selectCustomerPage = (page) => {
+      setCustomerActivePage(page);
+      setCustomerMessage("");
+      setCustomerError("");
+    };
+
     return (
       <div className="customer-app-shell">
         <header className="customer-topbar">
           <div className="customer-brand">
-            <div className="customer-brand-mark"><Activity size={21} /></div>
-            <div><strong>FinCore Nexus</strong><span>PERSONAL BANKING</span></div>
+            <div className="customer-brand-mark">
+              <Activity size={20} />
+            </div>
+            <div>
+              <strong>FinCore</strong>
+              <span>YOUR EVERYDAY BANKING</span>
+            </div>
           </div>
           <div className="customer-topbar-right">
-            <span className="customer-secure-indicator"><span /> Secure connection</span>
-            <div className="customer-user-chip"><span className="customer-avatar">{(customerPortal?.name || auth.username || "C").slice(0, 1).toUpperCase()}</span><span>{customerPortal?.name || auth.username}</span></div>
-            <button className="secondary-button customer-logout-top" onClick={logout} type="button">Sign out</button>
+            <span className="customer-secure-indicator">
+              <span /> Secure connection
+            </span>
+            <div className="customer-user-chip">
+              <span className="customer-avatar">
+                {(customerPortal?.name || auth.username || "C")
+                  .slice(0, 1)
+                  .toUpperCase()}
+              </span>
+              <span>{customerPortal?.name || auth.username}</span>
+            </div>
+            <button
+              className="secondary-button customer-logout-top"
+              onClick={logout}
+              type="button"
+            >
+              Sign out
+            </button>
           </div>
         </header>
 
         <div className="customer-workspace">
           <aside className="customer-sidebar">
-            <div className="customer-sidebar-label">YOUR BANKING</div>
+            <div className="customer-sidebar-label">YOUR ACCOUNT</div>
             <nav aria-label="Customer navigation">
-              {customerNav.map(({ label, href, icon: Icon }, index) => (
-                <a key={label} className="customer-nav-item" href={href}>
-                  <Icon size={17} /><span>{label}</span>
-                </a>
+              {customerNav.map(({ label, icon: Icon }) => (
+                <button
+                  key={label}
+                  type="button"
+                  className={`customer-nav-item ${customerActivePage === label ? "active" : ""}`}
+                  aria-current={
+                    customerActivePage === label ? "page" : undefined
+                  }
+                  onClick={() => selectCustomerPage(label)}
+                >
+                  <Icon size={17} />
+                  <span>{label}</span>
+                  {customerActivePage === label && (
+                    <span className="customer-nav-dot" />
+                  )}
+                </button>
               ))}
             </nav>
             <div className="customer-sidebar-bottom">
               <ShieldCheck size={18} />
-              <div><strong>Protected banking</strong><span>Your data is securely accessed.</span></div>
+              <div>
+                <strong>Your money matters</strong>
+                <span>
+                  Keep your details private. Sign out when you’re done.
+                </span>
+              </div>
             </div>
           </aside>
 
           <main className="customer-main-content">
-            <div className="customer-page-heading" id="customer-overview">
-              <div><div className="customer-eyebrow">PERSONAL BANKING / OVERVIEW</div><h1>Good to see you, {customerPortal?.name || "Customer"}</h1><p>Here’s your account overview and recent banking activity.</p></div>
-              <button className="secondary-button customer-refresh" type="button" onClick={refreshCustomerPortal} disabled={customerBusy}><RefreshCw size={14} />{customerBusy ? "Refreshing…" : "Refresh data"}</button>
+            <div className="customer-page-heading">
+              <div>
+                <div className="customer-eyebrow">PERSONAL BANKING</div>
+                <h1>
+                  {customerActivePage === "Overview"
+                    ? `Hi, ${(customerPortal?.name || "there").split(" ")[0]}`
+                    : customerActivePage}
+                </h1>
+                <p>
+                  {
+                    {
+                      Overview: "Here’s a quick look at your money.",
+                      "My accounts": "Your accounts and available balances.",
+                      "Transfer money":
+                        "Send money to another FinCore account.",
+                      Transactions: "A record of money moving in and out.",
+                      Statements: "Choose a date range to review your account.",
+                    }[customerActivePage]
+                  }
+                </p>
+              </div>
+              <button
+                className="secondary-button customer-refresh"
+                type="button"
+                onClick={refreshCustomerPortal}
+                disabled={customerBusy}
+              >
+                <RefreshCw size={14} />
+                {customerBusy ? "Refreshing…" : "Refresh"}
+              </button>
             </div>
 
-            <section className="customer-welcome-strip">
-              <div><span className="customer-welcome-label">CUSTOMER PROFILE</span><h2>Your money, all in one place.</h2><p>Review balances, send money and keep track of your activity.</p></div>
-              <div className="customer-kyc-summary"><span className={`customer-status-pill ${canBank ? "verified" : "pending"}`}>{customerPortal?.kycStatus || "PENDING"}</span><span>KYC verification</span></div>
-            </section>
+            {(customerError || customerMessage) && (
+              <div
+                className={`customer-feedback ${customerError ? "is-error" : "is-success"}`}
+                role={customerError ? "alert" : "status"}
+              >
+                <span className="customer-feedback-mark">
+                  {customerError ? "!" : "✓"}
+                </span>
+                <div>
+                  <strong>
+                    {customerError
+                      ? "Something needs your attention"
+                      : "All done"}
+                  </strong>
+                  <p>{customerError || customerMessage}</p>
+                </div>
+                <button
+                  type="button"
+                  aria-label="Dismiss message"
+                  onClick={() => {
+                    setCustomerError("");
+                    setCustomerMessage("");
+                  }}
+                >
+                  ×
+                </button>
+              </div>
+            )}
 
-            {customerError && <div className="alert-error customer-alert" role="alert">{customerError}</div>}
-            {customerMessage && <div className="alert-success customer-alert" role="status">{customerMessage}</div>}
-
-            <section className="customer-metric-grid" aria-label="Account summary">
-              <article className="customer-metric-card customer-metric-primary"><div className="customer-metric-top"><span>Total available balance</span><Wallet size={18} /></div><strong>{money(totalBalance)}</strong><small>Across {customerAccounts.length} account{customerAccounts.length === 1 ? "" : "s"}</small></article>
-              <article className="customer-metric-card"><div className="customer-metric-top"><span>My accounts</span><LayoutDashboard size={18} /></div><strong>{customerAccounts.length}</strong><small>Accounts linked to your profile</small></article>
-              <article className="customer-metric-card"><div className="customer-metric-top"><span>Account status</span><ShieldCheck size={18} /></div><strong className="customer-metric-status">{primaryAccount?.status || (canBank ? "Active" : "Pending")}</strong><small>{canBank ? "Banking access enabled" : "Waiting for Teller approval"}</small></article>
-            </section>
-
-            {!canBank && <section className="customer-section customer-kyc-pending"><div className="customer-panel-heading"><h3>Banking access is pending</h3><span className="customer-status-pill pending">ACTION REQUIRED</span></div><p>Your profile is registered, but banking operations unlock after Teller KYC approval. You can return here to check your status.</p></section>}
-
-            {canBank && <>
-              <section className="customer-section customer-section-wide" id="customer-accounts">
-                <div className="customer-section-heading"><div><span className="customer-section-kicker">YOUR MONEY</span><h3>My accounts</h3></div><span className="customer-muted">{customerAccounts.length} linked</span></div>
-                {customerAccounts.length ? <div className="customer-account-grid">{customerAccounts.map(account => (
-                  <article className="customer-account-card" key={account.id}><div className="customer-account-card-top"><span className="customer-account-icon"><Wallet size={18} /></span><span className="customer-status-pill verified">{account.status || "ACTIVE"}</span></div><span className="customer-muted">ACCOUNT NUMBER</span><strong>{account.accountNumber}</strong><span className="customer-muted">Available balance</span><strong className="customer-balance">{money(account.balance)}</strong></article>
-                ))}</div> : <p className="customer-muted">No bank account has been opened yet. Please contact your Teller.</p>}
-              </section>
-
-              {customerAccounts.length > 0 && <section className="customer-section" id="customer-transfer"><div className="customer-section-heading"><div><span className="customer-section-kicker">PAYMENTS</span><h3>Transfer money</h3></div><span className="customer-muted">Secure transfer</span></div><p className="customer-muted">Confirm the recipient account number before submitting. Transfers are validated by the bank.</p><form className="customer-transfer-form" onSubmit={submitCustomerTransfer}>
-                <label>From account<select value={primaryAccount?.id || ""} disabled>{customerAccounts.map(account => <option key={account.id} value={account.id}>{account.accountNumber} · {money(account.balance)}</option>)}</select></label>
-                <label>Recipient account number<input value={customerDestination} onChange={e => setCustomerDestination(e.target.value)} placeholder="e.g. 1000-0000-0002" required maxLength={30} /></label>
-                <label>Amount (INR)<input type="number" inputMode="decimal" min="0.01" step="0.01" value={customerTransferAmount} onChange={e => setCustomerTransferAmount(e.target.value)} placeholder="0.00" required /></label>
-                <button className="primary-button customer-transfer-submit" type="submit" disabled={customerBusy}>{customerBusy ? "Processing transfer…" : "Review and transfer"}<ArrowLeftRight size={15} /></button>
-              </form></section>}
-
-              <section className="customer-section" id="customer-transactions"><div className="customer-section-heading"><div><span className="customer-section-kicker">ACCOUNT ACTIVITY</span><h3>Transactions</h3></div><span className="customer-muted">Latest activity</span></div>
-                {customerTransactions.length ? <div className="customer-transactions-wrap"><table className="customer-transactions-table"><thead><tr><th>Transaction</th><th>Amount</th><th>Balance after</th><th>Date</th></tr></thead><tbody>{customerTransactions.map(tx => <tr key={tx.id}><td>{String(tx.transactionType || "").replaceAll("_", " ")}</td><td>{money(tx.amount)}</td><td>{money(tx.balanceAfter)}</td><td>{tx.createdAt ? new Date(tx.createdAt).toLocaleString() : "—"}</td></tr>)}</tbody></table></div> : <div className="customer-empty-state"><span><Activity size={20} /></span><strong>No transactions yet</strong><p>Your banking activity will appear here when you make your first transaction.</p></div>}
-              </section>
-
-              <section className="customer-section" id="customer-statements">
-                <div className="customer-section-heading"><div><span className="customer-section-kicker">DOCUMENTS</span><h3>Account statement</h3></div><span className="customer-muted">Statement generation</span></div>
-                <p className="customer-muted">Choose an optional date range to view your account activity summary.</p>
-                <form className="customer-transfer-form customer-statement-form" onSubmit={generateCustomerStatement}>
-                  <label>From date<input type="date" value={statementFrom} onChange={e => setStatementFrom(e.target.value)} /></label>
-                  <label>To date<input type="date" value={statementTo} onChange={e => setStatementTo(e.target.value)} min={statementFrom || undefined} /></label>
-                  <button className="primary-button customer-transfer-submit" type="submit" disabled={statementBusy}>{statementBusy ? "Generating statement…" : "Generate statement"}<FileText size={15} /></button>
-                </form>
-                {customerStatement && <div className="customer-statement-result">
-                  <div className="customer-statement-metrics">
-                    <div><span>Opening balance</span><strong>{money(customerStatement.openingBalance)}</strong></div>
-                    <div><span>Total deposits</span><strong>{money(customerStatement.totalDeposits)}</strong></div>
-                    <div><span>Total withdrawals</span><strong>{money(customerStatement.totalWithdrawals)}</strong></div>
-                    <div><span>Closing balance</span><strong>{money(customerStatement.closingBalance)}</strong></div>
+            {customerActivePage === "Overview" && (
+              <>
+                <section className="customer-welcome-strip">
+                  <div>
+                    <span className="customer-welcome-label">
+                      YOUR ACCOUNT AT A GLANCE
+                    </span>
+                    <h2>Your money, in one place.</h2>
+                    <p>
+                      Check your balance, make a transfer, or catch up on recent
+                      activity.
+                    </p>
                   </div>
-                  <p className="customer-muted">{customerStatement.totalTransactions ?? customerStatement.transactions?.length ?? 0} transactions in this period</p>
-                  {customerStatement.transactions?.length ? <div className="customer-transactions-wrap"><table className="customer-transactions-table"><thead><tr><th>Transaction</th><th>Amount</th><th>Balance after</th><th>Date</th></tr></thead><tbody>{customerStatement.transactions.map(tx => <tr key={tx.id}><td>{String(tx.transactionType || "").replaceAll("_", " ")}</td><td>{money(tx.amount)}</td><td>{money(tx.balanceAfter)}</td><td>{tx.createdAt ? new Date(tx.createdAt).toLocaleString() : "—"}</td></tr>)}</tbody></table></div> : <div className="customer-empty-state"><strong>No transactions in this date range</strong></div>}
-                </div>}
+                  <div className="customer-kyc-summary">
+                    <span
+                      className={`customer-status-pill ${canBank ? "verified" : "pending"}`}
+                    >
+                      {customerPortal?.kycStatus || "PENDING"}
+                    </span>
+                    <span>Verification status</span>
+                  </div>
+                </section>
+                <section
+                  className="customer-metric-grid"
+                  aria-label="Account summary"
+                >
+                  <article className="customer-metric-card customer-metric-primary">
+                    <div className="customer-metric-top">
+                      <span>Available balance</span>
+                      <Wallet size={18} />
+                    </div>
+                    <strong>{money(totalBalance)}</strong>
+                    <small>
+                      Across {customerAccounts.length} account
+                      {customerAccounts.length === 1 ? "" : "s"}
+                    </small>
+                  </article>
+                  <article className="customer-metric-card">
+                    <div className="customer-metric-top">
+                      <span>My accounts</span>
+                      <LayoutDashboard size={18} />
+                    </div>
+                    <strong>{customerAccounts.length}</strong>
+                    <small>Linked to your profile</small>
+                  </article>
+                  <article className="customer-metric-card">
+                    <div className="customer-metric-top">
+                      <span>Account status</span>
+                      <ShieldCheck size={18} />
+                    </div>
+                    <strong className="customer-metric-status">
+                      {primaryAccount?.status ||
+                        (canBank ? "Active" : "Pending")}
+                    </strong>
+                    <small>
+                      {canBank
+                        ? "Banking access is ready"
+                        : "Waiting for Teller approval"}
+                    </small>
+                  </article>
+                </section>
+                {!canBank && (
+                  <section className="customer-section customer-kyc-pending">
+                    <div className="customer-panel-heading">
+                      <h3>Your account is being checked</h3>
+                      <span className="customer-status-pill pending">
+                        PENDING
+                      </span>
+                    </div>
+                    <p>
+                      Your registration is in place. A Teller needs to verify
+                      your details before transfers and other banking services
+                      become available. You can refresh this page later to check
+                      for updates.
+                    </p>
+                  </section>
+                )}
+                {canBank && (
+                  <section className="customer-section customer-overview-activity">
+                    <div className="customer-section-heading">
+                      <div>
+                        <span className="customer-section-kicker">
+                          RECENT ACTIVITY
+                        </span>
+                        <h3>Latest transactions</h3>
+                      </div>
+                      <button
+                        type="button"
+                        className="text-button"
+                        onClick={() => selectCustomerPage("Transactions")}
+                      >
+                        See all
+                      </button>
+                    </div>
+                    {customerTransactions.length ? (
+                      <div className="customer-transactions-wrap">
+                        <table className="customer-transactions-table">
+                          <thead>
+                            <tr>
+                              <th>Details</th>
+                              <th>Amount</th>
+                              <th>Date</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {customerTransactions.slice(0, 4).map((tx) => (
+                              <tr key={tx.id}>
+                                <td>
+                                  {String(tx.transactionType || "").replaceAll(
+                                    "_",
+                                    " ",
+                                  )}
+                                </td>
+                                <td>{money(tx.amount)}</td>
+                                <td>
+                                  {tx.createdAt
+                                    ? new Date(
+                                        tx.createdAt,
+                                      ).toLocaleDateString()
+                                    : "—"}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    ) : (
+                      <div className="customer-empty-state">
+                        <strong>No activity just yet</strong>
+                        <p>
+                          Your transactions will show up here when you start
+                          using your account.
+                        </p>
+                      </div>
+                    )}
+                  </section>
+                )}
+                <footer className="customer-footer">
+                  <span>FinCore · Personal banking</span>
+                  <span>
+                    <ShieldCheck size={13} /> Your account, kept private
+                  </span>
+                </footer>
+              </>
+            )}
+
+            {customerActivePage === "My accounts" && (
+              <>
+                {!canBank ? (
+                  <section className="customer-section customer-kyc-pending">
+                    <h3>Account access is pending</h3>
+                    <p>
+                      Your account details will be available after Teller
+                      verification.
+                    </p>
+                  </section>
+                ) : (
+                  <section className="customer-section">
+                    <div className="customer-section-heading">
+                      <div>
+                        <span className="customer-section-kicker">
+                          YOUR MONEY
+                        </span>
+                        <h3>My accounts</h3>
+                      </div>
+                      <span className="customer-muted">
+                        {customerAccounts.length} linked
+                      </span>
+                    </div>
+                    {customerAccounts.length ? (
+                      <div className="customer-account-grid">
+                        {customerAccounts.map((account) => (
+                          <article
+                            className="customer-account-card"
+                            key={account.id}
+                          >
+                            <div className="customer-account-card-top">
+                              <span className="customer-account-icon">
+                                <Wallet size={18} />
+                              </span>
+                              <span className="customer-status-pill verified">
+                                {account.status || "ACTIVE"}
+                              </span>
+                            </div>
+                            <span className="customer-muted">
+                              ACCOUNT NUMBER
+                            </span>
+                            <strong>{account.accountNumber}</strong>
+                            <span className="customer-muted">
+                              Available balance
+                            </span>
+                            <strong className="customer-balance">
+                              {money(account.balance)}
+                            </strong>
+                          </article>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="customer-muted">
+                        No bank account has been opened yet. Please contact your
+                        Teller.
+                      </p>
+                    )}
+                  </section>
+                )}
+              </>
+            )}
+
+            {customerActivePage === "Transfer money" && (
+              <>
+                {!canBank ? (
+                  <section className="customer-section customer-kyc-pending">
+                    <h3>Transfers aren’t available yet</h3>
+                    <p>
+                      Once your KYC is approved, you’ll be able to send money
+                      from here.
+                    </p>
+                  </section>
+                ) : (
+                  <>
+                    <section className="customer-section">
+                      <div className="customer-section-heading">
+                        <div>
+                          <span className="customer-section-kicker">
+                            PAYMENTS
+                          </span>
+                          <h3>Send money</h3>
+                        </div>
+                        <span className="customer-muted">
+                          Review details before sending
+                        </span>
+                      </div>
+                      <p className="customer-muted">
+                        Double-check the recipient account number and amount
+                        before you confirm.
+                      </p>
+                      <form
+                        className="customer-transfer-form"
+                        onSubmit={submitCustomerTransfer}
+                      >
+                        <label>
+                          From account
+                          <select value={primaryAccount?.id || ""} disabled>
+                            {customerAccounts.map((account) => (
+                              <option key={account.id} value={account.id}>
+                                {account.accountNumber} ·{" "}
+                                {money(account.balance)}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                        <label>
+                          Recipient account number
+                          <input
+                            value={customerDestination}
+                            onChange={(e) =>
+                              setCustomerDestination(e.target.value)
+                            }
+                            placeholder="e.g. 1000-0000-0002"
+                            required
+                            maxLength={30}
+                          />
+                        </label>
+                        <label>
+                          Amount (INR)
+                          <input
+                            type="number"
+                            inputMode="decimal"
+                            min="0.01"
+                            step="0.01"
+                            value={customerTransferAmount}
+                            onChange={(e) =>
+                              setCustomerTransferAmount(e.target.value)
+                            }
+                            placeholder="0.00"
+                            required
+                          />
+                        </label>
+                        <label>
+                          4-digit transaction PIN
+                          <input
+                            type="password"
+                            inputMode="numeric"
+                            autoComplete="current-password"
+                            pattern="[0-9]{4}"
+                            maxLength={4}
+                            value={customerTransferPin}
+                            onChange={(e) =>
+                              setCustomerTransferPin(
+                                e.target.value.replace(/\D/g, "").slice(0, 4),
+                              )
+                            }
+                            placeholder={
+                              customerPortal?.hasTransactionPin
+                                ? "Enter transaction PIN"
+                                : "Set your PIN below first"
+                            }
+                            required
+                            disabled={!customerPortal?.hasTransactionPin}
+                          />
+                        </label>
+                        <button
+                          className="primary-button customer-transfer-submit"
+                          type="submit"
+                          disabled={customerBusy}
+                        >
+                          {customerBusy ? "Sending…" : "Send money"}
+                          <ArrowLeftRight size={15} />
+                        </button>
+                      </form>
+                    </section>
+                    <section className="customer-section">
+                      <div className="customer-section-heading">
+                        <div>
+                          <span className="customer-section-kicker">
+                            ACCOUNT SECURITY
+                          </span>
+                          <h3>
+                            {customerPortal?.hasTransactionPin
+                              ? "Change your transaction PIN"
+                              : "Set up your transaction PIN"}
+                          </h3>
+                        </div>
+                        <span
+                          className={`customer-status-pill ${customerPortal?.hasTransactionPin ? "verified" : "pending"}`}
+                        >
+                          {customerPortal?.hasTransactionPin
+                            ? "PIN ACTIVE"
+                            : "SETUP REQUIRED"}
+                        </span>
+                      </div>
+                      <p className="customer-muted">
+                        Your 4-digit PIN is used to approve transfers. It is
+                        checked securely by the server and is never shown back
+                        to you.
+                      </p>
+                      <form
+                        className="customer-transfer-form"
+                        onSubmit={saveCustomerPin}
+                      >
+                        {customerPortal?.hasTransactionPin && (
+                          <label>
+                            Current PIN
+                            <input
+                              type="password"
+                              inputMode="numeric"
+                              autoComplete="current-password"
+                              pattern="[0-9]{4}"
+                              maxLength={4}
+                              value={customerPinCurrent}
+                              onChange={(e) =>
+                                setCustomerPinCurrent(
+                                  e.target.value.replace(/\D/g, "").slice(0, 4),
+                                )
+                              }
+                              required
+                            />
+                          </label>
+                        )}
+                        <label>
+                          New PIN
+                          <input
+                            type="password"
+                            inputMode="numeric"
+                            autoComplete="new-password"
+                            pattern="[0-9]{4}"
+                            maxLength={4}
+                            value={customerPinNew}
+                            onChange={(e) =>
+                              setCustomerPinNew(
+                                e.target.value.replace(/\D/g, "").slice(0, 4),
+                              )
+                            }
+                            placeholder="4 digits"
+                            required
+                          />
+                        </label>
+                        <label>
+                          Confirm new PIN
+                          <input
+                            type="password"
+                            inputMode="numeric"
+                            autoComplete="new-password"
+                            pattern="[0-9]{4}"
+                            maxLength={4}
+                            value={customerPinConfirm}
+                            onChange={(e) =>
+                              setCustomerPinConfirm(
+                                e.target.value.replace(/\D/g, "").slice(0, 4),
+                              )
+                            }
+                            placeholder="Repeat PIN"
+                            required
+                          />
+                        </label>
+                        <button
+                          className="primary-button customer-transfer-submit"
+                          type="submit"
+                          disabled={customerPinBusy}
+                        >
+                          {customerPinBusy
+                            ? "Saving…"
+                            : customerPortal?.hasTransactionPin
+                              ? "Update PIN"
+                              : "Save PIN"}
+                          <ShieldCheck size={15} />
+                        </button>
+                      </form>
+                    </section>
+                  </>
+                )}
+              </>
+            )}
+
+            {customerActivePage === "Transactions" && (
+              <section className="customer-section">
+                <div className="customer-section-heading">
+                  <div>
+                    <span className="customer-section-kicker">
+                      ACCOUNT ACTIVITY
+                    </span>
+                    <h3>Transactions</h3>
+                  </div>
+                  <span className="customer-muted">Latest activity</span>
+                </div>
+                {!canBank ? (
+                  <p className="customer-muted">
+                    Transaction history will be available after your account is
+                    verified.
+                  </p>
+                ) : customerTransactions.length ? (
+                  <div className="customer-transactions-wrap">
+                    <table className="customer-transactions-table">
+                      <thead>
+                        <tr>
+                          <th>Transaction</th>
+                          <th>Amount</th>
+                          <th>Balance after</th>
+                          <th>Date</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {customerTransactions.map((tx) => (
+                          <tr key={tx.id}>
+                            <td>
+                              {String(tx.transactionType || "").replaceAll(
+                                "_",
+                                " ",
+                              )}
+                            </td>
+                            <td>{money(tx.amount)}</td>
+                            <td>{money(tx.balanceAfter)}</td>
+                            <td>
+                              {tx.createdAt
+                                ? new Date(tx.createdAt).toLocaleString()
+                                : "—"}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <div className="customer-empty-state">
+                    <span>
+                      <Activity size={20} />
+                    </span>
+                    <strong>No transactions yet</strong>
+                    <p>
+                      Your banking activity will appear here when you make your
+                      first transaction.
+                    </p>
+                  </div>
+                )}
               </section>
-            </>}
-            <footer className="customer-footer"><span>© FinCore Nexus · Milestone 1</span><span><ShieldCheck size={13} /> Secure personal banking</span></footer>
+            )}
+
+            {customerActivePage === "Statements" && (
+              <section className="customer-section">
+                <div className="customer-section-heading">
+                  <div>
+                    <span className="customer-section-kicker">
+                      PAPERWORK, WITHOUT THE PAPER
+                    </span>
+                    <h3>Account statement</h3>
+                  </div>
+                </div>
+                {!canBank ? (
+                  <p className="customer-muted">
+                    Statements will be available after your account is verified.
+                  </p>
+                ) : (
+                  <>
+                    <p className="customer-muted">
+                      Pick a date range if you want to narrow things down. Leave
+                      dates blank to use the available history.
+                    </p>
+                    <form
+                      className="customer-transfer-form customer-statement-form"
+                      onSubmit={generateCustomerStatement}
+                    >
+                      <label>
+                        From date
+                        <input
+                          type="date"
+                          value={statementFrom}
+                          onChange={(e) => setStatementFrom(e.target.value)}
+                        />
+                      </label>
+                      <label>
+                        To date
+                        <input
+                          type="date"
+                          value={statementTo}
+                          onChange={(e) => setStatementTo(e.target.value)}
+                          min={statementFrom || undefined}
+                        />
+                      </label>
+                      <button
+                        className="primary-button customer-transfer-submit"
+                        type="submit"
+                        disabled={statementBusy}
+                      >
+                        {statementBusy ? "Generating…" : "Generate statement"}
+                        <FileText size={15} />
+                      </button>
+                    </form>
+                    {customerStatement && (
+                      <div className="customer-statement-result">
+                        <div className="customer-statement-metrics">
+                          <div>
+                            <span>Opening balance</span>
+                            <strong>
+                              {money(customerStatement.openingBalance)}
+                            </strong>
+                          </div>
+                          <div>
+                            <span>Total deposits</span>
+                            <strong>
+                              {money(customerStatement.totalDeposits)}
+                            </strong>
+                          </div>
+                          <div>
+                            <span>Total withdrawals</span>
+                            <strong>
+                              {money(customerStatement.totalWithdrawals)}
+                            </strong>
+                          </div>
+                          <div>
+                            <span>Closing balance</span>
+                            <strong>
+                              {money(customerStatement.closingBalance)}
+                            </strong>
+                          </div>
+                        </div>
+                        <p className="customer-muted">
+                          {customerStatement.totalTransactions ??
+                            customerStatement.transactions?.length ??
+                            0}{" "}
+                          transactions in this period
+                        </p>
+                        {customerStatement.transactions?.length ? (
+                          <div className="customer-transactions-wrap">
+                            <table className="customer-transactions-table">
+                              <thead>
+                                <tr>
+                                  <th>Transaction</th>
+                                  <th>Amount</th>
+                                  <th>Balance after</th>
+                                  <th>Date</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {customerStatement.transactions.map((tx) => (
+                                  <tr key={tx.id}>
+                                    <td>
+                                      {String(
+                                        tx.transactionType || "",
+                                      ).replaceAll("_", " ")}
+                                    </td>
+                                    <td>{money(tx.amount)}</td>
+                                    <td>{money(tx.balanceAfter)}</td>
+                                    <td>
+                                      {tx.createdAt
+                                        ? new Date(
+                                            tx.createdAt,
+                                          ).toLocaleString()
+                                        : "—"}
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        ) : (
+                          <div className="customer-empty-state">
+                            <strong>No transactions in this date range</strong>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </>
+                )}
+              </section>
+            )}
+            <footer className="customer-footer">
+              <span>FinCore · Personal banking</span>
+              <span>
+                <ShieldCheck size={13} /> Your account, kept private
+              </span>
+            </footer>
           </main>
         </div>
       </div>
@@ -790,8 +1641,12 @@ function App() {
         <div className="topbar-right">
           <span className="status-dot" />
           <span>{auth.username} · Teller</span>
-          <button className="secondary-button" onClick={logout} type="button">Sign out</button>
-          <div className="avatar">{auth.username.slice(0, 2).toUpperCase()}</div>
+          <button className="secondary-button" onClick={logout} type="button">
+            Sign out
+          </button>
+          <div className="avatar">
+            {auth.username.slice(0, 2).toUpperCase()}
+          </div>
         </div>
       </header>
 
@@ -1455,9 +2310,16 @@ function App() {
               <div className="panel-heading">
                 <div>
                   <h2>Audit Trail</h2>
-                  <p>Recent successful account, transaction, customer and KYC actions (latest 100).</p>
+                  <p>
+                    Recent successful account, transaction, customer and KYC
+                    actions (latest 100).
+                  </p>
                 </div>
-                <button className="secondary-button" onClick={loadAuditLogs} disabled={loading}>
+                <button
+                  className="secondary-button"
+                  onClick={loadAuditLogs}
+                  disabled={loading}
+                >
                   <RefreshCw size={16} /> Refresh
                 </button>
               </div>
@@ -1476,7 +2338,11 @@ function App() {
                   <tbody>
                     {auditLogs.map((log) => (
                       <tr key={log.id}>
-                        <td>{log.createdAt ? new Date(log.createdAt).toLocaleString() : "—"}</td>
+                        <td>
+                          {log.createdAt
+                            ? new Date(log.createdAt).toLocaleString()
+                            : "—"}
+                        </td>
                         <td>{log.action}</td>
                         <td>{log.entityType}</td>
                         <td className="muted-cell">{log.entityId || "—"}</td>
@@ -1485,7 +2351,11 @@ function App() {
                       </tr>
                     ))}
                     {!auditLogs.length && (
-                      <tr><td colSpan="6" className="empty-state">No audit events yet.</td></tr>
+                      <tr>
+                        <td colSpan="6" className="empty-state">
+                          No audit events yet.
+                        </td>
+                      </tr>
                     )}
                   </tbody>
                 </table>

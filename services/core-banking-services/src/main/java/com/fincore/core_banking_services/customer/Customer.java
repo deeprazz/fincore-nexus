@@ -21,6 +21,9 @@ public class Customer {
     @Column(name = "password_hash")
     private String passwordHash;
 
+    @Column(name = "transaction_pin_hash")
+    private String transactionPinHash;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "kyc_status", nullable = false)
     private KycStatus kycStatus;
@@ -57,6 +60,12 @@ public class Customer {
     }
 
     public String getPasswordHash() { return passwordHash; }
+
+    public String getTransactionPinHash() { return transactionPinHash; }
+
+    public boolean hasTransactionPin() { return transactionPinHash != null && !transactionPinHash.isBlank(); }
+
+    public void setTransactionPinHash(String transactionPinHash) { this.transactionPinHash = transactionPinHash; }
 
     public KycStatus getKycStatus() {
         return kycStatus;

@@ -19,6 +19,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -31,16 +32,19 @@ public class CustomerPortalController {
     private final AccountRepository accounts;
     private final AccountService accountService;
     private final BankingTransactionRepository transactions;
+    private final PasswordEncoder passwordEncoder;
 
     public CustomerPortalController(
             CustomerRepository customers,
             AccountRepository accounts,
             AccountService accountService,
-            BankingTransactionRepository transactions) {
+            BankingTransactionRepository transactions,
+            PasswordEncoder passwordEncoder) {
         this.customers = customers;
         this.accounts = accounts;
         this.accountService = accountService;
         this.transactions = transactions;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @GetMapping("/me")
@@ -53,7 +57,7 @@ public class CustomerPortalController {
                     .toList()
                 : List.of();
         return new PortalResponse(customer.getId(), customer.getName(), customer.getEmail(),
-                customer.getKycStatus(), ownAccounts);
+                customer.getKycStatus(), ownAccounts, customer.hasTransactionPin());
     }
 
     @GetMapping("/transactions")
@@ -125,12 +129,42 @@ public class CustomerPortalController {
         return new AccountStatementResponse(opening, deposits, withdrawals, closing, filtered.size(), filtered);
     }
 
+    @PostMapping("/pin")
+    @Transactional
+    public PinResponse setOrChangeTransactionPin(
+            @RequestBody PinRequest request,
+            Authentication authentication) {
+        Customer customer = requireVerifiedCustomer(authentication);
+        if (request == null || request.pin() == null || !request.pin().matches("\\d{4}")) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Transaction PIN must contain exactly 4 digits");
+        }
+        if (customer.hasTransactionPin()) {
+            if (request.currentPin() == null || !passwordEncoder.matches(request.currentPin(), customer.getTransactionPinHash())) {
+                throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Current transaction PIN is incorrect");
+            }
+        } else if (request.currentPin() != null && !request.currentPin().isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No current PIN is set yet");
+        }
+        customer.setTransactionPinHash(passwordEncoder.encode(request.pin()));
+        customers.save(customer);
+        return new PinResponse(customer.hasTransactionPin(), customer.hasTransactionPin() ? "Transaction PIN saved successfully." : "Transaction PIN saved.");
+    }
+
     @PostMapping("/transfer")
     @Transactional
     public TransferResponse transfer(
             @RequestBody CustomerTransferRequest request,
             Authentication authentication) {
         Customer customer = requireVerifiedCustomer(authentication);
+        if (!customer.hasTransactionPin()) {
+            throw new ResponseStatusException(HttpStatus.PRECONDITION_REQUIRED, "Set a transaction PIN before transferring money");
+        }
+        if (request == null || request.transactionPin() == null || !request.transactionPin().matches("\\d{4}")) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "A valid 4-digit transaction PIN is required");
+        }
+        if (!passwordEncoder.matches(request.transactionPin(), customer.getTransactionPinHash())) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Transaction PIN is incorrect");
+        }
         if (request == null || request.sourceAccountId() == null
                 || request.destinationAccountNumber() == null
                 || request.destinationAccountNumber().isBlank()
@@ -181,8 +215,10 @@ public class CustomerPortalController {
     }
 
     public record PortalResponse(UUID customerId, String name, String email,
-                                 KycStatus kycStatus, List<AccountResponse> accounts) {}
-    public record CustomerTransferRequest(UUID sourceAccountId, String destinationAccountNumber, BigDecimal amount) {}
+                                 KycStatus kycStatus, List<AccountResponse> accounts, boolean hasTransactionPin) {}
+    public record PinRequest(String currentPin, String pin) {}
+    public record PinResponse(boolean hasTransactionPin, String message) {}
+    public record CustomerTransferRequest(UUID sourceAccountId, String destinationAccountNumber, BigDecimal amount, String transactionPin) {}
     public record TransferResponse(String message) {}
     public record TransactionResponse(UUID id, String transactionType, BigDecimal amount,
                                      BigDecimal balanceAfter, UUID referenceId, java.time.Instant createdAt) {}
