@@ -2143,3 +2143,21 @@ tbody tr:hover {
   outline: 2px solid #60a5fa;
   outline-offset: 2px;
 }
+
+/* Statement download action: keep it in the existing page flow. */
+.statement-download-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 16px;
+}
+.statement-download-actions .primary-button {
+  min-height: 40px;
+}
+@media (max-width: 700px) {
+  .statement-download-actions {
+    justify-content: stretch;
+  }
+  .statement-download-actions .primary-button {
+    width: 100%;
+  }
+}
