@@ -10,6 +10,8 @@ import { TellerDashboard } from "./features/dashboard/TellerDashboard";
 import { AccountList } from "./features/accounts/AccountList";
 import { LoansPage } from "./features/loans/LoansPage";
 import PaymentsPage from "./features/payments/PaymentsPage";
+import KycPage from "./features/kyc/KycPage";
+import CompliancePage from "./features/compliance/CompliancePage";
 import { CustomerList } from "./features/customers/CustomerList";
 import { KycStatusControl } from "./features/customers/KycStatusControl";
 import { OperationsPage } from "./features/operations/OperationsPage";
@@ -46,7 +48,8 @@ export function App() {
               <Route path="/loans" element={<LoansPage />} />
               <Route path="/loans/:id" element={<LoansPage />} />
               <Route path="/customers" element={<CustomerList />} />
-              <Route path="/kyc" element={<KycStatusControl />} />
+              <Route path="/kyc" element={<KycPage />} />
+              <Route path="/compliance" element={<CompliancePage />} />
               <Route path="/operations" element={<OperationsPage />} />
               <Route path="/transactions" element={<TransactionsPage />} />
               <Route path="/statements" element={<StatementPage />} />

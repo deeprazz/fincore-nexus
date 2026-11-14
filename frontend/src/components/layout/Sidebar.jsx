@@ -11,6 +11,7 @@ import {
   Settings,
   Landmark,
   Send,
+  UserCheck,
 } from "lucide-react";
 
 export function Sidebar({ sidebarOpen, setSidebarOpen, role = "TELLER" }) {
@@ -67,7 +68,8 @@ export function Sidebar({ sidebarOpen, setSidebarOpen, role = "TELLER" }) {
     { label: "Transactions", to: "/transactions", icon: ArrowLeftRight },
     { label: "Operations", to: "/operations", icon: Activity },
     { label: "Statements", to: "/statements", icon: FileText },
-    { label: "KYC", to: "/kyc", icon: ShieldCheck },
+    { label: "KYC", to: "/kyc", icon: UserCheck },
+    { label: "Compliance", to: "/compliance", icon: ShieldCheck },
     ...(role === "MANAGER" || role === "ADMIN" ? [{ label: "Audit Trail", to: "/audit", icon: ShieldCheck }] : []),
     { label: "Settings", to: "/settings", icon: Settings },
   ];

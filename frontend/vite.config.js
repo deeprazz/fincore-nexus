@@ -26,6 +26,14 @@ export default defineConfig({
         target: "http://localhost:8085",
         changeOrigin: true,
       },
+      "/api/kyc": {
+        target: "http://localhost:8084",
+        changeOrigin: true,
+      },
+      "/api/compliance": {
+        target: "http://localhost:8084",
+        changeOrigin: true,
+      },
       "/api": {
         target: "http://localhost:8081",
         changeOrigin: true,

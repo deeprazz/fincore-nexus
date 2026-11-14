@@ -58,6 +58,25 @@ public class NotificationEventListener {
         });
     }
 
+    @KafkaListener(topics = "kyc.approved", groupId = "notification-service")
+    public void onKycApproved(String payload) {
+        handleEvent("kyc.approved", payload, (node, customerId) -> {
+            String fullName = node.path("fullName").asText("Customer");
+            String content = "FinCore Alert: KYC verification for " + fullName + " has been APPROVED. Account opening is now unlocked.";
+            notificationService.sendNotification(customerId, NotificationChannel.SMS, "+91-9876543210", "KYC Approved", content, "KYC_APPROVED");
+            notificationService.sendNotification(customerId, NotificationChannel.EMAIL, "customer@fincore.bank", "KYC Verification Success", content, "KYC_APPROVED");
+        });
+    }
+
+    @KafkaListener(topics = "kyc.rejected", groupId = "notification-service")
+    public void onKycRejected(String payload) {
+        handleEvent("kyc.rejected", payload, (node, customerId) -> {
+            String reason = node.path("reason").asText("Documentation criteria not met");
+            String content = "FinCore Alert: Your KYC application was rejected. Reason: " + reason;
+            notificationService.sendNotification(customerId, NotificationChannel.SMS, "+91-9876543210", "KYC Rejected", content, "KYC_REJECTED");
+        });
+    }
+
     private void handleEvent(String topic, String payload, NotificationHandler handler) {
         try {
             JsonNode node = objectMapper.readTree(payload);
