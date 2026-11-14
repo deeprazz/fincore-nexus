@@ -29,6 +29,9 @@ export async function apiRequestWithResponse(path, options = {}, auth = null) {
   let url;
   if (path.startsWith("http://") || path.startsWith("https://")) {
     url = path;
+  } else if (API_BASE_URL && API_BASE_URL.includes(":8080")) {
+    // Single Unified API Gateway (Port 8080)
+    url = `${API_BASE_URL.replace(/\/api\/?$/, "")}${path}`;
   } else if (path.startsWith("/api/loans")) {
     const loansHost =
       import.meta.env.VITE_LOANS_API_URL ||

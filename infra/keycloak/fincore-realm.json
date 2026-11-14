@@ -1,0 +1,141 @@
+{
+  "realm": "fincore-nexus",
+  "enabled": true,
+  "displayName": "FinCore Nexus Banking Platform",
+  "sslRequired": "none",
+  "registrationAllowed": true,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "resetPasswordAllowed": true,
+  "editUsernameAllowed": false,
+  "roles": {
+    "realm": [
+      {
+        "name": "TELLER",
+        "description": "Teller role for standard banking counter operations and onboarding"
+      },
+      {
+        "name": "MANAGER",
+        "description": "Manager role for credit approval, maker-checker authorization, unfreezing accounts and audit review"
+      },
+      {
+        "name": "ADMIN",
+        "description": "Administrator role with full system access and configuration governance"
+      },
+      {
+        "name": "CUSTOMER",
+        "description": "Customer role for self-service portal, account view and transfer initiation"
+      }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "fincore-frontend",
+      "name": "FinCore Nexus React Frontend",
+      "enabled": true,
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": true,
+      "serviceAccountsEnabled": false,
+      "redirectUris": [
+        "http://localhost:5173/*",
+        "http://localhost:8080/*",
+        "http://localhost:3000/*"
+      ],
+      "webOrigins": [
+        "*"
+      ],
+      "attributes": {
+        "pkce.code.challenge.method": "S256"
+      }
+    },
+    {
+      "clientId": "fincore-gateway",
+      "name": "FinCore Nexus API Gateway",
+      "enabled": true,
+      "publicClient": false,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "fincore-gateway-client-secret-2026",
+      "standardFlowEnabled": false,
+      "directAccessGrantsEnabled": true,
+      "serviceAccountsEnabled": true
+    },
+    {
+      "clientId": "fincore-backend",
+      "name": "FinCore Nexus Resource Server",
+      "enabled": true,
+      "bearerOnly": true
+    }
+  ],
+  "users": [
+    {
+      "username": "teller",
+      "enabled": true,
+      "email": "teller@fincore.bank",
+      "firstName": "Staff",
+      "lastName": "Teller",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "Teller@123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "TELLER"
+      ]
+    },
+    {
+      "username": "manager",
+      "enabled": true,
+      "email": "manager@fincore.bank",
+      "firstName": "Branch",
+      "lastName": "Manager",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "Manager@123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "MANAGER"
+      ]
+    },
+    {
+      "username": "admin",
+      "enabled": true,
+      "email": "admin@fincore.bank",
+      "firstName": "System",
+      "lastName": "Administrator",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "Admin@123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "ADMIN"
+      ]
+    },
+    {
+      "username": "customer",
+      "enabled": true,
+      "email": "customer@fincore.bank",
+      "firstName": "Retail",
+      "lastName": "Customer",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "Customer@123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "CUSTOMER"
+      ]
+    }
+  ]
+}

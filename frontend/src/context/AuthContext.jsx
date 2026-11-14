@@ -106,6 +106,18 @@ export function AuthProvider({ children }) {
     }
   }
 
+  function loginWithToken(token, userProfile = {}) {
+    const role = (userProfile.roles && userProfile.roles[0]) || userProfile.role || "TELLER";
+    const authData = {
+      token,
+      username: userProfile.preferred_username || userProfile.username || "oauth_user",
+      role,
+      roles: userProfile.roles || [role],
+    };
+    setAuth(authData);
+    return authData;
+  }
+
   function logout() {
     setAuth(null);
     setCustomerPortal(null);
@@ -137,6 +149,7 @@ export function AuthProvider({ children }) {
         customerPortal,
         setCustomerPortal,
         login,
+        loginWithToken,
         logout,
         refreshPortalData,
         apiLatency,

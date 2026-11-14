@@ -1,0 +1,28 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: api-gateway
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      timeout: 1000ms
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+
+gateway:
+  routes:
+    core: ${CORE_BANKING_URL:http://localhost:8081}
+    loan: ${LOAN_SERVICE_URL:http://localhost:8082}
+    payment: ${PAYMENT_SERVICE_URL:http://localhost:8083}
+    kyc: ${KYC_SERVICE_URL:http://localhost:8084}
+    notification: ${NOTIFICATION_SERVICE_URL:http://localhost:8085}
+  rate-limit:
+    enabled: true
+    requests-per-minute: 120

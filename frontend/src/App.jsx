@@ -7,6 +7,7 @@ import { ProtectedRoute } from "./features/auth/ProtectedRoute";
 import { LoginPage } from "./features/auth/LoginPage";
 import { RegisterPage } from "./features/auth/RegisterPage";
 import { TellerDashboard } from "./features/dashboard/TellerDashboard";
+import MasterDashboard from "./features/dashboard/MasterDashboard";
 import { AccountList } from "./features/accounts/AccountList";
 import { LoansPage } from "./features/loans/LoansPage";
 import PaymentsPage from "./features/payments/PaymentsPage";
@@ -43,6 +44,7 @@ export function App() {
               }
             >
               <Route path="/" element={<TellerDashboard />} />
+              <Route path="/master" element={<MasterDashboard />} />
               <Route path="/accounts" element={<AccountList />} />
               <Route path="/payments" element={<PaymentsPage />} />
               <Route path="/loans" element={<LoansPage />} />
