@@ -7,9 +7,22 @@
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
+
   --bg: #0a0e14;
   --panel: #121923;
+  --card-bg: #121923;
+  --surface-color: #0c121b;
   --border: #283446;
+  --border-color: #283446;
+  --border-subtle: #1f293d;
   --muted: #8b98ac;
+  --text-muted: #8b98ac;
+  --text-primary: #f8fafc;
+  --text-secondary: #cbd5e1;
   --blue: #2468d7;
+  --primary-color: #3b82f6;
+  --accent-cyan: #38bdf8;
+  --success: #10b981;
+  --warning: #f59e0b;
+  --danger: #ef4444;
 }

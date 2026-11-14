@@ -73,10 +73,27 @@ export async function apiRequestWithResponse(path, options = {}, auth = null) {
     url = `${API_BASE_URL}${path}`;
   }
 
-  const response = await fetch(url, {
-    ...options,
-    headers,
-  });
+  let response;
+  try {
+    response = await fetch(url, {
+      ...options,
+      headers,
+    });
+  } catch (err) {
+    if (err.message && err.message.toLowerCase().includes("failed to fetch")) {
+      const serviceName = path.startsWith("/api/loans")
+        ? "Loan Management Service (Port 8082)"
+        : path.startsWith("/api/payments") || path.startsWith("/api/beneficiaries") || path.startsWith("/api/settlement")
+        ? "Payment Orchestration Service (Port 8083)"
+        : path.startsWith("/api/kyc") || path.startsWith("/api/compliance")
+        ? "KYC & Compliance Service (Port 8084)"
+        : path.startsWith("/api/notifications")
+        ? "Notification Service (Port 8085)"
+        : "Core Banking Service (Port 8081) or API Gateway (Port 8080)";
+      throw new Error(`Unable to connect to ${serviceName}. Please verify the service is running.`, { cause: err });
+    }
+    throw err;
+  }
 
   const duration = Math.round(
     (typeof performance !== "undefined" ? performance.now() : Date.now()) - startedAt

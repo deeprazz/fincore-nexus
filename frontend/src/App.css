@@ -7,11 +7,24 @@
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
+
   --bg: #0a0e14;
   --panel: #121923;
+  --card-bg: #121923;
+  --surface-color: #0c121b;
   --border: #283446;
+  --border-color: #283446;
+  --border-subtle: #1f293d;
   --muted: #8b98ac;
+  --text-muted: #8b98ac;
+  --text-primary: #f8fafc;
+  --text-secondary: #cbd5e1;
   --blue: #2468d7;
+  --primary-color: #3b82f6;
+  --accent-cyan: #38bdf8;
+  --success: #10b981;
+  --warning: #f59e0b;
+  --danger: #ef4444;
 }
 
 * {
@@ -2160,4 +2173,279 @@ tbody tr:hover {
   .statement-download-actions .primary-button {
     width: 100%;
   }
+}
+
+/* ==============================================================================
+   FinCore Nexus Enterprise Banking Design System & Dark Theme Unification
+   ============================================================================== */
+
+/* --- 1. Modern Banking Segmented Navigation Tabs --- */
+.tabs-container,
+.loans-nav-tabs,
+.portal-tabs {
+  display: inline-flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  margin-bottom: 24px;
+  background: #0b1329;
+  padding: 5px;
+  border-radius: 12px;
+  border: 1px solid #1f293d;
+  max-width: 100%;
+}
+
+.tab-btn {
+  background: transparent;
+  border: 1px solid transparent;
+  color: #94a3b8;
+  padding: 8px 18px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.15s ease-in-out;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.tab-btn:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: #f1f5f9;
+}
+
+.tab-btn.active {
+  background: #2563eb;
+  border-color: #3b82f6;
+  color: #ffffff;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.35);
+}
+
+.tab-count {
+  background: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+  padding: 2px 7px;
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+/* --- 2. Global Professional Form Inputs & Selects --- */
+.form-input,
+input:not([type="checkbox"]):not([type="radio"]),
+select,
+textarea {
+  background-color: #0c121b !important;
+  border: 1px solid #28374d !important;
+  color: #f8fafc !important;
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 13px;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.form-input:focus,
+input:not([type="checkbox"]):not([type="radio"]):focus,
+select:focus,
+textarea:focus {
+  border-color: #3b82f6 !important;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.25) !important;
+}
+
+select option {
+  background: #0c121b;
+  color: #f8fafc;
+}
+
+/* --- 3. Unified Cards & Panels --- */
+.card,
+.panel {
+  background: #111827;
+  border: 1px solid #1f293d;
+  border-radius: 12px;
+  color: #e8edf7;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+}
+
+.card-header,
+.panel-header,
+.panel-heading {
+  border-bottom: 1px solid #1f293d;
+  padding-bottom: 14px;
+  margin-bottom: 18px;
+}
+
+.card-header h2,
+.card-header h3,
+.panel-header h2,
+.panel-heading h2 {
+  color: #f8fafc;
+  margin: 0;
+  font-weight: 700;
+}
+
+.card-header p,
+.panel-header p,
+.panel-heading p {
+  color: #94a3b8;
+  margin: 4px 0 0 0;
+  font-size: 12px;
+}
+
+/* --- 4. Light/Slate Class Overrides for Flawless Dark Theme Integration --- */
+.bg-white,
+.bg-slate-50,
+.bg-slate-50\/50,
+.bg-slate-50\/60,
+.bg-slate-100 {
+  background-color: #111827 !important;
+}
+
+.border-slate-200,
+.border-slate-300,
+.border-slate-200\/80,
+.border-slate-200\/60,
+.border-slate-100 {
+  border-color: #1f293d !important;
+}
+
+.text-slate-900,
+.text-slate-800,
+.text-slate-700 {
+  color: #f8fafc !important;
+}
+
+.text-slate-600,
+.text-slate-500,
+.text-slate-400 {
+  color: #94a3b8 !important;
+}
+
+.hover\:bg-slate-50:hover,
+.hover\:bg-slate-100:hover {
+  background-color: #1a273b !important;
+}
+
+/* --- 5. Essential Flexbox & Grid Helpers --- */
+.flex { display: flex; }
+.flex-col { flex-direction: column; }
+.flex-wrap { flex-wrap: wrap; }
+.items-center { align-items: center; }
+.items-start { align-items: flex-start; }
+.justify-between { justify-content: space-between; }
+.justify-end { justify-content: flex-end; }
+.justify-center { justify-content: center; }
+
+.gap-1 { gap: 4px; }
+.gap-2 { gap: 8px; }
+.gap-3 { gap: 12px; }
+.gap-4 { gap: 16px; }
+.gap-6 { gap: 24px; }
+
+.space-y-1 > * + * { margin-top: 4px; }
+.space-y-2 > * + * { margin-top: 8px; }
+.space-y-3 > * + * { margin-top: 12px; }
+.space-y-4 > * + * { margin-top: 16px; }
+.space-y-6 > * + * { margin-top: 24px; }
+
+.grid { display: grid; }
+.grid-cols-1 { grid-template-columns: repeat(1, minmax(0, 1fr)); }
+.grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.grid-cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+
+@media (min-width: 640px) {
+  .sm\:flex-row { flex-direction: row; }
+  .sm\:items-center { align-items: center; }
+  .sm\:justify-between { justify-content: space-between; }
+}
+
+@media (min-width: 768px) {
+  .md\:grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .md\:grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+@media (min-width: 1024px) {
+  .lg\:grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .lg\:grid-cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+
+.p-2 { padding: 8px; }
+.p-3 { padding: 12px; }
+.p-4 { padding: 16px; }
+.p-5 { padding: 20px; }
+.p-6 { padding: 24px; }
+.p-8 { padding: 32px; }
+.py-1\.5 { padding-top: 6px; padding-bottom: 6px; }
+.px-3 { padding-left: 12px; padding-right: 12px; }
+.py-2 { padding-top: 8px; padding-bottom: 8px; }
+.px-4 { padding-left: 16px; padding-right: 16px; }
+.mt-1 { margin-top: 4px; }
+.mt-2 { margin-top: 8px; }
+.mt-4 { margin-top: 16px; }
+.mt-6 { margin-top: 24px; }
+.mb-2 { margin-bottom: 8px; }
+.mb-4 { margin-bottom: 16px; }
+
+.rounded { border-radius: 4px; }
+.rounded-lg { border-radius: 8px; }
+.rounded-xl { border-radius: 12px; }
+.rounded-2xl { border-radius: 16px; }
+.border { border: 1px solid #1f293d; }
+.border-b { border-bottom: 1px solid #1f293d; }
+.border-t { border-top: 1px solid #1f293d; }
+
+/* --- 6. Modal & Overlay Backdrop --- */
+.modal-overlay,
+.fixed.inset-0 {
+  background-color: rgba(5, 8, 15, 0.75) !important;
+  backdrop-filter: blur(4px);
+}
+
+.modal-content,
+.modal-card {
+  background: #111827 !important;
+  border: 1px solid #28374d !important;
+  color: #e8edf7 !important;
+  border-radius: 16px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5) !important;
+}
+
+/* --- 7. Table Styling for Enterprise Data Display --- */
+.data-table,
+table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  color: #e8edf7;
+}
+
+.data-table th,
+table th {
+  background: #0c121b;
+  color: #94a3b8;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 12px 16px;
+  border-bottom: 1px solid #1f293d;
+  text-align: left;
+}
+
+.data-table td,
+table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid #1a2536;
+  font-size: 13px;
+  color: #f1f5f9;
+}
+
+.data-table tr:hover,
+table tr:hover {
+  background: #151f30;
 }

@@ -183,7 +183,7 @@ export function TellerDashboard() {
         {accounts.length > 0 ? (
           <div>
             <div style={{ marginBottom: "16px", display: "flex", alignItems: "center", gap: "12px" }}>
-              <label htmlFor="account-selector" style={{ fontWeight: 600, fontSize: "0.875rem" }}>
+              <label htmlFor="account-selector" style={{ fontWeight: 600, fontSize: "0.875rem", color: "#94a3b8" }}>
                 Select Account:
               </label>
               <select
@@ -191,15 +191,17 @@ export function TellerDashboard() {
                 value={selectedAccountId}
                 onChange={(e) => setSelectedAccountId(e.target.value)}
                 style={{
-                  padding: "6px 12px",
-                  borderRadius: "6px",
-                  border: "1px solid var(--border-color, #d1d5db)",
-                  backgroundColor: "var(--card-bg, #ffffff)",
-                  color: "inherit",
+                  padding: "8px 14px",
+                  borderRadius: "8px",
+                  border: "1px solid #28374d",
+                  backgroundColor: "#0c121b",
+                  color: "#f8fafc",
+                  fontSize: "13px",
+                  outline: "none",
                 }}
               >
                 {accounts.map((acc) => (
-                  <option key={acc.id} value={acc.id}>
+                  <option key={acc.id} value={acc.id} style={{ background: "#0c121b", color: "#f8fafc" }}>
                     {acc.accountNumber} ({acc.status}) — Balance: {money(acc.balance)}
                   </option>
                 ))}
@@ -211,42 +213,42 @@ export function TellerDashboard() {
                 style={{
                   display: "grid",
                   gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-                  gap: "16px",
-                  padding: "16px",
-                  backgroundColor: "var(--surface-color, #f9fafb)",
-                  borderRadius: "8px",
-                  border: "1px solid var(--border-color, #e5e7eb)",
+                  gap: "18px",
+                  padding: "20px",
+                  backgroundColor: "#0c121b",
+                  borderRadius: "10px",
+                  border: "1px solid #1f293d",
                 }}
               >
                 <div>
-                  <div style={{ fontSize: "0.75rem", color: "var(--text-muted, #6b7280)", textTransform: "uppercase" }}>
+                  <div style={{ fontSize: "0.75rem", color: "#94a3b8", textTransform: "uppercase", fontWeight: 600, letterSpacing: "0.5px" }}>
                     Account Number
                   </div>
-                  <div style={{ fontSize: "1.125rem", fontWeight: 700, marginTop: "4px" }}>
+                  <div style={{ fontSize: "1.125rem", fontWeight: 700, marginTop: "4px", color: "#f8fafc" }}>
                     {selectedAccount.accountNumber}
                   </div>
                 </div>
 
                 <div>
-                  <div style={{ fontSize: "0.75rem", color: "var(--text-muted, #6b7280)", textTransform: "uppercase" }}>
+                  <div style={{ fontSize: "0.75rem", color: "#94a3b8", textTransform: "uppercase", fontWeight: 600, letterSpacing: "0.5px" }}>
                     Account Type
                   </div>
-                  <div style={{ fontSize: "1rem", fontWeight: 600, marginTop: "4px" }}>
+                  <div style={{ fontSize: "0.95rem", fontWeight: 600, marginTop: "4px", color: "#cbd5e1" }}>
                     SAVINGS
                   </div>
                 </div>
 
                 <div>
-                  <div style={{ fontSize: "0.75rem", color: "var(--text-muted, #6b7280)", textTransform: "uppercase" }}>
+                  <div style={{ fontSize: "0.75rem", color: "#94a3b8", textTransform: "uppercase", fontWeight: 600, letterSpacing: "0.5px" }}>
                     Current Balance
                   </div>
-                  <div style={{ fontSize: "1.25rem", fontWeight: 700, color: "var(--primary-color, #0284c7)", marginTop: "4px" }}>
+                  <div style={{ fontSize: "1.25rem", fontWeight: 700, color: "#38bdf8", marginTop: "4px" }}>
                     {money(accountDetail?.balance ?? selectedAccount.balance)}
                   </div>
                 </div>
 
                 <div>
-                  <div style={{ fontSize: "0.75rem", color: "var(--text-muted, #6b7280)", textTransform: "uppercase" }}>
+                  <div style={{ fontSize: "0.75rem", color: "#94a3b8", textTransform: "uppercase", fontWeight: 600, letterSpacing: "0.5px" }}>
                     Account Status
                   </div>
                   <div style={{ marginTop: "4px" }}>
@@ -255,7 +257,7 @@ export function TellerDashboard() {
                 </div>
 
                 <div>
-                  <div style={{ fontSize: "0.75rem", color: "var(--text-muted, #6b7280)", textTransform: "uppercase" }}>
+                  <div style={{ fontSize: "0.75rem", color: "#94a3b8", textTransform: "uppercase", fontWeight: 600, letterSpacing: "0.5px" }}>
                     Customer KYC
                   </div>
                   <div style={{ marginTop: "4px" }}>
@@ -264,19 +266,20 @@ export function TellerDashboard() {
                 </div>
 
                 <div>
-                  <div style={{ fontSize: "0.75rem", color: "var(--text-muted, #6b7280)", textTransform: "uppercase" }}>
+                  <div style={{ fontSize: "0.75rem", color: "#94a3b8", textTransform: "uppercase", fontWeight: 600, letterSpacing: "0.5px" }}>
                     <Database size={12} style={{ display: "inline", marginRight: "4px" }} />
                     Redis Cache (TTL 60s)
                   </div>
                   <div style={{ marginTop: "4px" }}>
                     <span
                       style={{
-                        padding: "2px 8px",
-                        borderRadius: "4px",
+                        padding: "3px 9px",
+                        borderRadius: "6px",
                         fontSize: "0.75rem",
                         fontWeight: 700,
-                        backgroundColor: accountDetail?.cacheStatus === "HIT" ? "#dcfce7" : "#fef3c7",
-                        color: accountDetail?.cacheStatus === "HIT" ? "#166534" : "#92400e",
+                        backgroundColor: accountDetail?.cacheStatus === "HIT" ? "rgba(16, 185, 129, 0.15)" : "rgba(245, 158, 11, 0.15)",
+                        color: accountDetail?.cacheStatus === "HIT" ? "#34d399" : "#fbbf24",
+                        border: accountDetail?.cacheStatus === "HIT" ? "1px solid rgba(16, 185, 129, 0.3)" : "1px solid rgba(245, 158, 11, 0.3)",
                       }}
                     >
                       {accountDetail?.cacheStatus || "MISS"}
@@ -285,36 +288,36 @@ export function TellerDashboard() {
                 </div>
 
                 <div>
-                  <div style={{ fontSize: "0.75rem", color: "var(--text-muted, #6b7280)", textTransform: "uppercase" }}>
+                  <div style={{ fontSize: "0.75rem", color: "#94a3b8", textTransform: "uppercase", fontWeight: 600, letterSpacing: "0.5px" }}>
                     <Radio size={12} style={{ display: "inline", marginRight: "4px" }} />
                     Kafka Outbox
                   </div>
-                  <div style={{ fontSize: "0.875rem", fontWeight: 600, color: "#166534", marginTop: "4px" }}>
+                  <div style={{ fontSize: "0.875rem", fontWeight: 600, color: "#34d399", marginTop: "4px" }}>
                     transaction.completed (Active)
                   </div>
                 </div>
 
                 <div>
-                  <div style={{ fontSize: "0.75rem", color: "var(--text-muted, #6b7280)", textTransform: "uppercase" }}>
+                  <div style={{ fontSize: "0.75rem", color: "#94a3b8", textTransform: "uppercase", fontWeight: 600, letterSpacing: "0.5px" }}>
                     API Roundtrip Latency
                   </div>
-                  <div style={{ fontSize: "1rem", fontWeight: 600, marginTop: "4px" }}>
+                  <div style={{ fontSize: "1rem", fontWeight: 600, marginTop: "4px", color: "#38bdf8" }}>
                     {accountDetail?.latency ? `${accountDetail.latency} ms` : apiLatency ? `${apiLatency} ms` : "—"}
                   </div>
                 </div>
 
-                <div style={{ gridColumn: "1 / -1", borderTop: "1px solid #e5e7eb", paddingTop: "12px", marginTop: "4px" }}>
-                  <div style={{ fontSize: "0.75rem", color: "var(--text-muted, #6b7280)", textTransform: "uppercase", display: "flex", alignItems: "center", gap: "6px" }}>
-                    <ShieldCheck size={14} color="#059669" />
+                <div style={{ gridColumn: "1 / -1", borderTop: "1px solid #1f293d", paddingTop: "14px", marginTop: "4px" }}>
+                  <div style={{ fontSize: "0.75rem", color: "#94a3b8", textTransform: "uppercase", display: "flex", alignItems: "center", gap: "6px", fontWeight: 600, letterSpacing: "0.5px" }}>
+                    <ShieldCheck size={14} color="#10b981" />
                     Latest Immutable Audit Log Entry
                   </div>
-                  <div style={{ fontSize: "0.875rem", marginTop: "4px", color: "#374151" }}>
+                  <div style={{ fontSize: "0.875rem", marginTop: "6px", color: "#cbd5e1" }}>
                     {recentAudit ? (
                       <span>
-                        <strong>[{recentAudit.action}]</strong> by <em>{recentAudit.actor}</em> at{" "}
+                        <strong style={{ color: "#f8fafc" }}>[{recentAudit.action}]</strong> by <em style={{ color: "#93c5fd" }}>{recentAudit.actor}</em> at{" "}
                         {new Date(recentAudit.createdAt).toLocaleTimeString()} — {recentAudit.details}
                         {recentAudit.hash && (
-                          <span style={{ display: "block", fontSize: "0.75rem", fontFamily: "monospace", color: "#6b7280", marginTop: "2px" }}>
+                          <span style={{ display: "block", fontSize: "0.75rem", fontFamily: "monospace", color: "#64748b", marginTop: "4px" }}>
                             Hash: {recentAudit.hash.substring(0, 16)}...
                           </span>
                         )}
@@ -325,7 +328,7 @@ export function TellerDashboard() {
                   </div>
                 </div>
 
-                <div style={{ gridColumn: "1 / -1", display: "flex", gap: "10px", marginTop: "8px", flexWrap: "wrap" }}>
+                <div style={{ gridColumn: "1 / -1", display: "flex", gap: "10px", marginTop: "12px", flexWrap: "wrap" }}>
                   <button
                     className="primary-button"
                     type="button"
@@ -351,8 +354,8 @@ export function TellerDashboard() {
                       disabled={actionLoading}
                       onClick={handleToggleFreeze}
                       style={{
-                        color: selectedAccount.status === "FROZEN" ? "#166534" : "#b91c1c",
-                        borderColor: selectedAccount.status === "FROZEN" ? "#166534" : "#b91c1c",
+                        color: selectedAccount.status === "FROZEN" ? "#10b981" : "#ef4444",
+                        borderColor: selectedAccount.status === "FROZEN" ? "rgba(16, 185, 129, 0.4)" : "rgba(239, 68, 68, 0.4)",
                       }}
                     >
                       {selectedAccount.status === "FROZEN" ? <Unlock size={15} /> : <Lock size={15} />}

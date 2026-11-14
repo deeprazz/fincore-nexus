@@ -1,5 +1,46 @@
 /* Loan Management Feature Styles */
 
+/* Navigation Tabs */
+.loans-nav-tabs {
+  display: inline-flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  margin-bottom: 24px;
+  background: #0b1329;
+  padding: 5px;
+  border-radius: 12px;
+  border: 1px solid #1f293d;
+}
+
+.loans-nav-tabs .tab-btn {
+  background: transparent;
+  border: 1px solid transparent;
+  color: #94a3b8;
+  padding: 8px 18px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.15s ease-in-out;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.loans-nav-tabs .tab-btn:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: #f1f5f9;
+}
+
+.loans-nav-tabs .tab-btn.active {
+  background: #2563eb;
+  border-color: #3b82f6;
+  color: #ffffff;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.35);
+}
+
 /* Common Toolbars & Layout */
 .table-toolbar {
   display: flex;
