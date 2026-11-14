@@ -22,8 +22,30 @@ export default function KycReviewQueue({ applications = [], onRefresh, onNewAppl
   return (
     <div className="space-y-4">
       {/* Top Filter and Search Bar */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white p-4 rounded-xl border border-slate-200">
-        <div className="flex items-center space-x-1.5 w-full sm:w-auto overflow-x-auto">
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: "16px",
+          background: "#111827",
+          padding: "16px",
+          borderRadius: "12px",
+          border: "1px solid #1f293d",
+          flexWrap: "wrap",
+        }}
+      >
+        <div
+          style={{
+            display: "inline-flex",
+            gap: "6px",
+            background: "#0b1329",
+            padding: "5px",
+            borderRadius: "10px",
+            border: "1px solid #1f293d",
+            flexWrap: "wrap",
+          }}
+        >
           {[
             { id: "PENDING_REVIEW", label: "Review Queue", icon: Clock },
             { id: "ALL", label: "All Records", icon: UserCheck },
@@ -31,38 +53,64 @@ export default function KycReviewQueue({ applications = [], onRefresh, onNewAppl
             { id: "REJECTED", label: "Rejected", icon: XCircle },
           ].map((tab) => {
             const Icon = tab.icon;
+            const active = filter === tab.id;
             return (
               <button
                 key={tab.id}
+                type="button"
                 onClick={() => setFilter(tab.id)}
-                className={`flex items-center space-x-1 px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors ${
-                  filter === tab.id
-                    ? "bg-indigo-600 text-white shadow-sm"
-                    : "text-slate-600 hover:bg-slate-100"
-                }`}
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  padding: "7px 14px",
+                  borderRadius: "7px",
+                  fontSize: "12px",
+                  fontWeight: active ? 600 : 500,
+                  cursor: "pointer",
+                  transition: "all 0.15s ease",
+                  background: active ? "#2563eb" : "transparent",
+                  color: active ? "#ffffff" : "#94a3b8",
+                  border: active ? "1px solid #3b82f6" : "1px solid transparent",
+                  boxShadow: active ? "0 2px 6px rgba(37,99,235,0.3)" : "none",
+                }}
               >
-                <Icon className="w-3.5 h-3.5" />
+                <Icon size={14} />
                 <span>{tab.label}</span>
               </button>
             );
           })}
         </div>
 
-        <div className="flex items-center space-x-2 w-full sm:w-auto">
-          <div className="relative w-full sm:w-64">
-            <Search className="w-4 h-4 absolute left-3 top-2.5 text-slate-400" />
+        <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
+          <div style={{ position: "relative", minWidth: "240px" }}>
+            <Search
+              size={14}
+              style={{ position: "absolute", left: "12px", top: "11px", color: "#64748b" }}
+            />
             <input
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Search applicant or PAN..."
-              className="w-full pl-9 pr-3 py-1.5 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+              style={{
+                width: "100%",
+                padding: "8px 12px 8px 34px",
+                background: "#0c121b",
+                border: "1px solid #28374d",
+                color: "#f8fafc",
+                borderRadius: "8px",
+                fontSize: "12px",
+                outline: "none",
+              }}
             />
           </div>
           {onNewApplication && (
             <button
               onClick={onNewApplication}
-              className="px-3.5 py-1.5 bg-indigo-600 text-white rounded-lg text-xs font-semibold hover:bg-indigo-700 whitespace-nowrap shrink-0 shadow-sm"
+              className="primary-button"
+              type="button"
+              style={{ minHeight: "36px", padding: "8px 14px", fontSize: "12px" }}
             >
               + New KYC
             </button>

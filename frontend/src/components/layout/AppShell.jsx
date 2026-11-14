@@ -27,7 +27,7 @@ export function AppShell() {
             setSidebarOpen={setSidebarOpen}
             role="CUSTOMER"
           />
-          <main className="customer-main">
+          <main className="customer-main customer-main-content">
             {error && <div className="alert-error customer-alert">{error}</div>}
             {success && (
               <div className="alert-success customer-alert">{success}</div>
@@ -44,12 +44,23 @@ export function AppShell() {
   let pageName = "DASHBOARD";
   if (path.startsWith("/accounts")) pageName = "ACCOUNTS";
   else if (path.startsWith("/customers")) pageName = "CUSTOMERS";
+  else if (path.startsWith("/loans")) pageName = "LOANS";
+  else if (path.startsWith("/payments")) pageName = "PAYMENTS";
+  else if (path.startsWith("/kyc")) pageName = "KYC";
+  else if (path.startsWith("/compliance")) pageName = "COMPLIANCE";
+  else if (path.startsWith("/master")) pageName = "MASTER TELEMETRY";
   else if (path.startsWith("/transactions")) pageName = "TRANSACTIONS";
   else if (path.startsWith("/operations")) pageName = "OPERATIONS";
   else if (path.startsWith("/statements")) pageName = "STATEMENTS";
-  else if (path.startsWith("/kyc")) pageName = "KYC";
   else if (path.startsWith("/audit")) pageName = "AUDIT";
   else if (path.startsWith("/settings")) pageName = "SETTINGS";
+
+  const hasCustomHeader =
+    path.startsWith("/loans") ||
+    path.startsWith("/payments") ||
+    path.startsWith("/kyc") ||
+    path.startsWith("/compliance") ||
+    path.startsWith("/master");
 
   return (
     <div className="app-shell">
@@ -65,17 +76,19 @@ export function AppShell() {
           role="TELLER"
         />
         <main className="main-content">
-          <div className="page-heading">
-            <div>
-              <div className="eyebrow">CORE BANKING / {pageName}</div>
-              <h1>{pageName.charAt(0) + pageName.slice(1).toLowerCase()}</h1>
-            </div>
-            {apiLatency != null && (
-              <div className="latency-badge">
-                API latency: {apiLatency} ms
+          {!hasCustomHeader && (
+            <div className="page-heading">
+              <div>
+                <div className="eyebrow">CORE BANKING / {pageName}</div>
+                <h1>{pageName.charAt(0) + pageName.slice(1).toLowerCase()}</h1>
               </div>
-            )}
-          </div>
+              {apiLatency != null && (
+                <div className="latency-badge">
+                  API latency: {apiLatency} ms
+                </div>
+              )}
+            </div>
+          )}
 
           {error && <div className="alert-error">{error}</div>}
           {success && <div className="alert-success">{success}</div>}

@@ -18,10 +18,10 @@ export function createCustomer(name, email, auth) {
 
 export function updateCustomerKyc(customerId, kycStatus, auth) {
   return apiRequest(
-    `/customers/${encodeURIComponent(customerId)}/kyc`,
+    `/customers/${encodeURIComponent(customerId)}/kyc?status=${encodeURIComponent(kycStatus)}`,
     {
       method: "PATCH",
-      body: JSON.stringify({ kycStatus }),
+      body: JSON.stringify({ kycStatus, status: kycStatus }),
     },
     auth
   );

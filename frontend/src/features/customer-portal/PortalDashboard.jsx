@@ -99,7 +99,7 @@ export function PortalDashboard() {
               See all
             </Link>
           </div>
-          <div className="quick-actions" style={{ marginTop: "1rem" }}>
+          <div className="quick-actions">
             <Link to="/portal/transfer" className="primary-button">
               Transfer Money
             </Link>

@@ -43,11 +43,22 @@ export function CustomerTable({
                 {showKycActions && (
                   <td className="action-cell">
                     {pending ? (
-                      <>
+                      <div style={{ display: "flex", gap: "6px" }}>
                         <button
                           type="button"
                           disabled={disabled}
                           onClick={() => onKycAction(customer.id, "VERIFIED")}
+                          style={{
+                            background: "rgba(16, 185, 129, 0.15)",
+                            border: "1px solid rgba(16, 185, 129, 0.4)",
+                            color: "#34d399",
+                            padding: "4px 10px",
+                            borderRadius: "6px",
+                            fontSize: "12px",
+                            fontWeight: 600,
+                            cursor: "pointer",
+                            transition: "all 0.15s ease",
+                          }}
                         >
                           Verify
                         </button>
@@ -55,10 +66,21 @@ export function CustomerTable({
                           type="button"
                           disabled={disabled}
                           onClick={() => onKycAction(customer.id, "REJECTED")}
+                          style={{
+                            background: "rgba(239, 68, 68, 0.15)",
+                            border: "1px solid rgba(239, 68, 68, 0.4)",
+                            color: "#f87171",
+                            padding: "4px 10px",
+                            borderRadius: "6px",
+                            fontSize: "12px",
+                            fontWeight: 600,
+                            cursor: "pointer",
+                            transition: "all 0.15s ease",
+                          }}
                         >
                           Reject
                         </button>
-                      </>
+                      </div>
                     ) : (
                       <span className="muted-cell">Decision recorded</span>
                     )}
