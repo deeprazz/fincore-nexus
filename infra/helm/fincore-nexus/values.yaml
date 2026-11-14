@@ -1,0 +1,47 @@
+# FinCore Nexus Helm Values
+
+global:
+  environment: production
+  domain: fincore.local
+
+image:
+  repository: fincore
+  tag: latest
+  pullPolicy: IfNotPresent
+
+replicaCount:
+  gateway: 2
+  coreBanking: 2
+  loanService: 2
+  paymentService: 2
+  kycService: 2
+  notificationService: 1
+  frontend: 2
+
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+  host: fincore.local
+
+redis:
+  host: redis
+  port: 6379
+
+kafka:
+  bootstrapServers: kafka:9092
+
+postgres:
+  host: postgres
+  port: 5432
+  user: fincore
+  database: fincore
+
+resources:
+  limits:
+    cpu: 1000m
+    memory: 1024Mi
+  requests:
+    cpu: 250m
+    memory: 512Mi

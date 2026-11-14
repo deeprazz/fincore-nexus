@@ -1,0 +1,312 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: core-banking
+  namespace: fincore-nexus
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: core-banking
+  template:
+    metadata:
+      labels:
+        app: core-banking
+    spec:
+      containers:
+        - name: core-banking
+          image: fincore/core-banking:latest
+          ports:
+            - containerPort: 8081
+          envFrom:
+            - configMapRef:
+                name: fincore-config
+            - secretRef:
+                name: fincore-secrets
+          env:
+            - name: SPRING_DATASOURCE_URL
+              value: "jdbc:postgresql://postgres:5432/fincore"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: core-banking
+  namespace: fincore-nexus
+spec:
+  ports:
+    - port: 8081
+      targetPort: 8081
+  selector:
+    app: core-banking
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: loan-service
+  namespace: fincore-nexus
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: loan-service
+  template:
+    metadata:
+      labels:
+        app: loan-service
+    spec:
+      containers:
+        - name: loan-service
+          image: fincore/loan-service:latest
+          ports:
+            - containerPort: 8082
+          envFrom:
+            - configMapRef:
+                name: fincore-config
+            - secretRef:
+                name: fincore-secrets
+          env:
+            - name: SPRING_DATASOURCE_URL
+              value: "jdbc:postgresql://postgres:5432/fincore_loan"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: loan-service
+  namespace: fincore-nexus
+spec:
+  ports:
+    - port: 8082
+      targetPort: 8082
+  selector:
+    app: loan-service
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: payment-service
+  namespace: fincore-nexus
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: payment-service
+  template:
+    metadata:
+      labels:
+        app: payment-service
+    spec:
+      containers:
+        - name: payment-service
+          image: fincore/payment-service:latest
+          ports:
+            - containerPort: 8083
+          envFrom:
+            - configMapRef:
+                name: fincore-config
+            - secretRef:
+                name: fincore-secrets
+          env:
+            - name: SPRING_DATASOURCE_URL
+              value: "jdbc:postgresql://postgres:5432/fincore_payment"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: payment-service
+  namespace: fincore-nexus
+spec:
+  ports:
+    - port: 8083
+      targetPort: 8083
+  selector:
+    app: payment-service
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kyc-service
+  namespace: fincore-nexus
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kyc-service
+  template:
+    metadata:
+      labels:
+        app: kyc-service
+    spec:
+      containers:
+        - name: kyc-service
+          image: fincore/kyc-service:latest
+          ports:
+            - containerPort: 8084
+          envFrom:
+            - configMapRef:
+                name: fincore-config
+            - secretRef:
+                name: fincore-secrets
+          env:
+            - name: SPRING_DATASOURCE_URL
+              value: "jdbc:postgresql://postgres:5432/fincore_kyc"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kyc-service
+  namespace: fincore-nexus
+spec:
+  ports:
+    - port: 8084
+      targetPort: 8084
+  selector:
+    app: kyc-service
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: notification-service
+  namespace: fincore-nexus
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: notification-service
+  template:
+    metadata:
+      labels:
+        app: notification-service
+    spec:
+      containers:
+        - name: notification-service
+          image: fincore/notification-service:latest
+          ports:
+            - containerPort: 8085
+          envFrom:
+            - configMapRef:
+                name: fincore-config
+            - secretRef:
+                name: fincore-secrets
+          env:
+            - name: SPRING_DATASOURCE_URL
+              value: "jdbc:postgresql://postgres:5432/fincore_notification"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: notification-service
+  namespace: fincore-nexus
+spec:
+  ports:
+    - port: 8085
+      targetPort: 8085
+  selector:
+    app: notification-service
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-gateway
+  namespace: fincore-nexus
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: api-gateway
+  template:
+    metadata:
+      labels:
+        app: api-gateway
+    spec:
+      containers:
+        - name: api-gateway
+          image: fincore/api-gateway:latest
+          ports:
+            - containerPort: 8080
+          env:
+            - name: REDIS_HOST
+              value: "redis"
+            - name: REDIS_PORT
+              value: "6379"
+            - name: CORE_BANKING_URL
+              value: "http://core-banking:8081"
+            - name: LOAN_SERVICE_URL
+              value: "http://loan-service:8082"
+            - name: PAYMENT_SERVICE_URL
+              value: "http://payment-service:8083"
+            - name: KYC_SERVICE_URL
+              value: "http://kyc-service:8084"
+            - name: NOTIFICATION_SERVICE_URL
+              value: "http://notification-service:8085"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: api-gateway
+  namespace: fincore-nexus
+spec:
+  ports:
+    - port: 8080
+      targetPort: 8080
+  selector:
+    app: api-gateway
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+  namespace: fincore-nexus
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+    spec:
+      containers:
+        - name: frontend
+          image: fincore/frontend:latest
+          ports:
+            - containerPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend
+  namespace: fincore-nexus
+spec:
+  ports:
+    - port: 80
+      targetPort: 80
+  selector:
+    app: frontend
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: fincore-ingress
+  namespace: fincore-nexus
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+spec:
+  rules:
+    - host: fincore.local
+      http:
+        paths:
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: api-gateway
+                port:
+                  number: 8080
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: frontend
+                port:
+                  number: 80

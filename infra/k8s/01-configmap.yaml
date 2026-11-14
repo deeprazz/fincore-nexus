@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fincore-config
+  namespace: fincore-nexus
+data:
+  SPRING_DATA_REDIS_HOST: "redis"
+  SPRING_DATA_REDIS_PORT: "6379"
+  SPRING_KAFKA_BOOTSTRAP_SERVERS: "kafka:9092"
+  CORE_BANKING_URL: "http://core-banking:8081"
+  LOAN_SERVICE_URL: "http://loan-service:8082"
+  PAYMENT_SERVICE_URL: "http://payment-service:8083"
+  KYC_SERVICE_URL: "http://kyc-service:8084"
+  NOTIFICATION_SERVICE_URL: "http://notification-service:8085"
+  VITE_API_URL: "/api"

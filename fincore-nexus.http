@@ -1,0 +1,380 @@
+### ==============================================================================
+### FinCore Nexus - Enterprise Digital Banking Platform REST API Collection
+### Works with VS Code REST Client, IntelliJ HTTP Client, and curl
+### All requests route through API Gateway (Port 8080) by default
+### ==============================================================================
+
+@baseUrl = http://localhost:8080/api
+@gatewayActuator = http://localhost:8080/actuator
+
+# Direct Microservice Ports (if running standalone or bypassing gateway):
+@coreBankingUrl = http://localhost:8081/api
+@loanServiceUrl = http://localhost:8082/api
+@paymentServiceUrl = http://localhost:8083/api
+@kycServiceUrl = http://localhost:8084/api
+@notificationServiceUrl = http://localhost:8085/api
+
+# Standard Credentials (Base64 for HTTP Basic Auth):
+# teller / teller123     -> Basic dGVsbGVyOnRlbGxlcjEyMw==
+# manager / manager123   -> Basic bWFuYWdlcjptYW5hZ2VyMTIz
+# admin / admin123       -> Basic YWRtaW46YWRtaW4xMjM=
+# customer / customer123 -> Basic Y3VzdG9tZXI6Y3VzdG9tZXIxMjM=
+
+@authTeller = Basic dGVsbGVyOnRlbGxlcjEyMw==
+@authManager = Basic bWFuYWdlcjptYW5hZ2VyMTIz
+@authAdmin = Basic YWRtaW46YWRtaW4xMjM=
+@authCustomer = Basic Y3VzdG9tZXI6Y3VzdG9tZXIxMjM=
+
+
+### ==============================================================================
+### SECTION 1: API GATEWAY & SYSTEM HEALTH
+### ==============================================================================
+
+### 1.1 Gateway Health & Routing Status
+GET {{gatewayActuator}}/health
+Accept: application/json
+
+### 1.2 Gateway Dynamic Route Discovery
+GET {{gatewayActuator}}/gatewayroutes
+Accept: application/json
+
+
+### ==============================================================================
+### SECTION 2: AUTHENTICATION & REGISTRATION
+### ==============================================================================
+
+### 2.1 Register New Banking User (Customer / Teller)
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+Accept: application/json
+
+{
+  "username": "priya_sharma",
+  "password": "Password@123",
+  "role": "ROLE_CUSTOMER"
+}
+
+
+### ==============================================================================
+### SECTION 3: CORE BANKING SERVICES (MILESTONE 1)
+### ==============================================================================
+
+### 3.1 Create Customer
+POST {{baseUrl}}/customers
+Authorization: {{authTeller}}
+Content-Type: application/json
+Accept: application/json
+
+{
+  "name": "Priya Sharma",
+  "email": "priya.sharma@example.com",
+  "phone": "+919876543210"
+}
+
+### 3.2 List All Customers
+GET {{baseUrl}}/customers
+Authorization: {{authTeller}}
+Accept: application/json
+
+### 3.3 Create Savings Account
+POST {{baseUrl}}/accounts
+Authorization: {{authTeller}}
+Content-Type: application/json
+Accept: application/json
+
+{
+  "customerId": 1,
+  "accountType": "SAVINGS",
+  "initialDeposit": 25000.00
+}
+
+### 3.4 Get Account by Account Number
+GET {{baseUrl}}/accounts/ACC-1001
+Authorization: {{authTeller}}
+Accept: application/json
+
+### 3.5 Check Balance (Cached via Redis Cache-Aside with 60s TTL)
+GET {{baseUrl}}/accounts/ACC-1001/balance
+Authorization: {{authTeller}}
+Accept: application/json
+
+### 3.6 Deposit Funds (Instant Ledger Update + SHA-256 Hash Chain)
+POST {{baseUrl}}/accounts/ACC-1001/deposit
+Authorization: {{authTeller}}
+Content-Type: application/json
+Accept: application/json
+
+{
+  "amount": 15000.00,
+  "description": "Salary deposit via RTGS"
+}
+
+### 3.7 Withdraw Funds
+POST {{baseUrl}}/accounts/ACC-1001/withdraw
+Authorization: {{authTeller}}
+Content-Type: application/json
+Accept: application/json
+
+{
+  "amount": 2500.00,
+  "description": "ATM cash withdrawal"
+}
+
+### 3.8 Internal Account-to-Account Transfer
+POST {{baseUrl}}/accounts/transfer
+Authorization: {{authTeller}}
+Content-Type: application/json
+Accept: application/json
+
+{
+  "sourceAccountNumber": "ACC-1001",
+  "targetAccountNumber": "ACC-1002",
+  "amount": 3500.00,
+  "description": "Monthly rent payment"
+}
+
+### 3.9 Account Statement with Paginated Ledger History
+GET {{baseUrl}}/accounts/ACC-1001/statement?page=0&size=20
+Authorization: {{authTeller}}
+Accept: application/json
+
+### 3.10 Real-Time Operational Dashboard Summary (Redis + DB Aggregations)
+GET {{baseUrl}}/dashboard/summary
+Authorization: {{authManager}}
+Accept: application/json
+
+### 3.11 Cryptographic Audit Trail Verification (Verifies Genesis-to-Head SHA-256 Hashes)
+GET {{baseUrl}}/audit/verify
+Authorization: {{authAdmin}}
+Accept: application/json
+
+
+### ==============================================================================
+### SECTION 4: LOAN MANAGEMENT SERVICE (MILESTONE 2)
+### ==============================================================================
+
+### 4.1 Loan EMI & Amortisation Calculator (DECIMAL128 Precision)
+POST {{baseUrl}}/loans/calculate
+Content-Type: application/json
+Accept: application/json
+
+{
+  "principal": 500000.00,
+  "annualInterestRate": 10.50,
+  "tenureMonths": 24
+}
+
+### 4.2 Submit Loan Application (Underwriting & Credit Scoring)
+POST {{baseUrl}}/loans/apply
+Authorization: {{authCustomer}}
+Content-Type: application/json
+Accept: application/json
+
+{
+  "customerId": 1,
+  "disbursementAccount": "ACC-1001",
+  "principal": 250000.00,
+  "annualInterestRate": 11.25,
+  "tenureMonths": 18,
+  "monthlyIncome": 85000.00,
+  "existingEmiObligations": 12000.00,
+  "employmentType": "SALARIED",
+  "loanPurpose": "Home Improvement"
+}
+
+### 4.3 View Pending Loan Applications
+GET {{baseUrl}}/loans/applications
+Authorization: {{authManager}}
+Accept: application/json
+
+### 4.4 Approve Loan Application (Triggers Distributed Kafka SAGA Disbursement)
+POST {{baseUrl}}/loans/applications/1/approve
+Authorization: {{authManager}}
+Content-Type: application/json
+Accept: application/json
+
+{
+  "notes": "Approved based on strong credit score (760) and healthy DTI ratio."
+}
+
+### 4.5 Reject Loan Application
+POST {{baseUrl}}/loans/applications/2/reject
+Authorization: {{authManager}}
+Content-Type: application/json
+Accept: application/json
+
+{
+  "reason": "Debt-to-income ratio exceeds regulatory threshold (65%)."
+}
+
+### 4.6 Get Active Loan Portfolio & Regulatory NPA Distribution
+GET {{baseUrl}}/loans/portfolio
+Authorization: {{authManager}}
+Accept: application/json
+
+### 4.7 Get Loan Details & Repayment Schedule
+GET {{baseUrl}}/loans/1
+Authorization: {{authCustomer}}
+Accept: application/json
+
+### 4.8 Collections & Delinquency Tracking (SMA-0 to NPA Buckets)
+GET {{baseUrl}}/loans/collections
+Authorization: {{authManager}}
+Accept: application/json
+
+
+### ==============================================================================
+### SECTION 5: PAYMENT ORCHESTRATION SERVICE (MILESTONE 3)
+### ==============================================================================
+
+### 5.1 Register External Beneficiary
+POST {{baseUrl}}/beneficiaries
+Authorization: {{authCustomer}}
+Content-Type: application/json
+Accept: application/json
+
+{
+  "customerId": 1,
+  "beneficiaryName": "Rahul Verma",
+  "accountNumber": "987654321098",
+  "ifscCode": "HDFC0001234",
+  "bankName": "HDFC Bank",
+  "vpa": "rahul@hdfcbank"
+}
+
+### 5.2 List Registered Beneficiaries
+GET {{baseUrl}}/beneficiaries?customerId=1
+Authorization: {{authCustomer}}
+Accept: application/json
+
+### 5.3 Execute Simulated Penny Drop Verification (INR 1.00 Validation)
+POST {{baseUrl}}/beneficiaries/1/verify
+Authorization: {{authCustomer}}
+Accept: application/json
+
+### 5.4 Execute Outward Payment (IMPS - Instant Gross Settlement)
+POST {{baseUrl}}/payments
+Authorization: {{authCustomer}}
+Content-Type: application/json
+Accept: application/json
+
+{
+  "senderAccountId": "ACC-1001",
+  "beneficiaryId": 1,
+  "amount": 7500.00,
+  "rail": "IMPS",
+  "purpose": "Vendor Settlement",
+  "idempotencyKey": "PAY-REQ-20261114-001"
+}
+
+### 5.5 Execute Outward Payment (UPI - Instant VPA Transfer)
+POST {{baseUrl}}/payments
+Authorization: {{authCustomer}}
+Content-Type: application/json
+Accept: application/json
+
+{
+  "senderAccountId": "ACC-1001",
+  "beneficiaryId": 1,
+  "amount": 1250.00,
+  "rail": "UPI",
+  "purpose": "Bill Split",
+  "idempotencyKey": "PAY-REQ-20261114-002"
+}
+
+### 5.6 Execute Outward Payment (NEFT - Batch Deferred Settlement)
+POST {{baseUrl}}/payments
+Authorization: {{authCustomer}}
+Content-Type: application/json
+Accept: application/json
+
+{
+  "senderAccountId": "ACC-1001",
+  "beneficiaryId": 1,
+  "amount": 150000.00,
+  "rail": "NEFT",
+  "purpose": "Capital Equipment Purchase",
+  "idempotencyKey": "PAY-REQ-20261114-003"
+}
+
+### 5.7 Get Payment Status & SAGA Tracking by ID
+GET {{baseUrl}}/payments/1
+Authorization: {{authCustomer}}
+Accept: application/json
+
+### 5.8 Get Clearing & Settlement Report (T+0 vs Batch Metrics)
+GET {{baseUrl}}/settlement/report
+Authorization: {{authManager}}
+Accept: application/json
+
+### 5.9 Trigger NEFT Hourly Batch Settlement (Clears Pending NEFT Transactions)
+POST {{baseUrl}}/settlement/trigger-neft
+Authorization: {{authAdmin}}
+Accept: application/json
+
+
+### ==============================================================================
+### SECTION 6: KYC & COMPLIANCE SERVICE (MILESTONE 4)
+### ==============================================================================
+
+### 6.1 Onboard Customer KYC (Verhoeff Aadhaar, PAN Regex, Simulated Biometrics)
+POST {{baseUrl}}/kyc/onboard
+Authorization: {{authTeller}}
+Content-Type: application/json
+Accept: application/json
+
+{
+  "customerId": 1,
+  "customerName": "Priya Sharma",
+  "pan": "ABCDE1234F",
+  "aadhaarNumber": "234567890123",
+  "dateOfBirth": "1994-08-15",
+  "residentialAddress": "Flat 402, Green Valley Apartments, Bengaluru, Karnataka",
+  "submittedBy": "teller"
+}
+
+### 6.2 Get Pending KYC Verification Queue (Maker-Checker In-tray)
+GET {{baseUrl}}/kyc/pending
+Authorization: {{authManager}}
+Accept: application/json
+
+### 6.3 Get KYC Dossier by ID (Includes Masked PAN, Salted Aadhaar, Face Match & PEP Status)
+GET {{baseUrl}}/kyc/1
+Authorization: {{authManager}}
+Accept: application/json
+
+### 6.4 Manager Review & Approval (Maker-Checker Rule Enforced: submittedBy != reviewedBy)
+POST {{baseUrl}}/kyc/1/approve
+Authorization: {{authManager}}
+Content-Type: application/json
+Accept: application/json
+
+{
+  "reviewedBy": "manager",
+  "notes": "Verified biometric selfie match (94.8%) and sanctions clean. Approved."
+}
+
+### 6.5 Dynamic PCI-DSS v4.0 Compliance Self-Assessment Report
+GET {{baseUrl}}/compliance/pci-dss
+Authorization: {{authAdmin}}
+Accept: application/json
+
+### 6.6 Cross-Service Cryptographic Audit Chain Verification (KYC + Core Banking)
+GET {{baseUrl}}/compliance/audit/verify
+Authorization: {{authAdmin}}
+Accept: application/json
+
+
+### ==============================================================================
+### SECTION 7: NOTIFICATION SERVICE (MILESTONES 3 & 4)
+### ==============================================================================
+
+### 7.1 Get Customer Notification Feed (Payment Receipts, Loan Status, KYC Alerts)
+GET {{baseUrl}}/notifications?customerId=1
+Authorization: {{authCustomer}}
+Accept: application/json
+
+### 7.2 Mark Notification as Read
+PUT {{baseUrl}}/notifications/1/read
+Authorization: {{authCustomer}}
+Accept: application/json
