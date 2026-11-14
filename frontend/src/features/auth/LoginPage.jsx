@@ -73,11 +73,17 @@ export function LoginPage() {
             Register here
           </Link>
         </p>
-        <p className="login-help">
-          Demo teller: <strong>teller</strong> / <strong>Teller@123</strong>
+        <p className="login-help" style={{ fontSize: "0.8125rem", lineHeight: "1.4" }}>
+          Demo Credentials:
+          <br />
+          • Teller: <strong>teller</strong> / <strong>Teller@123</strong>
+          <br />
+          • Manager: <strong>manager</strong> / <strong>Manager@123</strong>
+          <br />
+          • Admin: <strong>admin</strong> / <strong>Admin@123</strong>
         </p>
         <p className="login-warning">
-          New customers start with KYC Pending. Teller approval is required before banking access.
+          New customers start with KYC Pending. Manager approval is required before banking access.
         </p>
       </form>
     </div>

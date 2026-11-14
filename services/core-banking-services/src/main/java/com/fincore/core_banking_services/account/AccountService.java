@@ -37,6 +37,8 @@ public class AccountService {
     private final ApplicationEventPublisher eventPublisher;
     private final OutboxEventRepository outboxEventRepository;
     private final ObjectMapper objectMapper;
+    private final com.fincore.core_banking_services.audit.AuditService auditService;
+    private final AccountBalanceCacheService balanceCacheService;
 
     @PersistenceContext
     private EntityManager entityManager;
@@ -48,13 +50,27 @@ public class AccountService {
             BankingTransactionRepository transactionRepository,
             ApplicationEventPublisher eventPublisher,
             OutboxEventRepository outboxEventRepository,
-            ObjectMapper objectMapper) {
+            ObjectMapper objectMapper,
+            com.fincore.core_banking_services.audit.AuditService auditService,
+            AccountBalanceCacheService balanceCacheService) {
         this.repository = repository;
         this.customerRepository = customerRepository;
         this.transactionRepository = transactionRepository;
         this.eventPublisher = eventPublisher;
         this.outboxEventRepository = outboxEventRepository;
         this.objectMapper = objectMapper;
+        this.auditService = auditService;
+        this.balanceCacheService = balanceCacheService;
+    }
+
+    public AccountService(
+            AccountRepository repository,
+            CustomerRepository customerRepository,
+            BankingTransactionRepository transactionRepository,
+            ApplicationEventPublisher eventPublisher,
+            OutboxEventRepository outboxEventRepository,
+            ObjectMapper objectMapper) {
+        this(repository, customerRepository, transactionRepository, eventPublisher, outboxEventRepository, objectMapper, null, null);
     }
 
     public AccountService(
@@ -62,14 +78,18 @@ public class AccountService {
             CustomerRepository customerRepository,
             BankingTransactionRepository transactionRepository,
             ApplicationEventPublisher eventPublisher) {
-        this(repository, customerRepository, transactionRepository, eventPublisher, null, null);
+        this(repository, customerRepository, transactionRepository, eventPublisher, null, null, null, null);
     }
 
     private void audit(String action, String entityType, UUID entityId, String details) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String actor = authentication != null && authentication.isAuthenticated()
                 ? authentication.getName() : "SYSTEM";
-        entityManager.persist(new AuditLog(action, entityType, entityId, actor, details));
+        if (auditService != null) {
+            auditService.record(action, entityType, entityId, actor, details);
+        } else if (entityManager != null) {
+            entityManager.persist(new AuditLog(action, entityType, entityId, actor, details));
+        }
     }
 
     public Optional<Account> getAccountById(UUID id) {
@@ -105,6 +125,9 @@ public class AccountService {
         BigDecimal newBalance = account.getBalance().subtract(amount);
         account.setBalance(newBalance);
         repository.save(account);
+        if (balanceCacheService != null) {
+            balanceCacheService.cacheBalance(account.getId(), newBalance);
+        }
 
         BankingTransaction transaction = transactionRepository.save(new BankingTransaction(
                 account.getId(),
@@ -140,6 +163,9 @@ public class AccountService {
         BigDecimal newBalance = account.getBalance().add(amount);
         account.setBalance(newBalance);
         repository.save(account);
+        if (balanceCacheService != null) {
+            balanceCacheService.cacheBalance(account.getId(), newBalance);
+        }
 
         BankingTransaction transaction = transactionRepository.save(new BankingTransaction(
                 account.getId(),
@@ -233,6 +259,11 @@ public class AccountService {
 
         repository.save(fromAccount);
         repository.save(toAccount);
+
+        if (balanceCacheService != null) {
+            balanceCacheService.cacheBalance(fromAccount.getId(), fromBalanceAfter);
+            balanceCacheService.cacheBalance(toAccount.getId(), toBalanceAfter);
+        }
 
         UUID referenceId = UUID.randomUUID();
 
@@ -396,6 +427,32 @@ public class AccountService {
                 ));
     }
 
+    public Optional<CachedAccountResponse> getAccountResponseWithCacheCheck(UUID id) {
+        if (id == null) return Optional.empty();
+
+        if (balanceCacheService != null) {
+            Optional<BigDecimal> cachedBalance = balanceCacheService.getCachedBalance(id);
+            if (cachedBalance.isPresent()) {
+                return repository.findById(id).map(account ->
+                        new CachedAccountResponse(
+                                new AccountResponse(account.getId(), account.getAccountNumber(), cachedBalance.get()),
+                                true
+                        )
+                );
+            }
+        }
+
+        return repository.findById(id).map(account -> {
+            if (balanceCacheService != null) {
+                balanceCacheService.cacheBalance(account.getId(), account.getBalance());
+            }
+            return new CachedAccountResponse(
+                    new AccountResponse(account.getId(), account.getAccountNumber(), account.getBalance()),
+                    false
+            );
+        });
+    }
+
     public List<AccountResponse> getAllAccounts() {
         return repository.findAll()
                 .stream()
@@ -506,6 +563,9 @@ public class AccountService {
 
         account.setStatus(AccountStatus.CLOSED);
         repository.save(account);
+        if (balanceCacheService != null) {
+            balanceCacheService.evictBalance(account.getId());
+        }
         audit("ACCOUNT_CLOSED", "ACCOUNT", account.getId(),
                 "accountNumber=" + account.getAccountNumber());
 

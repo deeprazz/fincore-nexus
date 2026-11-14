@@ -25,8 +25,10 @@ public class AccountController {
     public ResponseEntity<AccountResponse> getAccountById(
             @PathVariable UUID id) {
 
-        return accountService.getAccountResponseById(id)
-                .map(ResponseEntity::ok)
+        return accountService.getAccountResponseWithCacheCheck(id)
+                .map(cached -> ResponseEntity.ok()
+                        .header("X-Cache", cached.cacheHit() ? "HIT" : "MISS")
+                        .body(cached.response()))
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
 

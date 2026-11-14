@@ -21,3 +21,22 @@ spring:
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
       properties:
         spring.json.add.type.headers: false
+  data:
+    redis:
+      host: ${SPRING_DATA_REDIS_HOST:localhost}
+      port: ${SPRING_DATA_REDIS_PORT:6379}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,metrics,info
+  endpoint:
+    health:
+      show-details: always
+
+fincore:
+  security:
+    teller-password: ${FINCORE_TELLER_PASSWORD:Teller@123}
+    manager-password: ${FINCORE_MANAGER_PASSWORD:Manager@123}
+    admin-password: ${FINCORE_ADMIN_PASSWORD:Admin@123}

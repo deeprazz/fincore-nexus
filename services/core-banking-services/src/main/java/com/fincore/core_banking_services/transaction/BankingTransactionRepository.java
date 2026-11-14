@@ -23,4 +23,6 @@ public interface BankingTransactionRepository
     List<BankingTransaction> findByReferenceIdOrderByCreatedAtAsc(
             UUID referenceId
     );
+
+    long countByCreatedAtGreaterThanEqual(Instant since);
 }

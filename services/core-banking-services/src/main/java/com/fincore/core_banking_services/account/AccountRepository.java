@@ -27,4 +27,12 @@ public interface AccountRepository extends JpaRepository<Account, UUID> {
      @Lock(LockModeType.PESSIMISTIC_WRITE)
      @Query("SELECT a FROM Account a WHERE a.id = :id")
      Optional<Account> findByIdForUpdate(@Param("id") UUID id);
+
+     long countByStatus(AccountStatus status);
+
+     @Query("SELECT COALESCE(SUM(a.balance), 0) FROM Account a WHERE a.status = :status")
+     java.math.BigDecimal sumBalanceByStatus(@Param("status") AccountStatus status);
+
+     @Query("SELECT COALESCE(SUM(a.balance), 0) FROM Account a")
+     java.math.BigDecimal sumAllBalances();
 }

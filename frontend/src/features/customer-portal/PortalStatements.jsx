@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import { FileText } from "lucide-react";
-import { getPortalStatement } from "../../api/portal";
+import { FileText, Download } from "lucide-react";
+import { getPortalStatement, exportPortalStatementCsv } from "../../api/portal";
 import { downloadStatementPdf } from "../../utils/pdf/statementPdf";
 import { useAuth } from "../../context/AuthContext";
 import { useToast } from "../../context/ToastContext";
@@ -166,7 +166,7 @@ export function PortalStatements() {
                   </div>
                 )}
 
-                <div className="statement-download-actions">
+                <div className="statement-download-actions" style={{ display: "flex", gap: "12px", marginTop: "16px" }}>
                   <button
                     className="primary-button"
                     type="button"
@@ -184,6 +184,31 @@ export function PortalStatements() {
                   >
                     <FileText size={16} />
                     Download PDF statement
+                  </button>
+
+                  <button
+                    className="secondary-button"
+                    type="button"
+                    onClick={async () => {
+                      try {
+                        const csv = await exportPortalStatementCsv(primaryAccount?.id, from, to, auth);
+                        const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+                        const url = URL.createObjectURL(blob);
+                        const link = document.createElement("a");
+                        link.href = url;
+                        link.setAttribute("download", `statement-${primaryAccount?.accountNumber || "account"}.csv`);
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                        URL.revokeObjectURL(url);
+                        setSuccess("CSV statement downloaded successfully.");
+                      } catch (err) {
+                        setError(err.message || "Failed to download CSV");
+                      }
+                    }}
+                  >
+                    <Download size={16} />
+                    Download CSV statement
                   </button>
                 </div>
               </div>

@@ -129,6 +129,27 @@ public class CustomerPortalController {
         return new AccountStatementResponse(opening, deposits, withdrawals, closing, filtered.size(), filtered);
     }
 
+    @GetMapping(value = "/accounts/{accountId}/statement/export", produces = "text/csv")
+    @Transactional(readOnly = true)
+    public org.springframework.http.ResponseEntity<String> exportStatementCsv(
+            @PathVariable UUID accountId,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
+            Authentication authentication) {
+        Customer customer = requireVerifiedCustomer(authentication);
+        Account account = accounts.findById(accountId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Account not found"));
+        if (!account.getCustomer().getId().equals(customer.getId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You can only view statements for your own account");
+        }
+        AccountStatementResponse res = statement(accountId, from, to, authentication);
+        String csv = com.fincore.core_banking_services.transaction.AccountStatementController.formatCsv(account, res);
+        return org.springframework.http.ResponseEntity.ok()
+                .header(org.springframework.http.HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"statement-" + account.getAccountNumber() + ".csv\"")
+                .header(org.springframework.http.HttpHeaders.CONTENT_TYPE, "text/csv; charset=UTF-8")
+                .body(csv);
+    }
+
     @PostMapping("/pin")
     @Transactional
     public PinResponse setOrChangeTransactionPin(

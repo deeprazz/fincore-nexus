@@ -38,7 +38,38 @@ export function AuthProvider({ children }) {
       Authorization: `Basic ${btoa(`${candidate.username}:${candidate.password}`)}`,
     };
 
-    // 1. Try customer portal first
+    // 1. Try unified auth/me endpoint
+    try {
+      const meResponse = await fetch(`${API_BASE_URL}/auth/me`, { headers });
+      if (meResponse.ok) {
+        const meData = await meResponse.json();
+        const role = meData.role || "TELLER";
+        let portalData = null;
+        if (role === "CUSTOMER") {
+          try {
+            const portalRes = await fetch(`${API_BASE_URL}/customer-portal/me`, { headers });
+            if (portalRes.ok) {
+              portalData = await portalRes.json();
+            }
+          } catch {
+            // ignore
+          }
+        }
+        const authData = { ...candidate, role, roles: meData.roles };
+        setCustomerPortal(portalData);
+        setAuth(authData);
+        return { role, portalData };
+      } else if (meResponse.status === 401 || meResponse.status === 403) {
+        throw new Error("Invalid username or password.");
+      }
+    } catch (err) {
+      if (err.message && err.message.includes("Invalid username")) {
+        throw err;
+      }
+      // Continue to fallback checks below
+    }
+
+    // 2. Fallback: try customer portal
     try {
       const portalResponse = await fetch(`${API_BASE_URL}/customer-portal/me`, { headers });
       if (portalResponse.ok) {
@@ -52,7 +83,7 @@ export function AuthProvider({ children }) {
       // Continue to check teller
     }
 
-    // 2. Try teller / staff API
+    // 3. Fallback: try teller / staff API
     try {
       const response = await fetch(`${API_BASE_URL}/accounts`, { headers });
       if (!response.ok) {
@@ -66,7 +97,7 @@ export function AuthProvider({ children }) {
       setAuth(authData);
       return { role: "TELLER" };
     } catch (err) {
-      if (err.message && (err.message.includes("Invalid credentials") || err.message.includes("Backend returned"))) {
+      if (err.message && (err.message.includes("Invalid credentials") || err.message.includes("Backend returned") || err.message.includes("Invalid username"))) {
         throw err;
       }
       throw new Error("Cannot connect to the backend. Start Spring Boot and PostgreSQL, then try again.", {

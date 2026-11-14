@@ -2,14 +2,14 @@ package com.fincore.core_banking_services.config;
 
 import com.fincore.core_banking_services.customer.Customer;
 import com.fincore.core_banking_services.customer.CustomerRepository;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.factory.PasswordEncoderFactories;
@@ -18,6 +18,16 @@ import org.springframework.security.web.SecurityFilterChain;
 
 @Configuration
 public class SecurityConfig {
+
+    @Value("${fincore.security.teller-password:Teller@123}")
+    private String tellerPassword;
+
+    @Value("${fincore.security.manager-password:Manager@123}")
+    private String managerPassword;
+
+    @Value("${fincore.security.admin-password:Admin@123}")
+    private String adminPassword;
+
     @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http.csrf(csrf -> csrf.disable())
@@ -26,9 +36,28 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/register").permitAll()
+                        .requestMatchers("/api/auth/me").authenticated()
+                        .requestMatchers("/actuator/**").permitAll()
                         .requestMatchers("/api/customer-portal/**").hasRole("CUSTOMER")
-                        .requestMatchers("/api/**").hasRole("TELLER")
-                        .anyRequest().permitAll())
+                        // Manager or Admin only: approve KYC, unfreeze, close, audit
+                        .requestMatchers(HttpMethod.PATCH, "/api/customers/*/kyc").hasAnyRole("MANAGER", "ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/accounts/*/unfreeze").hasAnyRole("MANAGER", "ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/accounts/*/close").hasAnyRole("MANAGER", "ADMIN")
+                        .requestMatchers("/api/audit/**").hasAnyRole("MANAGER", "ADMIN")
+                        // Teller operations: deposit, withdraw, transfer, freeze, create account/customer
+                        .requestMatchers(HttpMethod.POST, "/api/accounts/*/deposit").hasAnyRole("TELLER", "ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/accounts/*/withdraw").hasAnyRole("TELLER", "ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/accounts/transfer").hasAnyRole("TELLER", "ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/accounts/*/freeze").hasAnyRole("TELLER", "MANAGER", "ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/accounts").hasAnyRole("TELLER", "ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/customers").hasAnyRole("TELLER", "ADMIN")
+                        // Read access to staff APIs for Teller, Manager, Admin
+                        .requestMatchers(HttpMethod.GET, "/api/accounts/**").hasAnyRole("TELLER", "MANAGER", "ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/customers/**").hasAnyRole("TELLER", "MANAGER", "ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/transactions/**").hasAnyRole("TELLER", "MANAGER", "ADMIN")
+                        .requestMatchers("/api/dashboard/**").hasAnyRole("TELLER", "MANAGER", "ADMIN")
+                        .requestMatchers("/api/**").hasAnyRole("TELLER", "MANAGER", "ADMIN")
+                        .anyRequest().authenticated())
                 .httpBasic(Customizer.withDefaults())
                 .build();
     }
@@ -38,22 +67,32 @@ public class SecurityConfig {
         return PasswordEncoderFactories.createDelegatingPasswordEncoder();
     }
 
-    @org.springframework.beans.factory.annotation.Value("${fincore.security.teller-password:Teller@123}")
-    private String tellerPassword;
-
     @Bean
     UserDetailsService userDetailsService(
             PasswordEncoder encoder,
             CustomerRepository customers) {
 
         String tellerPasswordHash = encoder.encode(tellerPassword);
+        String managerPasswordHash = encoder.encode(managerPassword);
+        String adminPasswordHash = encoder.encode(adminPassword);
 
         return username -> {
             if ("teller".equalsIgnoreCase(username)) {
-                // Return a fresh UserDetails object for every authentication.
                 return User.withUsername("teller")
                         .password(tellerPasswordHash)
                         .roles("TELLER")
+                        .build();
+            }
+            if ("manager".equalsIgnoreCase(username)) {
+                return User.withUsername("manager")
+                        .password(managerPasswordHash)
+                        .roles("MANAGER")
+                        .build();
+            }
+            if ("admin".equalsIgnoreCase(username)) {
+                return User.withUsername("admin")
+                        .password(adminPasswordHash)
+                        .roles("ADMIN")
                         .build();
             }
 

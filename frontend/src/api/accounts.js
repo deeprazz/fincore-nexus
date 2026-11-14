@@ -1,7 +1,20 @@
-import { apiRequest } from "./client";
+import { apiRequest, apiRequestWithResponse } from "./client";
 
 export function getAccounts(auth) {
   return apiRequest("/accounts", {}, auth);
+}
+
+export async function getAccountDetail(accountId, auth) {
+  const res = await apiRequestWithResponse(
+    `/accounts/${encodeURIComponent(accountId)}`,
+    {},
+    auth
+  );
+  return {
+    ...res.data,
+    cacheStatus: res.headers.get("x-cache") || res.headers.get("X-Cache") || "MISS",
+    latency: res.latency,
+  };
 }
 
 export function createAccount(customerId, initialBalance, auth) {
@@ -89,4 +102,19 @@ export function getAccountStatement(accountId, from, to, auth) {
     {},
     auth
   );
+}
+
+export async function exportStatementCsv(accountId, from, to, auth) {
+  const params = new URLSearchParams();
+  if (from) params.set("from", from);
+  if (to) params.set("to", to);
+  const q = params.toString();
+  const res = await apiRequestWithResponse(
+    `/accounts/${encodeURIComponent(accountId)}/statement/export${q ? `?${q}` : ""}`,
+    {
+      headers: { Accept: "text/csv" },
+    },
+    auth
+  );
+  return res.data;
 }

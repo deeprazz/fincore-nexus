@@ -20,13 +20,20 @@ public class CustomerService {
 
     private final CustomerRepository repo;
     private final PasswordEncoder passwordEncoder;
+    private final com.fincore.core_banking_services.audit.AuditService auditService;
 
     @PersistenceContext
     private EntityManager entityManager;
 
-    public CustomerService(CustomerRepository repo, PasswordEncoder passwordEncoder) {
+    @org.springframework.beans.factory.annotation.Autowired
+    public CustomerService(CustomerRepository repo, PasswordEncoder passwordEncoder, com.fincore.core_banking_services.audit.AuditService auditService) {
         this.repo = repo;
         this.passwordEncoder = passwordEncoder;
+        this.auditService = auditService;
+    }
+
+    public CustomerService(CustomerRepository repo, PasswordEncoder passwordEncoder) {
+        this(repo, passwordEncoder, null);
     }
 
     /** Public self-registration always creates a CUSTOMER with KYC pending. */
@@ -54,8 +61,12 @@ public class CustomerService {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String actor = authentication != null && authentication.isAuthenticated()
                 ? authentication.getName() : "SYSTEM";
-        entityManager.persist(new AuditLog(
-                action, "CUSTOMER", customer.getId(), actor, details));
+        if (auditService != null) {
+            auditService.record(action, "CUSTOMER", customer.getId(), actor, details);
+        } else if (entityManager != null) {
+            entityManager.persist(new AuditLog(
+                    action, "CUSTOMER", customer.getId(), actor, details));
+        }
     }
 
     @Transactional

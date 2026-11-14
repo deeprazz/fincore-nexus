@@ -34,6 +34,12 @@ public class AuditLog {
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
+    @Column(name = "prev_hash", length = 64)
+    private String prevHash;
+
+    @Column(name = "hash", length = 64)
+    private String hash;
+
     protected AuditLog() {
     }
 
@@ -46,6 +52,13 @@ public class AuditLog {
         this.actor = actor;
         this.details = details;
         this.createdAt = Instant.now();
+    }
+
+    public AuditLog(String action, String entityType, UUID entityId,
+                    String actor, String details, String prevHash, String hash) {
+        this(action, entityType, entityId, actor, details);
+        this.prevHash = prevHash;
+        this.hash = hash;
     }
 
     @PrePersist
@@ -61,4 +74,9 @@ public class AuditLog {
     public String getActor() { return actor; }
     public String getDetails() { return details; }
     public Instant getCreatedAt() { return createdAt; }
+    public String getPrevHash() { return prevHash; }
+    public void setPrevHash(String prevHash) { this.prevHash = prevHash; }
+    public String getHash() { return hash; }
+    public void setHash(String hash) { this.hash = hash; }
+    public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
 }

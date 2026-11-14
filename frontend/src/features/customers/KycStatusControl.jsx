@@ -103,7 +103,7 @@ export function KycStatusControl() {
         disabled={loading}
       />
       <p className="field-hint kyc-note">
-        Teller approval updates the status in the backend and unlocks account opening.
+        Manager or Admin approval updates the status in the backend and unlocks account opening.
       </p>
     </section>
   );

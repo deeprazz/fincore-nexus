@@ -30,7 +30,7 @@ public class AccountStatementController {
         this.accountRepository = accountRepository;
     }
 
-    @GetMapping("/{accountId}/statement")
+    @GetMapping(value = "/{accountId}/statement", produces = "application/json")
     public AccountStatementResponse getAccountStatement(
             @PathVariable UUID accountId,
             @RequestParam(required = false)
@@ -40,16 +40,44 @@ public class AccountStatementController {
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
             LocalDate to) {
 
+        Account account = accountRepository.findById(accountId)
+                .orElseThrow(() ->
+                        new IllegalArgumentException("Account not found"));
+
+        return computeStatement(account, from, to);
+    }
+
+    @GetMapping(value = {"/{accountId}/statement", "/{accountId}/statement/export"}, produces = "text/csv")
+    public org.springframework.http.ResponseEntity<String> getAccountStatementCsv(
+            @PathVariable UUID accountId,
+            @RequestParam(required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+            LocalDate from,
+            @RequestParam(required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+            LocalDate to) {
+
+        Account account = accountRepository.findById(accountId)
+                .orElseThrow(() ->
+                        new IllegalArgumentException("Account not found"));
+
+        AccountStatementResponse statement = computeStatement(account, from, to);
+        String csv = formatCsv(account, statement);
+
+        return org.springframework.http.ResponseEntity.ok()
+                .header(org.springframework.http.HttpHeaders.CONTENT_DISPOSITION,
+                        "attachment; filename=\"statement-" + account.getAccountNumber() + ".csv\"")
+                .header(org.springframework.http.HttpHeaders.CONTENT_TYPE, "text/csv; charset=UTF-8")
+                .body(csv);
+    }
+
+    private AccountStatementResponse computeStatement(Account account, LocalDate from, LocalDate to) {
         if (from != null && to != null && from.isAfter(to)) {
             throw new IllegalArgumentException(
                     "'from' date must not be after 'to' date");
         }
 
-        // Verify that the account exists.
-        Account account = accountRepository.findById(accountId)
-                .orElseThrow(() ->
-                        new IllegalArgumentException("Account not found"));
-
+        UUID accountId = account.getId();
         Instant start = from == null
                 ? null
                 : from.atStartOfDay().toInstant(ZoneOffset.UTC);
@@ -84,7 +112,6 @@ public class AccountStatementController {
             }
         }
 
-        // Find the most recent transaction before the selected period.
         BankingTransaction previousTransaction = allTransactions.stream()
                 .filter(t -> start != null
                         && t.getCreatedAt().isBefore(start))
@@ -96,7 +123,6 @@ public class AccountStatementController {
         if (previousTransaction != null) {
             openingBalance = previousTransaction.getBalanceAfter();
         } else if (!allTransactions.isEmpty()) {
-            // Infer the balance before the account's first recorded transaction.
             BankingTransaction earliestTransaction =
                     allTransactions.get(allTransactions.size() - 1);
 
@@ -113,8 +139,6 @@ public class AccountStatementController {
                         openingBalance.add(earliestTransaction.getAmount());
             }
         } else {
-            // No recorded transactions: current balance is the best available
-            // balance, but it is not necessarily a historical opening balance.
             openingBalance = account.getBalance();
         }
 
@@ -130,5 +154,26 @@ public class AccountStatementController {
                 transactions.size(),
                 transactions
         );
+    }
+
+    public static String formatCsv(Account account, AccountStatementResponse response) {
+        StringBuilder csv = new StringBuilder();
+        csv.append("Account Number,").append(account.getAccountNumber()).append("\n");
+        csv.append("Opening Balance,").append(response.openingBalance()).append("\n");
+        csv.append("Total Deposits,").append(response.totalDeposits()).append("\n");
+        csv.append("Total Withdrawals,").append(response.totalWithdrawals()).append("\n");
+        csv.append("Closing Balance,").append(response.closingBalance()).append("\n");
+        csv.append("\n");
+        csv.append("Transaction ID,Timestamp,Type,Amount,Balance After\n");
+        if (response.transactions() != null) {
+            for (BankingTransaction tx : response.transactions()) {
+                csv.append(tx.getId()).append(",")
+                   .append(tx.getCreatedAt()).append(",")
+                   .append(tx.getTransactionType()).append(",")
+                   .append(tx.getAmount()).append(",")
+                   .append(tx.getBalanceAfter()).append("\n");
+            }
+        }
+        return csv.toString();
     }
 }

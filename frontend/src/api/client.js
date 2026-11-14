@@ -6,7 +6,7 @@ export function setLatencyListener(listener) {
   latencyListener = listener;
 }
 
-export async function apiRequest(path, options = {}, auth = null) {
+export async function apiRequestWithResponse(path, options = {}, auth = null) {
   const startedAt = typeof performance !== "undefined" ? performance.now() : Date.now();
   const token = auth?.token;
   const username = auth?.username;
@@ -61,7 +61,12 @@ export async function apiRequest(path, options = {}, auth = null) {
     throw error;
   }
 
-  return data;
+  return { data, response, headers: response.headers, latency: duration };
+}
+
+export async function apiRequest(path, options = {}, auth = null) {
+  const res = await apiRequestWithResponse(path, options, auth);
+  return res.data;
 }
 
 export default apiRequest;

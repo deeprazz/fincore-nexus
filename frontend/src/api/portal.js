@@ -1,4 +1,4 @@
-import { apiRequest } from "./client";
+import { apiRequest, apiRequestWithResponse } from "./client";
 
 export function registerCustomer(name, email, password) {
   return apiRequest("/auth/register", {
@@ -44,4 +44,17 @@ export function getPortalStatement(from, to, auth) {
   if (to) params.set("to", to);
   const q = params.toString();
   return apiRequest(`/customer-portal/statement${q ? `?${q}` : ""}`, {}, auth);
+}
+
+export async function exportPortalStatementCsv(accountId, from, to, auth) {
+  const params = new URLSearchParams();
+  if (from) params.set("from", from);
+  if (to) params.set("to", to);
+  const q = params.toString();
+  const res = await apiRequestWithResponse(
+    `/customer-portal/accounts/${encodeURIComponent(accountId)}/statement/export${q ? `?${q}` : ""}`,
+    { headers: { Accept: "text/csv" } },
+    auth
+  );
+  return res.data;
 }
