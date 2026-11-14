@@ -216,6 +216,11 @@ npm run dev
 ```
 Open your browser to [http://localhost:5173](http://localhost:5173).
 
+> [!TIP]
+> **API Endpoint Targeting (`frontend/.env`)**:
+> - If running all services through the API Gateway (port 8080): `VITE_API_URL=http://localhost:8080/api`
+> - If running only the Core Banking Service standalone (port 8081): `VITE_API_URL=http://localhost:8081/api` (A committed template is available in `frontend/.env.example`).
+
 ---
 
 ### Option C: Run Automated Tests & Quality Checks
@@ -321,3 +326,43 @@ Compatible with the **VS Code REST Client extension**, **IntelliJ HTTP Client**,
 | **MANAGER** | `manager` | `manager123` | Maker-checker KYC approvals, loan credit approval, collections, settlement reports |
 | **ADMIN** | `admin` | `admin123` | PCI-DSS compliance audits, system configuration, cryptographic audit chain verification |
 | **CUSTOMER** | `customer` | `customer123` | Self-service customer portal, loan applications, payment transfers, beneficiary registry |
+
+---
+
+## 10. Fresh Customer Onboarding & Banking Workflow
+
+When starting with a clean database (customers reset), follow this standard 4-step banking workflow:
+
+1. **Step 1: Sign in as Teller**
+   - Log in at [http://localhost:5173](http://localhost:5173) with username `teller` and password `Teller@123`.
+2. **Step 2: Create a Customer**
+   - Navigate to the **Customers** tab $\to$ click **+ Create Customer** (e.g., Name: `Priya Sharma`, Email: `priya@example.com`).
+   - The newly created customer will initially have `KYC: PENDING`.
+3. **Step 3: Dual Maker-Checker KYC Verification (Manager)**
+   - Sign out and sign in as **Manager** (`manager` / `Manager@123`).
+   - Under **Customers** or the **KYC Hub**, review and approve the customer's KYC status to `VERIFIED`.
+   - *Regulatory Compliance Rule*: The core banking ledger strictly blocks account opening until KYC is `VERIFIED`.
+4. **Step 4: Open Account & Move Funds (Teller)**
+   - Sign back in as **Teller** (`teller` / `Teller@123`).
+   - Under **Accounts** $\to$ click **+ Open Account**, select the verified customer, and enter an initial deposit (e.g., `₹25,000.00`).
+   - The account is immediately active, recorded in the SHA-256 tamper-proof ledger, cached in Redis, and ready for operations!
+
+---
+
+## 11. Troubleshooting & FAQ
+
+### Q: `error: release version 25 not supported` during `mvn` or `mvnw.cmd`?
+- **Cause**: Windows or IntelliJ terminal has `JAVA_HOME` pointing to an older JDK (e.g. Java 17).
+- **Fix**: Point `JAVA_HOME` to JDK 25 before running Maven:
+  ```powershell
+  $env:JAVA_HOME = "C:\Program Files\Eclipse Adoptium\jdk-25.0.5.8-hotspot"
+  .\mvnw.cmd clean spring-boot:run
+  ```
+  In IntelliJ: Go to **Project Structure** (`Ctrl+Alt+Shift+S`) $\to$ **Project** $\to$ set SDK to `25`. In **Settings** (`Ctrl+Alt+S`) $\to$ **Build Tools** $\to$ **Maven** $\to$ **Runner** $\to$ set JRE to `Project SDK (25)`.
+
+### Q: `Cannot connect to the backend` in Frontend?
+- **Cause**: Frontend default `API_BASE_URL` targets port 8080 (API Gateway), but only Core Banking (port 8081) is running.
+- **Fix**: Check `frontend/.env` has `VITE_API_URL=http://localhost:8081/api` if developing against Core Banking directly. Alternatively, start the API Gateway on port 8080.
+
+### Q: What are the `sasl.oauthbearer.expected.issuer = null` logs on startup?
+- **Explanation**: These are completely normal Apache Kafka client configuration dumps printed at `INFO` level when Spring Kafka initializes its consumers. Once connected, Kafka outputs: `partitions assigned: [loan.approved-0, ...]`. No action is required.

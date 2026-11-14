@@ -127,3 +127,18 @@
   - Authored `docs/architecture.md` (9 enterprise layers, microservice topology, ER diagrams, distributed SAGA sequence diagrams).
   - Authored `docs/security.md` (PCI-DSS v4.0 controls matrix, SHA-256 tamper-proof ledger, Maker-Checker dual control, AES-256-GCM encryption at rest).
   - Authored `docs/demo-script.md` (timed 10-minute Friday demonstration script with step-by-step UI actions, curl commands, and expected outcomes).
+
+## Phase 6.1: Enterprise UI Hardening & Environment Governance
+- **Unified Enterprise Banking Design System & Dark Theme**:
+  - Eliminated inline light CSS fallbacks (`var(--card-bg, #ffffff)`, `var(--surface-color, #f9fafb)`) and default browser button styling (`buttonface`).
+  - Standardized modern segmented control tabs (`.tabs-container`, `.loans-nav-tabs`, `.tab-btn`) with deep navy backgrounds (`#0b1329`), subtle hover states, and royal blue active states (`#2563eb`).
+  - Upgraded the Account Service Live Detail Panel with dark slate paneling (`#0c121b`), subtle borders (`#1f293d`), and high-contrast metrics.
+  - Form controls (`select`, `input`, `textarea`, `.form-input`) globally standardized to `#0c121b` with `#28374d` borders and blue focus indicators.
+  - Mapped light utility classes (`bg-white`, `text-slate-900`, `border-slate-200`) to dark banking tokens across KYC, Compliance, and Master Dashboard views.
+- **Dynamic Microservice Error Normalisation**:
+  - Replaced generic browser `Failed to fetch` network errors with contextual service error messages in `client.js` identifying the exact microservice port (e.g., *“Unable to connect to Loan Management Service (Port 8082)...”*).
+- **Dual Developer Environment Support (`frontend/.env`)**:
+  - Added support for targeting either the API Gateway (`http://localhost:8080/api`) or standalone Core Banking (`http://localhost:8081/api`) with committed `.env.example`.
+- **Database Reset & Role Segregation**:
+  - Truncated dev customer data across all databases (`fincore`, `fincore_loan`, `fincore_payment`, `fincore_kyc`, `fincore_notification`) and flushed Redis cache to provide a clean slate for new user journeys.
+  - Maintained code-configured staff access (`teller:Teller@123`, `manager:Manager@123`, `admin:Admin@123`) in `SecurityConfig.java` to guarantee zero-dependency staff operations.
