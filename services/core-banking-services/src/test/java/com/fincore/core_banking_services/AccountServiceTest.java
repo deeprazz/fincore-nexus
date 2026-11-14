@@ -14,6 +14,7 @@ import org.mockito.ArgumentCaptor;
 import java.util.List;
 import org.mockito.junit.jupiter.MockitoExtension;
 import com.fincore.core_banking_services.account.Account;
+import com.fincore.core_banking_services.account.AccountStatus;
 import com.fincore.core_banking_services.account.AccountRepository;
 import com.fincore.core_banking_services.account.AccountResponse;
 import com.fincore.core_banking_services.account.AccountService;
@@ -55,8 +56,15 @@ class AccountServiceTest {
         accountId = UUID.randomUUID();
 
         account = new Account();
+        account.setId(accountId);
         account.setBalance(new BigDecimal("1000.00"));
         account.setAccountNumber("FC1000001");
+        account.setStatus(AccountStatus.ACTIVE);
+
+        lenient().when(transactionRepository.save(any(BankingTransaction.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        org.springframework.test.util.ReflectionTestUtils.setField(accountService, "entityManager", entityManager);
     }
 
     @Test
@@ -286,7 +294,7 @@ class AccountServiceTest {
         );
 
         assertEquals(
-                "account does not exist",
+                "Account does not exist",
                 exception.getMessage()
         );
 
@@ -303,12 +311,16 @@ class AccountServiceTest {
         UUID receiverId = UUID.randomUUID();
 
         Account sender = new Account();
+        sender.setId(senderId);
         sender.setBalance(new BigDecimal("1000.00"));
         sender.setAccountNumber("FC1000001");
+        sender.setStatus(AccountStatus.ACTIVE);
 
         Account receiver = new Account();
+        receiver.setId(receiverId);
         receiver.setBalance(new BigDecimal("500.00"));
         receiver.setAccountNumber("FC1000002");
+        receiver.setStatus(AccountStatus.ACTIVE);
 
         TransferRequest request = new TransferRequest();
         request.setFromAccountId(senderId);
@@ -373,12 +385,16 @@ class AccountServiceTest {
         UUID receiverId = UUID.randomUUID();
 
         Account sender = new Account();
+        sender.setId(senderId);
         sender.setBalance(new BigDecimal("1000.00"));
         sender.setAccountNumber("FC1000001");
+        sender.setStatus(AccountStatus.ACTIVE);
 
         Account receiver = new Account();
+        receiver.setId(receiverId);
         receiver.setBalance(new BigDecimal("500.00"));
         receiver.setAccountNumber("FC1000002");
+        receiver.setStatus(AccountStatus.ACTIVE);
 
         TransferRequest request = new TransferRequest();
         request.setFromAccountId(senderId);

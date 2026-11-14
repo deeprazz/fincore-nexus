@@ -24,6 +24,12 @@ public class Customer {
     @Column(name = "transaction_pin_hash")
     private String transactionPinHash;
 
+    @Column(name = "failed_pin_attempts", nullable = false)
+    private int failedPinAttempts = 0;
+
+    @Column(name = "pin_locked_until")
+    private Instant pinLockedUntil;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "kyc_status", nullable = false)
     private KycStatus kycStatus;
@@ -66,6 +72,30 @@ public class Customer {
     public boolean hasTransactionPin() { return transactionPinHash != null && !transactionPinHash.isBlank(); }
 
     public void setTransactionPinHash(String transactionPinHash) { this.transactionPinHash = transactionPinHash; }
+
+    public int getFailedPinAttempts() { return failedPinAttempts; }
+
+    public void setFailedPinAttempts(int failedPinAttempts) { this.failedPinAttempts = failedPinAttempts; }
+
+    public Instant getPinLockedUntil() { return pinLockedUntil; }
+
+    public void setPinLockedUntil(Instant pinLockedUntil) { this.pinLockedUntil = pinLockedUntil; }
+
+    public boolean isPinLocked() {
+        return pinLockedUntil != null && pinLockedUntil.isAfter(Instant.now());
+    }
+
+    public void registerFailedPinAttempt() {
+        this.failedPinAttempts++;
+        if (this.failedPinAttempts >= 5) {
+            this.pinLockedUntil = Instant.now().plusSeconds(15 * 60);
+        }
+    }
+
+    public void resetPinAttempts() {
+        this.failedPinAttempts = 0;
+        this.pinLockedUntil = null;
+    }
 
     public KycStatus getKycStatus() {
         return kycStatus;

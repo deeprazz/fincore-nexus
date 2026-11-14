@@ -1,15 +1,19 @@
 
 package com.fincore.core_banking_services.account;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fincore.core_banking_services.audit.AuditLog;
+import com.fincore.core_banking_services.customer.Customer;
+import com.fincore.core_banking_services.customer.CustomerRepository;
+import com.fincore.core_banking_services.events.OutboxEvent;
+import com.fincore.core_banking_services.events.OutboxEventRepository;
+import com.fincore.core_banking_services.events.TransactionCompletedEvent;
+import com.fincore.core_banking_services.transaction.AccountStatementResponse;
+import com.fincore.core_banking_services.transaction.BankingTransaction;
+import com.fincore.core_banking_services.transaction.BankingTransactionRepository;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
-import com.fincore.core_banking_services.customer.Customer;
-import com.fincore.core_banking_services.customer.CustomerRepository;
-import com.fincore.core_banking_services.transaction.BankingTransaction;
-import com.fincore.core_banking_services.transaction.BankingTransactionRepository;
-import com.fincore.core_banking_services.events.TransactionCompletedEvent;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import org.springframework.context.ApplicationEventPublisher;
@@ -31,19 +35,34 @@ public class AccountService {
     private final CustomerRepository customerRepository;
     private final BankingTransactionRepository transactionRepository;
     private final ApplicationEventPublisher eventPublisher;
+    private final OutboxEventRepository outboxEventRepository;
+    private final ObjectMapper objectMapper;
 
     @PersistenceContext
     private EntityManager entityManager;
+
+    @org.springframework.beans.factory.annotation.Autowired
+    public AccountService(
+            AccountRepository repository,
+            CustomerRepository customerRepository,
+            BankingTransactionRepository transactionRepository,
+            ApplicationEventPublisher eventPublisher,
+            OutboxEventRepository outboxEventRepository,
+            ObjectMapper objectMapper) {
+        this.repository = repository;
+        this.customerRepository = customerRepository;
+        this.transactionRepository = transactionRepository;
+        this.eventPublisher = eventPublisher;
+        this.outboxEventRepository = outboxEventRepository;
+        this.objectMapper = objectMapper;
+    }
 
     public AccountService(
             AccountRepository repository,
             CustomerRepository customerRepository,
             BankingTransactionRepository transactionRepository,
             ApplicationEventPublisher eventPublisher) {
-        this.repository = repository;
-        this.customerRepository = customerRepository;
-        this.transactionRepository = transactionRepository;
-        this.eventPublisher = eventPublisher;
+        this(repository, customerRepository, transactionRepository, eventPublisher, null, null);
     }
 
     private void audit(String action, String entityType, UUID entityId, String details) {
@@ -243,7 +262,7 @@ public class AccountService {
     }
 
     private void publishTransactionCompleted(BankingTransaction transaction) {
-        eventPublisher.publishEvent(new TransactionCompletedEvent(
+        TransactionCompletedEvent event = new TransactionCompletedEvent(
                 transaction.getId(),
                 transaction.getAccountId(),
                 transaction.getTransactionType(),
@@ -251,7 +270,23 @@ public class AccountService {
                 transaction.getBalanceAfter(),
                 transaction.getReferenceId(),
                 transaction.getCreatedAt()
-        ));
+        );
+        if (eventPublisher != null) {
+            eventPublisher.publishEvent(event);
+        }
+        if (outboxEventRepository != null && objectMapper != null) {
+            try {
+                String payload = objectMapper.writeValueAsString(event);
+                outboxEventRepository.save(new OutboxEvent(
+                        "ACCOUNT",
+                        transaction.getAccountId().toString(),
+                        "transaction.completed",
+                        payload
+                ));
+            } catch (Exception e) {
+                throw new IllegalStateException("Failed to write to transactional outbox", e);
+            }
+        }
     }
 
     private void validateInitialBalance(BigDecimal balance) {
@@ -514,12 +549,25 @@ public class AccountService {
                                 toExclusive
                         );
 
+        BigDecimal deposits = BigDecimal.ZERO;
+        BigDecimal withdrawals = BigDecimal.ZERO;
+        for (BankingTransaction t : transactions) {
+            String type = t.getTransactionType();
+            if ("DEPOSIT".equals(type) || "TRANSFER_IN".equals(type)) {
+                deposits = deposits.add(t.getAmount());
+            } else if ("WITHDRAWAL".equals(type) || "TRANSFER_OUT".equals(type)) {
+                withdrawals = withdrawals.add(t.getAmount());
+            }
+        }
+        BigDecimal closingBalance = transactions.isEmpty() ? account.getBalance() : transactions.get(transactions.size() - 1).getBalanceAfter();
+        BigDecimal openingBalance = closingBalance.subtract(deposits).add(withdrawals);
+
         return new AccountStatementResponse(
-                account.getId(),
-                account.getAccountNumber(),
-                from,
-                to,
-                account.getBalance(),
+                openingBalance,
+                deposits,
+                withdrawals,
+                closingBalance,
+                transactions.size(),
                 transactions
         );
     }

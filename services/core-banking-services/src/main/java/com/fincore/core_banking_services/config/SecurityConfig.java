@@ -38,12 +38,15 @@ public class SecurityConfig {
         return PasswordEncoderFactories.createDelegatingPasswordEncoder();
     }
 
+    @org.springframework.beans.factory.annotation.Value("${fincore.security.teller-password:Teller@123}")
+    private String tellerPassword;
+
     @Bean
     UserDetailsService userDetailsService(
             PasswordEncoder encoder,
             CustomerRepository customers) {
 
-        String tellerPasswordHash = encoder.encode("Teller@123");
+        String tellerPasswordHash = encoder.encode(tellerPassword);
 
         return username -> {
             if ("teller".equalsIgnoreCase(username)) {

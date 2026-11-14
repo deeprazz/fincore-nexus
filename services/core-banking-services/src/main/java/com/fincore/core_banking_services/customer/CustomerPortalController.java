@@ -138,13 +138,22 @@ public class CustomerPortalController {
         if (request == null || request.pin() == null || !request.pin().matches("\\d{4}")) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Transaction PIN must contain exactly 4 digits");
         }
+        if (customer.isPinLocked()) {
+            throw new ResponseStatusException(HttpStatus.LOCKED, "Transaction PIN is locked due to 5 consecutive failed attempts. Please try again after " + customer.getPinLockedUntil());
+        }
         if (customer.hasTransactionPin()) {
             if (request.currentPin() == null || !passwordEncoder.matches(request.currentPin(), customer.getTransactionPinHash())) {
-                throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Current transaction PIN is incorrect");
+                customer.registerFailedPinAttempt();
+                customers.save(customer);
+                if (customer.isPinLocked()) {
+                    throw new ResponseStatusException(HttpStatus.LOCKED, "Transaction PIN is now locked for 15 minutes due to 5 consecutive failed attempts");
+                }
+                throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Current transaction PIN is incorrect. Failed attempts: " + customer.getFailedPinAttempts() + "/5");
             }
         } else if (request.currentPin() != null && !request.currentPin().isBlank()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No current PIN is set yet");
         }
+        customer.resetPinAttempts();
         customer.setTransactionPinHash(passwordEncoder.encode(request.pin()));
         customers.save(customer);
         return new PinResponse(customer.hasTransactionPin(), customer.hasTransactionPin() ? "Transaction PIN saved successfully." : "Transaction PIN saved.");
@@ -155,17 +164,10 @@ public class CustomerPortalController {
     public TransferResponse transfer(
             @RequestBody CustomerTransferRequest request,
             Authentication authentication) {
-        Customer customer = requireVerifiedCustomer(authentication);
-        if (!customer.hasTransactionPin()) {
-            throw new ResponseStatusException(HttpStatus.PRECONDITION_REQUIRED, "Set a transaction PIN before transferring money");
+        if (request == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Transfer request is required");
         }
-        if (request == null || request.transactionPin() == null || !request.transactionPin().matches("\\d{4}")) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "A valid 4-digit transaction PIN is required");
-        }
-        if (!passwordEncoder.matches(request.transactionPin(), customer.getTransactionPinHash())) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Transaction PIN is incorrect");
-        }
-        if (request == null || request.sourceAccountId() == null
+        if (request.sourceAccountId() == null
                 || request.destinationAccountNumber() == null
                 || request.destinationAccountNumber().isBlank()
                 || request.amount() == null || request.amount().compareTo(BigDecimal.ZERO) <= 0) {
@@ -176,6 +178,27 @@ public class CustomerPortalController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                     "Amount can have at most two decimal places");
         }
+        if (request.transactionPin() == null || !request.transactionPin().matches("\\d{4}")) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "A valid 4-digit transaction PIN is required");
+        }
+
+        Customer customer = requireVerifiedCustomer(authentication);
+        if (!customer.hasTransactionPin()) {
+            throw new ResponseStatusException(HttpStatus.PRECONDITION_REQUIRED, "Set a transaction PIN before transferring money");
+        }
+        if (customer.isPinLocked()) {
+            throw new ResponseStatusException(HttpStatus.LOCKED, "Transaction PIN is locked due to 5 consecutive failed attempts. Please try again after " + customer.getPinLockedUntil());
+        }
+        if (!passwordEncoder.matches(request.transactionPin(), customer.getTransactionPinHash())) {
+            customer.registerFailedPinAttempt();
+            customers.save(customer);
+            if (customer.isPinLocked()) {
+                throw new ResponseStatusException(HttpStatus.LOCKED, "Transaction PIN is now locked for 15 minutes due to 5 consecutive failed attempts");
+            }
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Transaction PIN is incorrect. Failed attempts: " + customer.getFailedPinAttempts() + "/5");
+        }
+        customer.resetPinAttempts();
+        customers.save(customer);
 
         Account source = accounts.findById(request.sourceAccountId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Source account not found"));
