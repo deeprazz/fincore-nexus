@@ -10,6 +10,7 @@ import {
   ShieldCheck,
   Settings,
   Landmark,
+  Send,
 } from "lucide-react";
 
 export function Sidebar({ sidebarOpen, setSidebarOpen, role = "TELLER" }) {
@@ -60,6 +61,7 @@ export function Sidebar({ sidebarOpen, setSidebarOpen, role = "TELLER" }) {
   const staffNav = [
     { label: "Dashboard", to: "/", icon: LayoutDashboard },
     { label: "Accounts", to: "/accounts", icon: Wallet },
+    { label: "Payments", to: "/payments", icon: Send },
     { label: "Loans", to: "/loans", icon: Landmark },
     { label: "Customers", to: "/customers", icon: Users },
     { label: "Transactions", to: "/transactions", icon: ArrowLeftRight },

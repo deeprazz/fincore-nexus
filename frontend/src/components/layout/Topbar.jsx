@@ -1,6 +1,7 @@
 import React from "react";
 import { Activity, Menu, X } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
+import NotificationBell from "../../features/notifications/NotificationBell";
 
 export function Topbar({ sidebarOpen, setSidebarOpen, role = "TELLER" }) {
   const { auth, customerPortal, logout } = useAuth();
@@ -66,6 +67,7 @@ export function Topbar({ sidebarOpen, setSidebarOpen, role = "TELLER" }) {
       </div>
 
       <div className="topbar-right">
+        <NotificationBell />
         <span className="status-dot" />
         <span>{auth?.username || "teller"} · Teller</span>
         <button className="secondary-button" onClick={logout} type="button">
