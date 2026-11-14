@@ -26,7 +26,23 @@ export async function apiRequestWithResponse(path, options = {}, auth = null) {
     ...options.headers,
   };
 
-  const response = await fetch(`${API_BASE_URL}${path}`, {
+  let url;
+  if (path.startsWith("http://") || path.startsWith("https://")) {
+    url = path;
+  } else if (path.startsWith("/api/loans")) {
+    const loansHost =
+      import.meta.env.VITE_LOANS_API_URL ||
+      (API_BASE_URL && API_BASE_URL.includes(":8081")
+        ? API_BASE_URL.replace(":8081/api", ":8082")
+        : "");
+    url = loansHost ? `${loansHost}${path}` : path;
+  } else if (path.startsWith("/api/")) {
+    url = `${API_BASE_URL.replace(/\/api\/?$/, "")}${path}`;
+  } else {
+    url = `${API_BASE_URL}${path}`;
+  }
+
+  const response = await fetch(url, {
     ...options,
     headers,
   });

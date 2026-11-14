@@ -9,6 +9,7 @@ import {
   FileText,
   ShieldCheck,
   Settings,
+  Landmark,
 } from "lucide-react";
 
 export function Sidebar({ sidebarOpen, setSidebarOpen, role = "TELLER" }) {
@@ -59,6 +60,7 @@ export function Sidebar({ sidebarOpen, setSidebarOpen, role = "TELLER" }) {
   const staffNav = [
     { label: "Dashboard", to: "/", icon: LayoutDashboard },
     { label: "Accounts", to: "/accounts", icon: Wallet },
+    { label: "Loans", to: "/loans", icon: Landmark },
     { label: "Customers", to: "/customers", icon: Users },
     { label: "Transactions", to: "/transactions", icon: ArrowLeftRight },
     { label: "Operations", to: "/operations", icon: Activity },
