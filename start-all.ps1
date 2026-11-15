@@ -43,11 +43,44 @@ try {
 }
 
 if ($dockerRunning) {
-    Write-Host "  -> Docker is running. Starting backing services (postgres, redis, kafka)..." -ForegroundColor Green
-    docker compose up -d postgres db-init redis kafka
+    $runningNames = docker ps --format "{{.Names}}" 2>&1
+    $allNames = docker ps -a --format "{{.Names}}" 2>&1
+    $requiredContainers = @("fincore-postgres", "fincore-redis", "fincore-kafka")
+    
+    $missingFromRunning = @()
+    foreach ($name in $requiredContainers) {
+        if ($runningNames -notcontains $name) {
+            $missingFromRunning += $name
+        }
+    }
+
+    if ($missingFromRunning.Count -eq 0) {
+        Write-Host "  -> [OK] Postgres, Redis, and Kafka containers are already running and healthy." -ForegroundColor Green
+    } else {
+        # Check if existing containers are merely stopped
+        $toStart = @()
+        $toCreate = @()
+        foreach ($name in $missingFromRunning) {
+            if ($allNames -contains $name) {
+                $toStart += $name
+            } else {
+                $toCreate += $name
+            }
+        }
+
+        if ($toStart.Count -gt 0) {
+            Write-Host "  -> Starting existing containers: $($toStart -join ', ')..." -ForegroundColor Cyan
+            docker start $toStart | Out-Null
+        }
+
+        if ($toCreate.Count -gt 0) {
+            Write-Host "  -> Creating missing backing services via docker compose..." -ForegroundColor Cyan
+            docker compose up -d postgres db-init redis kafka
+        }
+    }
 } else {
-    Write-Host "  -> [NOTICE] Docker does not appear to be running or accessible." -ForegroundColor DarkYellow
-    Write-Host "     If Postgres/Redis/Kafka are running locally or in Docker Desktop, services will connect." -ForegroundColor Gray
+    Write-Host "  -> [NOTICE] Docker is not running or not accessible in current context." -ForegroundColor DarkYellow
+    Write-Host "     If Postgres/Redis/Kafka are running locally or in background, services will connect." -ForegroundColor Gray
 }
 
 # ------------------------------------------------------------------------------
@@ -87,13 +120,19 @@ foreach ($svc in $services) {
 
     Write-Host "  [START] Starting $svcName on port $svcPort..." -ForegroundColor Cyan
 
-    $cmd = "`$host.UI.RawUI.WindowTitle = 'FinCore [$svcPort] $svcName'; " +
-           "`$env:JAVA_HOME = '$JavaHome'; " +
-           "Set-Location '$svcPath'; " +
-           "mvn spring-boot:run"
-
-    Start-Process powershell -ArgumentList "-NoExit", "-Command", $cmd
-    Start-Sleep -Seconds 1
+    $svcScript = @"
+`$host.UI.RawUI.WindowTitle = 'FinCore [$svcPort] $svcName'
+`$env:JAVA_HOME = '$JavaHome'
+Set-Location '$svcPath'
+Write-Host '==================================================================' -ForegroundColor Cyan
+Write-Host ' [FinCore] Starting $svcName on Port $svcPort... ' -ForegroundColor Cyan
+Write-Host '==================================================================' -ForegroundColor Cyan
+mvn spring-boot:run
+"@
+    $bytes = [System.Text.Encoding]::Unicode.GetBytes($svcScript)
+    $encoded = [System.Convert]::ToBase64String($bytes)
+    Start-Process powershell -ArgumentList "-NoExit", "-EncodedCommand", $encoded
+    Start-Sleep -Milliseconds 800
 }
 
 # ------------------------------------------------------------------------------
@@ -106,10 +145,17 @@ if (-not $NoFrontend) {
     } else {
         $frontendPath = Join-Path $RootDir "frontend"
         Write-Host "  [START] Starting React 19 Frontend on port 5173..." -ForegroundColor Cyan
-        $frontendCmd = "`$host.UI.RawUI.WindowTitle = 'FinCore [5173] React Frontend'; " +
-                       "Set-Location '$frontendPath'; " +
-                       "npm run dev"
-        Start-Process powershell -ArgumentList "-NoExit", "-Command", $frontendCmd
+        $frontendScript = @"
+`$host.UI.RawUI.WindowTitle = 'FinCore [5173] React Frontend'
+Set-Location '$frontendPath'
+Write-Host '==================================================================' -ForegroundColor Cyan
+Write-Host ' [FinCore] Starting React 19 Frontend on Port 5173... ' -ForegroundColor Cyan
+Write-Host '==================================================================' -ForegroundColor Cyan
+npm run dev
+"@
+        $bytes = [System.Text.Encoding]::Unicode.GetBytes($frontendScript)
+        $encoded = [System.Convert]::ToBase64String($bytes)
+        Start-Process powershell -ArgumentList "-NoExit", "-EncodedCommand", $encoded
     }
 } else {
     Write-Host "`n[3/3] Skipping frontend (-NoFrontend passed)." -ForegroundColor Gray
