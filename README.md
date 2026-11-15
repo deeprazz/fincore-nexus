@@ -164,7 +164,34 @@ docker compose down -v
 
 ---
 
-### Option B: Local Developer Mode (Manual Execution)
+### Option B: One-Click Local Launcher (PowerShell Script)
+
+Launch all 5 backend microservices, API Gateway, and Frontend with a single command:
+
+```powershell
+# In the root repository directory:
+.\start-all.ps1
+```
+
+This script:
+1. Verifies/starts Docker backing infrastructure (`postgres`, `db-init`, `redis`, `kafka`).
+2. Opens dedicated, labeled PowerShell windows for each microservice with `JAVA_HOME` pre-configured:
+   - **Core Banking Service**: [http://localhost:8081](http://localhost:8081)
+   - **Loan Management**: [http://localhost:8082](http://localhost:8082)
+   - **Payment Orchestration**: [http://localhost:8083](http://localhost:8083)
+   - **KYC & Compliance**: [http://localhost:8084](http://localhost:8084)
+   - **Notification Service**: [http://localhost:8085](http://localhost:8085)
+   - **API Gateway**: [http://localhost:8080](http://localhost:8080)
+3. Starts the React 19 Frontend at [http://localhost:5173](http://localhost:5173).
+
+To shut down all running services at once:
+```powershell
+.\stop-all.ps1
+```
+
+---
+
+### Option C: Local Developer Mode (Manual Execution)
 
 If developing locally with immediate hot-reload:
 
