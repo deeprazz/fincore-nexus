@@ -130,8 +130,8 @@ export function AuditPage() {
                   <strong>{log.action}</strong>
                 </td>
                 <td>
-                  <span style={{ fontSize: "0.8125rem", color: "#4b5563" }}>
-                    {log.entityType} {log.entityId ? `(${String(log.entityId).substring(0, 8)}…)` : ""}
+                  <span className="audit-entity-tag">
+                    {log.entityType} {log.entityId ? `(#${String(log.entityId).substring(0, 8).toUpperCase()})` : ""}
                   </span>
                 </td>
                 <td>{log.actor}</td>
@@ -139,19 +139,13 @@ export function AuditPage() {
                 <td>
                   {log.hash ? (
                     <code
-                      style={{
-                        fontSize: "0.75rem",
-                        backgroundColor: "#f3f4f6",
-                        padding: "2px 6px",
-                        borderRadius: "4px",
-                        color: "#1f2937",
-                      }}
+                      className="audit-hash-badge"
                       title={`Hash: ${log.hash}\nPrev: ${log.prevHash || "GENESIS"}`}
                     >
                       {log.hash.substring(0, 12)}…
                     </code>
                   ) : (
-                    <span style={{ color: "#9ca3af", fontSize: "0.75rem" }}>legacy</span>
+                    <span className="audit-hash-legacy">genesis</span>
                   )}
                 </td>
               </tr>

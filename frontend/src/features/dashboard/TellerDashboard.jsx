@@ -380,7 +380,7 @@ export function TellerDashboard() {
               id="dashboard-account-id"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Enter account UUID or account number"
+              placeholder="Enter account number or reference"
             />
             <button
               className="primary-button"
@@ -404,7 +404,7 @@ export function TellerDashboard() {
             </button>
           </div>
           <span className="field-hint">
-            Lookup by account UUID or formatted account number.
+            Quick lookup by formatted account number (e.g. 1000-0000-0012) or reference ID.
           </span>
         </div>
       </section>

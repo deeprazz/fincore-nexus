@@ -63,7 +63,7 @@ export function AccountList() {
             <thead>
               <tr>
                 <th>Account Number</th>
-                <th>Account ID</th>
+                <th>Account Ref</th>
                 <th>Balance</th>
                 <th>Status</th>
                 <th>Actions</th>
@@ -75,7 +75,9 @@ export function AccountList() {
                 return (
                   <tr key={account.id}>
                     <td className="account-number">{account.accountNumber}</td>
-                    <td className="muted-cell">{account.id}</td>
+                    <td className="muted-cell" title={`UUID: ${account.id}`}>
+                      #{String(account.id).replace(/-/g, "").slice(0, 8).toUpperCase()}
+                    </td>
                     <td>{money(account.balance)}</td>
                     <td>
                       <span className={`kyc-status kyc-${status.toLowerCase()}`}>

@@ -78,13 +78,13 @@ export function RegisterPage() {
         </button>
 
         <p className="login-help">
-          Already registered?{" "}
+          Already have an account?{" "}
           <Link to="/login" className="text-button">
             Sign in
           </Link>
         </p>
-        <p className="login-warning">
-          New customers start with KYC Pending. Teller approval is required before banking access.
+        <p className="login-note-secure">
+          Registration establishes your identity. A verification officer will review your KYC to activate transfers.
         </p>
       </form>
     </div>

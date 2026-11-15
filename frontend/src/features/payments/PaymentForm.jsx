@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Button from "../../components/ui/Button";
 import FormField from "../../components/ui/FormField";
 
@@ -14,16 +14,22 @@ export default function PaymentForm({
   onSubmitPayment,
   defaultBeneficiary = null,
 }) {
-  const [sourceAccountId] = useState(accounts[0]?.id || "");
+  const [sourceAccountId, setSourceAccountId] = useState(accounts[0]?.id || "");
   const [paymentRail, setPaymentRail] = useState("IMPS");
   const [selectedBeneficiaryId, setSelectedBeneficiaryId] = useState(defaultBeneficiary?.id || "");
   const [targetAccount, setTargetAccount] = useState(defaultBeneficiary?.accountNumber || "");
-  const [targetIfsc, setTargetIfsc] = useState(defaultBeneficiary?.ifscCode || "");
+  const [targetIfsc, setTargetIfsc] = useState(defaultBeneficiary?.ifscCode || "FINC0001234");
   const [targetVpa, setTargetVpa] = useState(defaultBeneficiary?.vpa || "");
   const [amount, setAmount] = useState("");
   const [purpose, setPurpose] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
+
+  useEffect(() => {
+    if (!sourceAccountId && accounts.length > 0) {
+      setSourceAccountId(accounts[0].id);
+    }
+  }, [accounts, sourceAccountId]);
 
   const handleBeneficiaryChange = (e) => {
     const val = e.target.value;
@@ -31,11 +37,11 @@ export default function PaymentForm({
     const ben = beneficiaries.find((b) => b.id === val);
     if (ben) {
       setTargetAccount(ben.accountNumber);
-      setTargetIfsc(ben.ifscCode);
+      setTargetIfsc(ben.ifscCode || "FINC0001234");
       setTargetVpa(ben.vpa || "");
     } else {
       setTargetAccount("");
-      setTargetIfsc("");
+      setTargetIfsc("FINC0001234");
       setTargetVpa("");
     }
   };
@@ -46,13 +52,14 @@ export default function PaymentForm({
     setSubmitting(true);
 
     try {
+      const selectedAcc = accounts.find((a) => a.id === sourceAccountId) || accounts[0];
       const payload = {
-        customerId: "00000000-0000-0000-0000-000000000001",
-        sourceAccountId: sourceAccountId || "00000000-0000-0000-0000-000000000002",
+        customerId: selectedAcc?.customerId || "00000000-0000-0000-0000-000000000001",
+        sourceAccountId: selectedAcc?.id || sourceAccountId || "00000000-0000-0000-0000-000000000002",
         beneficiaryId: selectedBeneficiaryId || null,
-        targetAccountNumber: targetAccount,
-        targetIfsc: targetIfsc,
-        targetVpa: targetVpa,
+        targetAccountNumber: paymentRail === "UPI" ? "" : targetAccount,
+        targetIfsc: paymentRail === "UPI" ? "UPI0000000" : (targetIfsc || "FINC0001234"),
+        targetVpa: paymentRail === "UPI" ? targetVpa : "",
         amount: parseFloat(amount),
         paymentRail,
         purpose: purpose || "Fund Transfer",
@@ -99,6 +106,26 @@ export default function PaymentForm({
         </div>
       </div>
 
+      {/* Source Account Selection */}
+      <FormField label="From Source Account" required>
+        <select
+          className="form-input"
+          value={sourceAccountId}
+          onChange={(e) => setSourceAccountId(e.target.value)}
+          required
+        >
+          {accounts.length > 0 ? (
+            accounts.map((acc) => (
+              <option key={acc.id} value={acc.id}>
+                {acc.accountNumber} — Balance: ₹{Number(acc.balance || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+              </option>
+            ))
+          ) : (
+            <option value="">No active accounts found</option>
+          )}
+        </select>
+      </FormField>
+
       {/* Beneficiary selection */}
       <FormField label="Select Beneficiary (or enter manually)">
         <select
@@ -109,7 +136,7 @@ export default function PaymentForm({
           <option value="">-- Manual / Direct Transfer --</option>
           {beneficiaries.map((b) => (
             <option key={b.id} value={b.id}>
-              {b.name} ({b.accountNumber} - {b.status})
+              {b.name} ({b.accountNumber || b.vpa} - {b.status})
             </option>
           ))}
         </select>
@@ -121,11 +148,14 @@ export default function PaymentForm({
           <input
             type="text"
             className="form-input"
-            placeholder="e.g. merchant@icici or receiver@upi"
+            placeholder="e.g. mobile@upi or name@icici"
             value={targetVpa}
             onChange={(e) => setTargetVpa(e.target.value)}
             required
           />
+          <span className="text-2xs text-muted block mt-1">
+            Virtual Payment Address (No IFSC required for UPI rails)
+          </span>
         </FormField>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -133,7 +163,7 @@ export default function PaymentForm({
             <input
               type="text"
               className="form-input"
-              placeholder="100000000002"
+              placeholder="e.g. 1000-0000-0012"
               value={targetAccount}
               onChange={(e) => setTargetAccount(e.target.value)}
               required
@@ -149,6 +179,9 @@ export default function PaymentForm({
               onChange={(e) => setTargetIfsc(e.target.value.toUpperCase())}
               required
             />
+            <span className="text-2xs text-muted block mt-1">
+              FinCore branch IFSC: FINC0001234 (Pre-filled for internal transfers)
+            </span>
           </FormField>
         </div>
       )}

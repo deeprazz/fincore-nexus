@@ -4053,3 +4053,478 @@ table tr:hover {
 [data-theme="light"] .telemetry-audit-subtitle {
   color: #64748b !important;
 }
+
+
+/* ==============================================================================
+   FinCore Nexus End-to-End Theme Polish: Customer Portal, Login & Clean Banking UI
+   ============================================================================== */
+
+/* --- Customer Portal Complete Light Mode Support --- */
+[data-theme="light"] .customer-app-shell {
+  background: #f8fafc !important;
+  color: #0f172a !important;
+}
+
+[data-theme="light"] .customer-workspace {
+  background: #f8fafc !important;
+}
+
+[data-theme="light"] .customer-main,
+[data-theme="light"] .customer-main-content {
+  background: #f8fafc !important;
+  color: #0f172a !important;
+}
+
+[data-theme="light"] .customer-topbar {
+  background: #ffffff !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+  color: #0f172a !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03) !important;
+}
+
+[data-theme="light"] .customer-brand strong {
+  color: #0f172a !important;
+}
+
+[data-theme="light"] .customer-brand span {
+  color: #64748b !important;
+}
+
+[data-theme="light"] .customer-brand-mark {
+  background: #eff6ff !important;
+  border: 1px solid #bfdbfe !important;
+  color: #2563eb !important;
+}
+
+[data-theme="light"] .customer-secure-indicator {
+  color: #059669 !important;
+}
+
+[data-theme="light"] .customer-secure-indicator > span {
+  background: #10b981 !important;
+  box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.15) !important;
+}
+
+[data-theme="light"] .customer-user-chip {
+  color: #334155 !important;
+}
+
+[data-theme="light"] .customer-avatar {
+  background: #eff6ff !important;
+  border: 1px solid #bfdbfe !important;
+  color: #2563eb !important;
+}
+
+[data-theme="light"] .customer-logout-top {
+  background: #f1f5f9 !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #334155 !important;
+}
+
+[data-theme="light"] .customer-logout-top:hover {
+  background: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+
+[data-theme="light"] .customer-sidebar {
+  background: #ffffff !important;
+  border-right: 1px solid #e2e8f0 !important;
+}
+
+[data-theme="light"] .customer-sidebar-bottom {
+  background: #f8fafc !important;
+  border: 1px solid #e2e8f0 !important;
+}
+
+[data-theme="light"] .customer-sidebar-bottom strong {
+  color: #0f172a !important;
+}
+
+[data-theme="light"] .customer-sidebar-bottom span {
+  color: #64748b !important;
+}
+
+[data-theme="light"] .customer-sidebar-bottom svg {
+  color: #2563eb !important;
+}
+
+[data-theme="light"] .customer-page-header h1 {
+  color: #0f172a !important;
+}
+
+[data-theme="light"] .customer-page-header p {
+  color: #64748b !important;
+}
+
+[data-theme="light"] .customer-eyebrow {
+  color: #2563eb !important;
+}
+
+[data-theme="light"] .customer-welcome-strip {
+  background: linear-gradient(135deg, #ffffff, #f1f5f9) !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04) !important;
+}
+
+[data-theme="light"] .customer-welcome-strip h2 {
+  color: #0f172a !important;
+}
+
+[data-theme="light"] .customer-welcome-strip p {
+  color: #64748b !important;
+}
+
+[data-theme="light"] .customer-welcome-label {
+  color: #2563eb !important;
+}
+
+[data-theme="light"] .customer-metric-card {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04) !important;
+}
+
+[data-theme="light"] .customer-metric-card > strong {
+  color: #0f172a !important;
+}
+
+[data-theme="light"] .customer-metric-card small {
+  color: #64748b !important;
+}
+
+[data-theme="light"] .customer-metric-top {
+  color: #64748b !important;
+}
+
+[data-theme="light"] .customer-metric-top svg {
+  color: #2563eb !important;
+}
+
+[data-theme="light"] .customer-section {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04) !important;
+}
+
+[data-theme="light"] .customer-section h3,
+[data-theme="light"] .customer-section-heading h3 {
+  color: #0f172a !important;
+}
+
+[data-theme="light"] .customer-section-kicker {
+  color: #2563eb !important;
+}
+
+[data-theme="light"] .customer-muted {
+  color: #64748b !important;
+}
+
+[data-theme="light"] .customer-transfer-form label {
+  color: #334155 !important;
+}
+
+[data-theme="light"] .customer-transfer-form input,
+[data-theme="light"] .customer-transfer-form select {
+  background: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #0f172a !important;
+}
+
+[data-theme="light"] .customer-transfer-form select:disabled {
+  background: #f1f5f9 !important;
+  border: 1px solid #e2e8f0 !important;
+  color: #475569 !important;
+}
+
+[data-theme="light"] .customer-footer {
+  border-top: 1px solid #e2e8f0 !important;
+  color: #64748b !important;
+}
+
+[data-theme="light"] .customer-footer span {
+  color: #64748b !important;
+}
+
+/* --- Customer Transfer Form in Dark Mode (no stark white inputs) --- */
+.customer-transfer-form input,
+.customer-transfer-form select {
+  background: #090e17;
+  border: 1px solid #1f2b3e;
+  color: #f8fafc;
+}
+
+.customer-transfer-form select:disabled {
+  background: #111823;
+  color: #94a3b8;
+}
+
+/* --- Redesigned Modern Banking Login Screen --- */
+.login-shell {
+  position: relative;
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: radial-gradient(circle at top, #162438 0%, #0a0e14 60%);
+  transition: background 0.2s ease;
+}
+
+[data-theme="light"] .login-shell {
+  background: radial-gradient(circle at top, #eff6ff 0%, #f1f5f9 60%) !important;
+}
+
+.login-theme-bar {
+  position: absolute;
+  top: 24px;
+  right: 28px;
+}
+
+.login-card {
+  width: min(100%, 420px);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 32px;
+  background: #111823;
+  border: 1px solid #253347;
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+  transition: all 0.2s ease;
+}
+
+[data-theme="light"] .login-card {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.08) !important;
+}
+
+.login-brand-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 4px;
+}
+
+.login-card .brand-name {
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  color: var(--text-primary, #f8fafc);
+}
+
+[data-theme="light"] .login-card .brand-name {
+  color: #0f172a !important;
+}
+
+.login-card .brand-subtitle {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--muted, #94a3b8);
+}
+
+[data-theme="light"] .login-card .brand-subtitle {
+  color: #64748b !important;
+}
+
+.login-role-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  background: #0b1329;
+  padding: 4px;
+  border-radius: 10px;
+  border: 1px solid #1f293d;
+  margin-bottom: 4px;
+}
+
+[data-theme="light"] .login-role-tabs {
+  background: #f1f5f9 !important;
+  border: 1px solid #e2e8f0 !important;
+}
+
+.login-role-tab {
+  padding: 8px 12px;
+  border-radius: 7px;
+  border: 0;
+  background: transparent;
+  color: var(--muted, #94a3b8);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.login-role-tab.active {
+  background: #2563eb;
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.35);
+}
+
+[data-theme="light"] .login-role-tab {
+  color: #64748b !important;
+}
+
+[data-theme="light"] .login-role-tab.active {
+  background: #ffffff !important;
+  color: #0f172a !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+}
+
+.login-card label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  color: var(--text-secondary, #cbd5e1);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+[data-theme="light"] .login-card label {
+  color: #334155 !important;
+}
+
+.login-card input {
+  height: 42px;
+  padding: 0 14px;
+  border-radius: 8px;
+  border: 1px solid #28374d;
+  background-color: #0c121b;
+  color: #f8fafc;
+  font-size: 13px;
+  outline: none;
+  transition: all 0.15s ease;
+}
+
+.login-card input:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+[data-theme="light"] .login-card input {
+  background-color: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #0f172a !important;
+}
+
+.login-quick-demo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: rgba(37, 99, 235, 0.08);
+  border: 1px solid rgba(37, 99, 235, 0.2);
+  margin-top: 4px;
+}
+
+.quick-demo-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #3b82f6;
+}
+
+[data-theme="light"] .quick-demo-label {
+  color: #2563eb !important;
+}
+
+.quick-demo-pill {
+  padding: 3px 9px;
+  border-radius: 5px;
+  border: 1px solid #28374d;
+  background: #111823;
+  color: #f8fafc;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.quick-demo-pill:hover {
+  background: #1e293b;
+  border-color: #3b82f6;
+}
+
+[data-theme="light"] .quick-demo-pill {
+  background: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #334155 !important;
+}
+
+[data-theme="light"] .quick-demo-pill:hover {
+  background: #f1f5f9 !important;
+  color: #0f172a !important;
+}
+
+.login-footer-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 6px;
+  padding-top: 12px;
+  border-top: 1px solid #1f293d;
+}
+
+[data-theme="light"] .login-footer-row {
+  border-top-color: #e2e8f0 !important;
+}
+
+.login-secure-note {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  color: var(--muted, #94a3b8);
+}
+
+[data-theme="light"] .login-secure-note {
+  color: #64748b !important;
+}
+
+.login-note-secure {
+  font-size: 11px;
+  color: var(--muted, #94a3b8);
+  margin: 0;
+  line-height: 1.4;
+}
+
+[data-theme="light"] .login-note-secure {
+  color: #64748b !important;
+}
+
+/* --- Audit Page Entity Tags & Badges --- */
+.audit-entity-tag {
+  display: inline-block;
+  font-size: 12px;
+  color: var(--text-secondary, #cbd5e1);
+  font-weight: 500;
+}
+
+[data-theme="light"] .audit-entity-tag {
+  color: #334155 !important;
+}
+
+.audit-hash-badge {
+  font-size: 11px;
+  font-family: monospace;
+  padding: 3px 7px;
+  border-radius: 5px;
+  background: #1a2538;
+  color: #7dd3fc;
+  border: 1px solid #2a3c58;
+}
+
+[data-theme="light"] .audit-hash-badge {
+  background: #f1f5f9 !important;
+  color: #0284c7 !important;
+  border: 1px solid #cbd5e1 !important;
+}
+
+.audit-hash-legacy {
+  color: var(--muted, #64748b);
+  font-size: 11px;
+  font-style: italic;
+}

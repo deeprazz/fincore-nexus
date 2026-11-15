@@ -13,7 +13,7 @@ export function CustomerTable({
           <tr>
             <th>Customer</th>
             <th>Email</th>
-            <th>Customer ID</th>
+            <th>Customer Ref</th>
             <th>KYC Status</th>
             <th>Created At</th>
             {showKycActions && <th>Decision</th>}
@@ -29,7 +29,9 @@ export function CustomerTable({
               <tr key={customer.id}>
                 <td>{customer.name}</td>
                 <td>{customer.email}</td>
-                <td className="muted-cell">{customer.id}</td>
+                <td className="muted-cell" title={`UUID: ${customer.id}`}>
+                  CUST-{String(customer.id).replace(/-/g, "").slice(0, 8).toUpperCase()}
+                </td>
                 <td>
                   <span className={`kyc-status kyc-${status.toLowerCase()}`}>
                     {status.replaceAll("_", " ")}

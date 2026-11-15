@@ -101,6 +101,7 @@ export function PortalTransfer() {
               <label>
                 Recipient account number
                 <input
+                  type="text"
                   value={destination}
                   onChange={(e) => setDestination(e.target.value)}
                   placeholder="e.g. 1000-0000-0002"

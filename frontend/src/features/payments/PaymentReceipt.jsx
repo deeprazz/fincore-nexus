@@ -8,6 +8,10 @@ import jsPDF from "jspdf";
 export default function PaymentReceipt({ payment, onReset }) {
   if (!payment) return null;
 
+  const sourceRef = payment.sourceAccountId
+    ? (String(payment.sourceAccountId).includes("-") ? `Ref #${String(payment.sourceAccountId).slice(0, 8).toUpperCase()}` : payment.sourceAccountId)
+    : "Primary Ledger";
+
   const downloadPdf = () => {
     const doc = new jsPDF();
     doc.setFontSize(18);
@@ -17,13 +21,17 @@ export default function PaymentReceipt({ payment, onReset }) {
     doc.text("Enterprise Digital Banking Platform", 20, 28);
     doc.line(20, 32, 190, 32);
 
+    const sourceRef = payment.sourceAccountId
+      ? (String(payment.sourceAccountId).includes("-") ? `Ref #${String(payment.sourceAccountId).slice(0, 8).toUpperCase()}` : payment.sourceAccountId)
+      : "Primary Ledger";
+
     doc.setFontSize(12);
     doc.text(`UTR / Reference: ${payment.utr || "N/A"}`, 20, 42);
     doc.text(`Rail: ${payment.paymentRail}`, 20, 50);
     doc.text(`Amount: INR ${Number(payment.amount).toLocaleString("en-IN", { minimumFractionDigits: 2 })}`, 20, 58);
     doc.text(`Status: ${payment.status}`, 20, 66);
     doc.text(`Date & Time: ${payment.createdAt ? new Date(payment.createdAt).toLocaleString() : "N/A"}`, 20, 74);
-    doc.text(`Source Account: ${payment.sourceAccountId}`, 20, 82);
+    doc.text(`Source Account: ${sourceRef}`, 20, 82);
     doc.text(`Destination: ${payment.targetAccountNumber || payment.targetVpa || "N/A"}`, 20, 90);
     doc.text(`IFSC: ${payment.targetIfsc || "N/A"}`, 20, 98);
     doc.text(`Purpose: ${payment.purpose || "Transfer"}`, 20, 106);
@@ -66,10 +74,14 @@ export default function PaymentReceipt({ payment, onReset }) {
         rules={payment.triggeredRules}
       />
 
-      <div className="grid grid-cols-2 gap-4 text-xs py-2 border-t border-b">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 text-xs py-2 border-t border-b">
         <div>
           <span className="text-muted block">Payment Rail</span>
           <span className="font-semibold text-sm">{payment.paymentRail}</span>
+        </div>
+        <div>
+          <span className="text-muted block">Source</span>
+          <span className="font-semibold font-mono text-sm">{sourceRef}</span>
         </div>
         <div>
           <span className="text-muted block">Destination</span>
@@ -81,7 +93,7 @@ export default function PaymentReceipt({ payment, onReset }) {
           <span className="text-muted block">IFSC Code</span>
           <span className="font-semibold font-mono">{payment.targetIfsc || "UPI Rail"}</span>
         </div>
-        <div>
+        <div className="sm:col-span-2">
           <span className="text-muted block">Remarks</span>
           <span className="font-medium">{payment.purpose || "Fund Transfer"}</span>
         </div>

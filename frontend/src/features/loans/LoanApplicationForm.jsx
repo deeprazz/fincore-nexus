@@ -145,7 +145,7 @@ export function LoanApplicationForm({ onApplicationSubmitted, customers: initial
               <option value="">-- Select Customer --</option>
               {customers.map((c) => (
                 <option key={c.id} value={c.id}>
-                  {c.name || c.email} ({c.id.substring(0, 8)}...)
+                  {c.name || c.email} (Cust #{c.id.substring(0, 8).toUpperCase()})
                 </option>
               ))}
             </select>
@@ -154,7 +154,7 @@ export function LoanApplicationForm({ onApplicationSubmitted, customers: initial
               id="customerId"
               name="customerId"
               type="text"
-              placeholder="Enter customer UUID"
+              placeholder="Enter customer reference or email"
               value={formData.customerId}
               onChange={handleChange}
               required
