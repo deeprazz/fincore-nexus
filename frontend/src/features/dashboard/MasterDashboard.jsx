@@ -5,15 +5,15 @@ import {
   Wallet,
   Landmark,
   Send,
-  UserCheck,
   ShieldCheck,
   RefreshCw,
   CheckCircle2,
-  TrendingUp,
   Server,
   Zap,
+  ArrowRight,
 } from "lucide-react";
 import Card from "../../components/ui/Card";
+import Button from "../../components/ui/Button";
 import { apiRequest } from "../../api/client";
 import { money } from "../../utils/money";
 
@@ -83,285 +83,182 @@ export default function MasterDashboard() {
   }, []);
 
   return (
-    <div className="space-y-6">
-      {/* Top Banner */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <div className="flex items-center space-x-2">
-            <span className="p-2 bg-indigo-600 rounded-xl text-white shadow-md">
-              <Server className="w-6 h-6" />
-            </span>
-            <div>
-              <h1 className="text-2xl font-black text-slate-900 tracking-tight">
-                FinCore Nexus Master Dashboard
-              </h1>
-              <p className="text-xs text-slate-500 font-medium">
-                Unified real-time telemetry across All 4 Banking Microservice Modules & API Gateway
-              </p>
-            </div>
+    <div className="telemetry-page">
+      {/* Page Header */}
+      <div className="telemetry-header">
+        <div className="telemetry-header-title">
+          <div className="telemetry-icon-box">
+            <Server size={22} />
+          </div>
+          <div>
+            <h1 className="page-title">FinCore Nexus Master Dashboard</h1>
+            <p className="page-subtitle">
+              Live operational telemetry across banking ledger, lending portfolios, payment clearing, and compliance
+            </p>
           </div>
         </div>
 
-        <div className="flex items-center space-x-3">
-          <div className="flex items-center space-x-1.5 px-3 py-1.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-lg text-xs font-semibold">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+        <div className="telemetry-header-actions">
+          <div className="gateway-indicator">
+            <span className="gateway-dot" />
             <span>Gateway 8080 Active</span>
           </div>
 
-          <button
+          <Button
             onClick={fetchAllMetrics}
             disabled={loading}
-            className="p-2 border border-slate-300 rounded-lg hover:bg-slate-50 text-slate-600 transition-colors"
+            variant="secondary"
+            className="telemetry-refresh-btn"
             title="Refresh system metrics"
           >
-            <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
-          </button>
+            <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
+            <span>Refresh</span>
+          </Button>
         </div>
       </div>
 
-      {/* Cross-Module KPI Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Module 1: Core Banking */}
-        <Card className="p-5 border-l-4 border-l-blue-500">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-              Core Banking Ledger
-            </span>
-            <Wallet className="w-5 h-5 text-blue-500" />
+      {/* Latency & Throughput Row */}
+      <div className="telemetry-latency-row">
+        <div className="latency-stat-card">
+          <span className="stat-label">Latency p50</span>
+          <span className="stat-value">{coreSummary?.latencyP50Ms ?? "3.4"} ms</span>
+          <span className="stat-sub">Normal SLA (&lt;25ms)</span>
+        </div>
+        <div className="latency-stat-card">
+          <span className="stat-label">Latency p95</span>
+          <span className="stat-value">{coreSummary?.latencyP95Ms ?? "8.1"} ms</span>
+          <span className="stat-sub">Burst threshold (&lt;50ms)</span>
+        </div>
+        <div className="latency-stat-card">
+          <span className="stat-label">Today's Transactions</span>
+          <span className="stat-value">{coreSummary?.transactionsToday ?? "48"}</span>
+          <span className="stat-sub">Double-entry ledger</span>
+        </div>
+        <div className="latency-stat-card">
+          <span className="stat-label">Measured TPS</span>
+          <span className="stat-value flex-val">
+            <Zap size={16} className="text-amber-500" /> 84.5 req/s
+          </span>
+          <span className="stat-sub">100% Success Rate</span>
+        </div>
+      </div>
+
+      {/* 4 Core Domain KPI Cards */}
+      <div className="telemetry-kpi-grid">
+        {/* Core Banking */}
+        <Card className="telemetry-domain-card domain-blue">
+          <div className="domain-card-top">
+            <span className="domain-label">Core Banking Ledger</span>
+            <div className="domain-icon-circle blue">
+              <Wallet size={18} />
+            </div>
           </div>
-          <div className="mt-3">
-            <div className="text-2xl font-black text-slate-900">
+          <div className="domain-card-main">
+            <div className="domain-main-number">
               {coreSummary?.activeAccounts ?? "12"}
             </div>
-            <p className="text-xs text-slate-500 mt-0.5">Active Account Ledgers</p>
+            <p className="domain-sub-label">Active Account Ledgers</p>
           </div>
-          <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px]">
-            <span className="text-slate-500">Total Deposits:</span>
-            <span className="font-bold text-slate-700">
-              {money(coreSummary?.totalBalance ?? 1845000)}
-            </span>
+          <div className="domain-card-bottom">
+            <span>Total Deposits:</span>
+            <strong>{money(coreSummary?.totalBalance ?? 1845000)}</strong>
           </div>
+          <Link to="/accounts" className="domain-card-link">
+            Open Accounts Ledger <ArrowRight size={13} />
+          </Link>
         </Card>
 
-        {/* Module 2: Loans */}
-        <Card className="p-5 border-l-4 border-l-indigo-500">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-              Loans & Credit Portfolio
-            </span>
-            <Landmark className="w-5 h-5 text-indigo-500" />
+        {/* Loans */}
+        <Card className="telemetry-domain-card domain-indigo">
+          <div className="domain-card-top">
+            <span className="domain-label">Loans & Credit Portfolio</span>
+            <div className="domain-icon-circle indigo">
+              <Landmark size={18} />
+            </div>
           </div>
-          <div className="mt-3">
-            <div className="text-2xl font-black text-slate-900">
+          <div className="domain-card-main">
+            <div className="domain-main-number">
               {loanPortfolio?.activeLoansCount ?? "8"}
             </div>
-            <p className="text-xs text-slate-500 mt-0.5">Active Loan Portfolios</p>
+            <p className="domain-sub-label">Active Loan Portfolios</p>
           </div>
-          <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px]">
-            <span className="text-slate-500">NPA Ratio:</span>
-            <span className="font-bold text-emerald-600">
+          <div className="domain-card-bottom">
+            <span>NPA Ratio:</span>
+            <strong className="text-emerald-500">
               {loanPortfolio?.npaRatio != null ? `${loanPortfolio.npaRatio}%` : "0.00%"}
-            </span>
+            </strong>
           </div>
+          <Link to="/loans" className="domain-card-link">
+            Open Loan Management <ArrowRight size={13} />
+          </Link>
         </Card>
 
-        {/* Module 3: Payments */}
-        <Card className="p-5 border-l-4 border-l-emerald-500">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-              Payment Clearing Rails
-            </span>
-            <Send className="w-5 h-5 text-emerald-500" />
+        {/* Payments */}
+        <Card className="telemetry-domain-card domain-emerald">
+          <div className="domain-card-top">
+            <span className="domain-label">Payment Clearing Rails</span>
+            <div className="domain-icon-circle emerald">
+              <Send size={18} />
+            </div>
           </div>
-          <div className="mt-3">
-            <div className="text-2xl font-black text-slate-900">
+          <div className="domain-card-main">
+            <div className="domain-main-number">
               {paymentReport?.successRate ?? "100"}%
             </div>
-            <p className="text-xs text-slate-500 mt-0.5">Payment Success Rate</p>
+            <p className="domain-sub-label">Clearing Success Rate</p>
           </div>
-          <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px]">
-            <span className="text-slate-500">Measured TPS:</span>
-            <span className="font-bold text-indigo-600 flex items-center gap-1">
-              <Zap className="w-3 h-3 text-amber-500" /> 84.5 req/s
-            </span>
+          <div className="domain-card-bottom">
+            <span>Rail Modes:</span>
+            <strong>IMPS · UPI · NEFT</strong>
           </div>
+          <Link to="/payments" className="domain-card-link">
+            Open Payments Hub <ArrowRight size={13} />
+          </Link>
         </Card>
 
-        {/* Module 4: KYC */}
-        <Card className="p-5 border-l-4 border-l-violet-500">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-              Identity & Regulatory Compliance
-            </span>
-            <ShieldCheck className="w-5 h-5 text-violet-500" />
+        {/* KYC & Compliance */}
+        <Card className="telemetry-domain-card domain-purple">
+          <div className="domain-card-top">
+            <span className="domain-label">Identity & Regulatory Compliance</span>
+            <div className="domain-icon-circle purple">
+              <ShieldCheck size={18} />
+            </div>
           </div>
-          <div className="mt-3">
-            <div className="text-2xl font-black text-slate-900">
+          <div className="domain-card-main">
+            <div className="domain-main-number">
               {kycData?.verified ?? "5"}
             </div>
-            <p className="text-xs text-slate-500 mt-0.5">Verified Identity Records</p>
+            <p className="domain-sub-label">Verified Customer Identities</p>
           </div>
-          <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px]">
-            <span className="text-slate-500">PCI-DSS Score:</span>
-            <span className="font-bold text-emerald-600">
-              {pciData?.complianceScore != null ? `${pciData.complianceScore}%` : "100%"}
-            </span>
+          <div className="domain-card-bottom">
+            <span>PCI-DSS Controls:</span>
+            <strong className="text-emerald-500">
+              {pciData?.complianceScore != null ? `${pciData.complianceScore}%` : "100%"} Passed
+            </strong>
           </div>
+          <Link to="/compliance" className="domain-card-link">
+            Open Compliance & Audit <ArrowRight size={13} />
+          </Link>
         </Card>
       </div>
 
-      {/* Module Operational Drill-Downs */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Core Banking & Payment SAGA Overview */}
-        <Card className="p-6 space-y-4">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-            <div className="flex items-center space-x-2">
-              <Activity className="w-5 h-5 text-indigo-600" />
-              <h3 className="font-bold text-sm text-slate-800">
-                Core Banking & Payment Orchestration Telemetry
-              </h3>
-            </div>
-            <Link
-              to="/payments"
-              className="text-xs font-semibold text-indigo-600 hover:text-indigo-800"
-            >
-              View Rails &rarr;
-            </Link>
-          </div>
-
-          <div className="grid grid-cols-3 gap-3 text-center">
-            <div className="p-3 bg-slate-50 rounded-lg border border-slate-200/70">
-              <p className="text-[10px] font-semibold text-slate-400 uppercase">Latency p50</p>
-              <p className="text-lg font-bold text-slate-800 mt-0.5">
-                {coreSummary?.latencyP50Ms ?? "3.4"} ms
-              </p>
-            </div>
-            <div className="p-3 bg-slate-50 rounded-lg border border-slate-200/70">
-              <p className="text-[10px] font-semibold text-slate-400 uppercase">Latency p95</p>
-              <p className="text-lg font-bold text-slate-800 mt-0.5">
-                {coreSummary?.latencyP95Ms ?? "8.1"} ms
-              </p>
-            </div>
-            <div className="p-3 bg-slate-50 rounded-lg border border-slate-200/70">
-              <p className="text-[10px] font-semibold text-slate-400 uppercase">Transactions</p>
-              <p className="text-lg font-bold text-slate-800 mt-0.5">
-                {coreSummary?.transactionsToday ?? "48"}
+      {/* Security & Audit Assurance Section */}
+      <Card className="telemetry-audit-card">
+        <div className="telemetry-audit-header">
+          <div className="flex-group">
+            <CheckCircle2 size={18} className="text-emerald-500" />
+            <div>
+              <h3 className="telemetry-audit-title">Cryptographic Audit Chain Integrity</h3>
+              <p className="telemetry-audit-subtitle">
+                Immutable SHA-256 hash chains verified across Core Banking and KYC PostgreSQL databases
               </p>
             </div>
           </div>
-
-          <div className="space-y-2 text-xs">
-            <div className="flex items-center justify-between p-2.5 bg-slate-50 rounded-lg">
-              <span className="text-slate-600">IMPS Immediate Gross Settlement</span>
-              <span className="font-bold text-emerald-600">T+0 Real-Time</span>
-            </div>
-            <div className="flex items-center justify-between p-2.5 bg-slate-50 rounded-lg">
-              <span className="text-slate-600">UPI Virtual Payment Addresses</span>
-              <span className="font-bold text-emerald-600">Instant Clearing</span>
-            </div>
-            <div className="flex items-center justify-between p-2.5 bg-slate-50 rounded-lg">
-              <span className="text-slate-600">NEFT Batch Settlement Scheduler</span>
-              <span className="font-bold text-indigo-600">30-Min Windows</span>
-            </div>
-          </div>
-        </Card>
-
-        {/* Loan Portfolio & Risk Assurance */}
-        <Card className="p-6 space-y-4">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-            <div className="flex items-center space-x-2">
-              <TrendingUp className="w-5 h-5 text-indigo-600" />
-              <h3 className="font-bold text-sm text-slate-800">
-                Loan Portfolio & Regulatory Risk Health
-              </h3>
-            </div>
-            <Link
-              to="/loans"
-              className="text-xs font-semibold text-indigo-600 hover:text-indigo-800"
-            >
-              Loan Portal &rarr;
-            </Link>
-          </div>
-
-          <div className="grid grid-cols-3 gap-3 text-center">
-            <div className="p-3 bg-slate-50 rounded-lg border border-slate-200/70">
-              <p className="text-[10px] font-semibold text-slate-400 uppercase">Disbursed YTD</p>
-              <p className="text-sm font-bold text-slate-800 mt-1">
-                {money(loanPortfolio?.totalDisbursedYtd ?? 4250000)}
-              </p>
-            </div>
-            <div className="p-3 bg-slate-50 rounded-lg border border-slate-200/70">
-              <p className="text-[10px] font-semibold text-slate-400 uppercase">SMA Buckets</p>
-              <p className="text-sm font-bold text-emerald-600 mt-1">
-                0 High DPD
-              </p>
-            </div>
-            <div className="p-3 bg-slate-50 rounded-lg border border-slate-200/70">
-              <p className="text-[10px] font-semibold text-slate-400 uppercase">Audit Chain</p>
-              <p className="text-sm font-bold text-emerald-600 mt-1 flex items-center justify-center gap-1">
-                <CheckCircle2 className="w-3.5 h-3.5" /> SHA-256
-              </p>
-            </div>
-          </div>
-
-          <div className="space-y-2 text-xs">
-            <div className="flex items-center justify-between p-2.5 bg-slate-50 rounded-lg">
-              <span className="text-slate-600">High-Precision Amortisation Engine</span>
-              <span className="font-bold text-slate-800">DECIMAL128 Exact</span>
-            </div>
-            <div className="flex items-center justify-between p-2.5 bg-slate-50 rounded-lg">
-              <span className="text-slate-600">Dual Maker-Checker Governance</span>
-              <span className="font-bold text-indigo-600">Enforced & Active</span>
-            </div>
-            <div className="flex items-center justify-between p-2.5 bg-slate-50 rounded-lg">
-              <span className="text-slate-600">AES-256-GCM Document Encryption</span>
-              <span className="font-bold text-emerald-600">Active at Rest</span>
-            </div>
-          </div>
-        </Card>
-      </div>
-
-      {/* Quick Navigation Footer */}
-      <div className="bg-slate-900 text-white rounded-2xl p-6 flex flex-col md:flex-row items-center justify-between gap-4 shadow-xl">
-        <div>
-          <h4 className="font-bold text-base">FinCore Nexus Enterprise Operations</h4>
-          <p className="text-xs text-slate-400 mt-0.5">
-            Access dedicated workstations for Banking Ledger, Lending SAGA, Payments Engine, or Regulatory Compliance.
-          </p>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <Link
-            to="/accounts"
-            className="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-xs font-semibold transition-colors"
-          >
-            Accounts
-          </Link>
-          <Link
-            to="/payments"
-            className="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-xs font-semibold transition-colors"
-          >
-            Payments
-          </Link>
-          <Link
-            to="/loans"
-            className="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-xs font-semibold transition-colors"
-          >
-            Loans
-          </Link>
-          <Link
-            to="/kyc"
-            className="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-xs font-semibold transition-colors"
-          >
-            KYC Hub
-          </Link>
-          <Link
-            to="/compliance"
-            className="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-500 rounded-lg text-xs font-semibold transition-colors shadow-sm"
-          >
-            Compliance & Audit
+          <Link to="/audit" className="primary-button btn-sm">
+            Inspect Full Audit Log <ArrowRight size={13} />
           </Link>
         </div>
-      </div>
+      </Card>
     </div>
   );
 }

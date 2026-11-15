@@ -2959,11 +2959,13 @@ table tr:hover {
   border: 1px solid #e2e8f0 !important;
 }
 
-[data-theme="light"] .tab-button {
+[data-theme="light"] .tab-button,
+[data-theme="light"] .tab-btn {
   color: #64748b !important;
 }
 
-[data-theme="light"] .tab-button.active {
+[data-theme="light"] .tab-button.active,
+[data-theme="light"] .tab-btn.active {
   background: #ffffff !important;
   color: #0f172a !important;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08) !important;
@@ -3523,4 +3525,531 @@ table tr:hover {
   font-size: 11px;
   font-family: monospace;
   color: var(--muted, #94a3b8);
+}
+
+/* ==============================================================================
+   FinCore Nexus Light Mode Fixes & Master Telemetry Professional UI Polish
+   ============================================================================== */
+
+/* --- Teller Dashboard Metric Cards & Detail Panel in Light Mode --- */
+[data-theme="light"] .metric-card {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03) !important;
+}
+
+[data-theme="light"] .metric-label {
+  color: #64748b !important;
+}
+
+[data-theme="light"] .metric-value {
+  color: #0f172a !important;
+}
+
+[data-theme="light"] .metric-hint {
+  color: #2563eb !important;
+}
+
+[data-theme="light"] .metric-icon {
+  background: #eff6ff !important;
+  border: 1px solid #bfdbfe !important;
+  color: #2563eb !important;
+}
+
+/* Account Service Detail Panel */
+.account-select-bar {
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.account-select-label {
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: var(--muted, #94a3b8);
+}
+
+.account-select-input {
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color, #28374d);
+  background-color: var(--surface-color, #0c121b);
+  color: var(--text-primary, #f8fafc);
+  font-size: 13px;
+  outline: none;
+  transition: all 0.15s ease;
+}
+
+.account-select-input:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+.account-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 18px;
+  padding: 20px;
+  background-color: var(--surface-color, #0c121b);
+  border-radius: 12px;
+  border: 1px solid var(--border-color, #1f293d);
+}
+
+[data-theme="light"] .account-select-input {
+  background-color: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #0f172a !important;
+}
+
+[data-theme="light"] .account-select-label {
+  color: #475569 !important;
+}
+
+[data-theme="light"] .account-detail-grid {
+  background-color: #f8fafc !important;
+  border: 1px solid #e2e8f0 !important;
+}
+
+.detail-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.detail-item-title {
+  font-size: 0.75rem;
+  color: var(--muted, #94a3b8);
+  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+[data-theme="light"] .detail-item-title {
+  color: #64748b !important;
+}
+
+.detail-item-val {
+  margin-top: 4px;
+  color: var(--text-primary, #f8fafc);
+}
+
+[data-theme="light"] .detail-item-val {
+  color: #0f172a !important;
+}
+
+.text-cyan {
+  color: #0284c7 !important;
+}
+
+[data-theme="dark"] .text-cyan {
+  color: #38bdf8 !important;
+}
+
+.text-emerald {
+  color: #059669 !important;
+}
+
+[data-theme="dark"] .text-emerald {
+  color: #34d399 !important;
+}
+
+.detail-audit-full {
+  grid-column: 1 / -1;
+  border-top: 1px solid var(--border-color, #1f293d);
+  padding-top: 14px;
+  margin-top: 4px;
+}
+
+[data-theme="light"] .detail-audit-full {
+  border-top-color: #e2e8f0 !important;
+}
+
+.detail-audit-heading {
+  font-size: 0.75rem;
+  color: var(--muted, #94a3b8);
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+[data-theme="light"] .detail-audit-heading {
+  color: #475569 !important;
+}
+
+.detail-audit-body {
+  font-size: 0.875rem;
+  margin-top: 6px;
+  color: var(--text-secondary, #cbd5e1);
+}
+
+[data-theme="light"] .detail-audit-body {
+  color: #1e293b !important;
+}
+
+.detail-audit-hash {
+  display: block;
+  font-size: 0.75rem;
+  font-family: monospace;
+  color: var(--muted, #64748b);
+  margin-top: 4px;
+}
+
+.detail-actions-row {
+  grid-column: 1 / -1;
+  display: flex;
+  gap: 10px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+
+/* --- Topbar buttons in Light Mode --- */
+[data-theme="light"] .topbar-right .secondary-button {
+  background: #f1f5f9 !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #334155 !important;
+}
+
+[data-theme="light"] .topbar-right .secondary-button:hover {
+  background: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+
+[data-theme="light"] .topbar-right .avatar {
+  background: #eff6ff !important;
+  border: 1px solid #bfdbfe !important;
+  color: #2563eb !important;
+}
+
+[data-theme="light"] .theme-toggle-btn {
+  background: #f1f5f9 !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #334155 !important;
+}
+
+[data-theme="light"] .theme-toggle-btn:hover {
+  background: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+
+/* --- Master Telemetry Professional Clean Styles --- */
+.telemetry-page {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+.telemetry-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.telemetry-header-title {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.telemetry-icon-box {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  color: #ffffff;
+  display: grid;
+  place-items: center;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+  flex-shrink: 0;
+}
+
+.telemetry-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.gateway-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  color: #059669;
+}
+
+[data-theme="dark"] .gateway-indicator {
+  color: #34d399;
+}
+
+.gateway-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.6);
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+/* Latency & Throughput Row */
+.telemetry-latency-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.latency-stat-card {
+  background: var(--surface-color, #0d141f);
+  border: 1px solid var(--border-color, #1f293d);
+  border-radius: 12px;
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+[data-theme="light"] .latency-stat-card {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04) !important;
+}
+
+.stat-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--muted, #94a3b8);
+}
+
+[data-theme="light"] .stat-label {
+  color: #64748b !important;
+}
+
+.stat-value {
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--text-primary, #f8fafc);
+  letter-spacing: -0.5px;
+}
+
+[data-theme="light"] .stat-value {
+  color: #0f172a !important;
+}
+
+.stat-value.flex-val {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.stat-sub {
+  font-size: 11px;
+  color: var(--muted, #94a3b8);
+  margin-top: 2px;
+}
+
+[data-theme="light"] .stat-sub {
+  color: #64748b !important;
+}
+
+/* 4 Core Domain Cards */
+.telemetry-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 18px;
+}
+
+.telemetry-domain-card {
+  display: flex;
+  flex-direction: column;
+  padding: 22px;
+  border-radius: 14px;
+  border-top: 4px solid #3b82f6;
+  gap: 14px;
+}
+
+.telemetry-domain-card.domain-blue {
+  border-top-color: #2563eb;
+}
+
+.telemetry-domain-card.domain-indigo {
+  border-top-color: #6366f1;
+}
+
+.telemetry-domain-card.domain-emerald {
+  border-top-color: #10b981;
+}
+
+.telemetry-domain-card.domain-purple {
+  border-top-color: #8b5cf6;
+}
+
+.domain-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.domain-label {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--muted, #94a3b8);
+}
+
+[data-theme="light"] .domain-label {
+  color: #64748b !important;
+}
+
+.domain-icon-circle {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+}
+
+.domain-icon-circle.blue {
+  background: rgba(37, 99, 235, 0.15);
+  color: #3b82f6;
+}
+
+.domain-icon-circle.indigo {
+  background: rgba(99, 102, 241, 0.15);
+  color: #6366f1;
+}
+
+.domain-icon-circle.emerald {
+  background: rgba(16, 185, 129, 0.15);
+  color: #10b981;
+}
+
+.domain-icon-circle.purple {
+  background: rgba(139, 92, 246, 0.15);
+  color: #8b5cf6;
+}
+
+.domain-card-main {
+  margin: 4px 0;
+}
+
+.domain-main-number {
+  font-size: 32px;
+  font-weight: 900;
+  letter-spacing: -1px;
+  color: var(--text-primary, #f8fafc);
+  line-height: 1.1;
+}
+
+[data-theme="light"] .domain-main-number {
+  color: #0f172a !important;
+}
+
+.domain-sub-label {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: var(--muted, #94a3b8);
+}
+
+[data-theme="light"] .domain-sub-label {
+  color: #64748b !important;
+}
+
+.domain-card-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-top: 1px solid var(--border-color, #1f293d);
+  font-size: 12px;
+}
+
+[data-theme="light"] .domain-card-bottom {
+  border-top-color: #e2e8f0 !important;
+}
+
+.domain-card-bottom span {
+  color: var(--muted, #94a3b8);
+}
+
+[data-theme="light"] .domain-card-bottom span {
+  color: #64748b !important;
+}
+
+.domain-card-bottom strong {
+  font-size: 13px;
+  color: var(--text-primary, #f8fafc);
+}
+
+[data-theme="light"] .domain-card-bottom strong {
+  color: #0f172a !important;
+}
+
+.domain-card-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #2563eb;
+  text-decoration: none;
+  transition: gap 0.15s ease;
+  margin-top: 4px;
+}
+
+.domain-card-link:hover {
+  color: #1d4ed8;
+  gap: 9px;
+}
+
+/* Security & Audit Assurance Section */
+.telemetry-audit-card {
+  padding: 20px 24px;
+  border-radius: 14px;
+}
+
+.telemetry-audit-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.telemetry-audit-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary, #f8fafc);
+}
+
+[data-theme="light"] .telemetry-audit-title {
+  color: #0f172a !important;
+}
+
+.telemetry-audit-subtitle {
+  margin: 3px 0 0;
+  font-size: 12px;
+  color: var(--muted, #94a3b8);
+}
+
+[data-theme="light"] .telemetry-audit-subtitle {
+  color: #64748b !important;
 }

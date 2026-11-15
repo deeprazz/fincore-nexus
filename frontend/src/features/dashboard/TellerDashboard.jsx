@@ -182,26 +182,18 @@ export function TellerDashboard() {
 
         {accounts.length > 0 ? (
           <div>
-            <div style={{ marginBottom: "16px", display: "flex", alignItems: "center", gap: "12px" }}>
-              <label htmlFor="account-selector" style={{ fontWeight: 600, fontSize: "0.875rem", color: "#94a3b8" }}>
+            <div className="account-select-bar">
+              <label htmlFor="account-selector" className="account-select-label">
                 Select Account:
               </label>
               <select
                 id="account-selector"
                 value={selectedAccountId}
                 onChange={(e) => setSelectedAccountId(e.target.value)}
-                style={{
-                  padding: "8px 14px",
-                  borderRadius: "8px",
-                  border: "1px solid #28374d",
-                  backgroundColor: "#0c121b",
-                  color: "#f8fafc",
-                  fontSize: "13px",
-                  outline: "none",
-                }}
+                className="account-select-input"
               >
                 {accounts.map((acc) => (
-                  <option key={acc.id} value={acc.id} style={{ background: "#0c121b", color: "#f8fafc" }}>
+                  <option key={acc.id} value={acc.id}>
                     {acc.accountNumber} ({acc.status}) — Balance: {money(acc.balance)}
                   </option>
                 ))}
@@ -209,115 +201,75 @@ export function TellerDashboard() {
             </div>
 
             {selectedAccount && (
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-                  gap: "18px",
-                  padding: "20px",
-                  backgroundColor: "#0c121b",
-                  borderRadius: "10px",
-                  border: "1px solid #1f293d",
-                }}
-              >
-                <div>
-                  <div style={{ fontSize: "0.75rem", color: "#94a3b8", textTransform: "uppercase", fontWeight: 600, letterSpacing: "0.5px" }}>
-                    Account Number
-                  </div>
-                  <div style={{ fontSize: "1.125rem", fontWeight: 700, marginTop: "4px", color: "#f8fafc" }}>
-                    {selectedAccount.accountNumber}
-                  </div>
+              <div className="account-detail-grid">
+                <div className="detail-item">
+                  <div className="detail-item-title">Account Number</div>
+                  <div className="detail-item-val font-bold text-lg">{selectedAccount.accountNumber}</div>
                 </div>
 
-                <div>
-                  <div style={{ fontSize: "0.75rem", color: "#94a3b8", textTransform: "uppercase", fontWeight: 600, letterSpacing: "0.5px" }}>
-                    Account Type
-                  </div>
-                  <div style={{ fontSize: "0.95rem", fontWeight: 600, marginTop: "4px", color: "#cbd5e1" }}>
-                    SAVINGS
-                  </div>
+                <div className="detail-item">
+                  <div className="detail-item-title">Account Type</div>
+                  <div className="detail-item-val font-medium">SAVINGS</div>
                 </div>
 
-                <div>
-                  <div style={{ fontSize: "0.75rem", color: "#94a3b8", textTransform: "uppercase", fontWeight: 600, letterSpacing: "0.5px" }}>
-                    Current Balance
-                  </div>
-                  <div style={{ fontSize: "1.25rem", fontWeight: 700, color: "#38bdf8", marginTop: "4px" }}>
-                    {money(accountDetail?.balance ?? selectedAccount.balance)}
-                  </div>
+                <div className="detail-item">
+                  <div className="detail-item-title">Current Balance</div>
+                  <div className="detail-item-val font-bold text-xl text-cyan">{money(accountDetail?.balance ?? selectedAccount.balance)}</div>
                 </div>
 
-                <div>
-                  <div style={{ fontSize: "0.75rem", color: "#94a3b8", textTransform: "uppercase", fontWeight: 600, letterSpacing: "0.5px" }}>
-                    Account Status
-                  </div>
-                  <div style={{ marginTop: "4px" }}>
+                <div className="detail-item">
+                  <div className="detail-item-title">Account Status</div>
+                  <div className="mt-1">
                     <StatusBadge status={selectedAccount.status || "ACTIVE"} />
                   </div>
                 </div>
 
-                <div>
-                  <div style={{ fontSize: "0.75rem", color: "#94a3b8", textTransform: "uppercase", fontWeight: 600, letterSpacing: "0.5px" }}>
-                    Customer KYC
-                  </div>
-                  <div style={{ marginTop: "4px" }}>
+                <div className="detail-item">
+                  <div className="detail-item-title">Customer KYC</div>
+                  <div className="mt-1">
                     <StatusBadge status={selectedCustomer?.kycStatus || "VERIFIED"} />
                   </div>
                 </div>
 
-                <div>
-                  <div style={{ fontSize: "0.75rem", color: "#94a3b8", textTransform: "uppercase", fontWeight: 600, letterSpacing: "0.5px" }}>
-                    <Database size={12} style={{ display: "inline", marginRight: "4px" }} />
+                <div className="detail-item">
+                  <div className="detail-item-title">
+                    <Database size={12} className="inline mr-1" />
                     Redis Cache (TTL 60s)
                   </div>
-                  <div style={{ marginTop: "4px" }}>
-                    <span
-                      style={{
-                        padding: "3px 9px",
-                        borderRadius: "6px",
-                        fontSize: "0.75rem",
-                        fontWeight: 700,
-                        backgroundColor: accountDetail?.cacheStatus === "HIT" ? "rgba(16, 185, 129, 0.15)" : "rgba(245, 158, 11, 0.15)",
-                        color: accountDetail?.cacheStatus === "HIT" ? "#34d399" : "#fbbf24",
-                        border: accountDetail?.cacheStatus === "HIT" ? "1px solid rgba(16, 185, 129, 0.3)" : "1px solid rgba(245, 158, 11, 0.3)",
-                      }}
-                    >
+                  <div className="mt-1">
+                    <span className={`status-pill ${accountDetail?.cacheStatus === "HIT" ? "pill-valid" : "pill-warning"}`}>
                       {accountDetail?.cacheStatus || "MISS"}
                     </span>
                   </div>
                 </div>
 
-                <div>
-                  <div style={{ fontSize: "0.75rem", color: "#94a3b8", textTransform: "uppercase", fontWeight: 600, letterSpacing: "0.5px" }}>
-                    <Radio size={12} style={{ display: "inline", marginRight: "4px" }} />
+                <div className="detail-item">
+                  <div className="detail-item-title">
+                    <Radio size={12} className="inline mr-1" />
                     Kafka Outbox
                   </div>
-                  <div style={{ fontSize: "0.875rem", fontWeight: 600, color: "#34d399", marginTop: "4px" }}>
-                    transaction.completed (Active)
-                  </div>
+                  <div className="detail-item-val font-medium text-emerald">transaction.completed (Active)</div>
                 </div>
 
-                <div>
-                  <div style={{ fontSize: "0.75rem", color: "#94a3b8", textTransform: "uppercase", fontWeight: 600, letterSpacing: "0.5px" }}>
-                    API Roundtrip Latency
-                  </div>
-                  <div style={{ fontSize: "1rem", fontWeight: 600, marginTop: "4px", color: "#38bdf8" }}>
+                <div className="detail-item">
+                  <div className="detail-item-title">API Roundtrip Latency</div>
+                  <div className="detail-item-val font-semibold text-cyan">
                     {accountDetail?.latency ? `${accountDetail.latency} ms` : apiLatency ? `${apiLatency} ms` : "—"}
                   </div>
                 </div>
 
-                <div style={{ gridColumn: "1 / -1", borderTop: "1px solid #1f293d", paddingTop: "14px", marginTop: "4px" }}>
-                  <div style={{ fontSize: "0.75rem", color: "#94a3b8", textTransform: "uppercase", display: "flex", alignItems: "center", gap: "6px", fontWeight: 600, letterSpacing: "0.5px" }}>
-                    <ShieldCheck size={14} color="#10b981" />
+                <div className="detail-audit-full">
+                  <div className="detail-audit-heading">
+                    <ShieldCheck size={14} className="text-emerald-500" />
                     Latest Immutable Audit Log Entry
                   </div>
-                  <div style={{ fontSize: "0.875rem", marginTop: "6px", color: "#cbd5e1" }}>
+                  <div className="detail-audit-body">
                     {recentAudit ? (
                       <span>
-                        <strong style={{ color: "#f8fafc" }}>[{recentAudit.action}]</strong> by <em style={{ color: "#93c5fd" }}>{recentAudit.actor}</em> at{" "}
+                        <strong>[{recentAudit.action}]</strong> by <em>{recentAudit.actor}</em> at{" "}
                         {new Date(recentAudit.createdAt).toLocaleTimeString()} — {recentAudit.details}
                         {recentAudit.hash && (
-                          <span style={{ display: "block", fontSize: "0.75rem", fontFamily: "monospace", color: "#64748b", marginTop: "4px" }}>
+                          <span className="detail-audit-hash">
                             Hash: {recentAudit.hash.substring(0, 16)}...
                           </span>
                         )}
@@ -328,7 +280,7 @@ export function TellerDashboard() {
                   </div>
                 </div>
 
-                <div style={{ gridColumn: "1 / -1", display: "flex", gap: "10px", marginTop: "12px", flexWrap: "wrap" }}>
+                <div className="detail-actions-row">
                   <button
                     className="primary-button"
                     type="button"

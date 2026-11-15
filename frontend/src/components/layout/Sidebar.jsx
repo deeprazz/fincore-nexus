@@ -71,7 +71,7 @@ export function Sidebar({ sidebarOpen, setSidebarOpen, role = "TELLER" }) {
     { label: "Statements", to: "/statements", icon: FileText },
     { label: "KYC", to: "/kyc", icon: UserCheck },
     { label: "Compliance", to: "/compliance", icon: ShieldCheck },
-    ...(role === "MANAGER" || role === "ADMIN" ? [{ label: "Audit Trail", to: "/audit", icon: ShieldCheck }] : []),
+    { label: "Audit Trail", to: "/audit", icon: ShieldCheck },
     { label: "Settings", to: "/settings", icon: Settings },
   ];
 
