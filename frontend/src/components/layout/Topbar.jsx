@@ -2,6 +2,7 @@ import React from "react";
 import { Activity, Menu, X } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import NotificationBell from "../../features/notifications/NotificationBell";
+import ThemeToggle from "../ui/ThemeToggle";
 
 export function Topbar({ sidebarOpen, setSidebarOpen, role = "TELLER" }) {
   const { auth, customerPortal, logout } = useAuth();
@@ -22,6 +23,7 @@ export function Topbar({ sidebarOpen, setSidebarOpen, role = "TELLER" }) {
           <span className="customer-secure-indicator">
             <span /> Secure connection
           </span>
+          <ThemeToggle />
           <div className="customer-user-chip">
             <span className="customer-avatar">
               {(customerPortal?.name || auth?.username || "C")
@@ -65,11 +67,12 @@ export function Topbar({ sidebarOpen, setSidebarOpen, role = "TELLER" }) {
       <div className="topbar-right">
         <NotificationBell />
         <span className="status-dot" />
-        <span>{auth?.username || "teller"}</span>
+        <span className="topbar-user-badge">{auth?.username || "teller"}</span>
         <button className="secondary-button" onClick={logout} type="button">
           Sign out
         </button>
-        <div className="avatar">
+        <ThemeToggle />
+        <div className="avatar" title={`Signed in as ${auth?.username || "teller"}`}>
           {(auth?.username || "TE").slice(0, 2).toUpperCase()}
         </div>
       </div>

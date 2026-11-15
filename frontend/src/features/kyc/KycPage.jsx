@@ -22,7 +22,7 @@ export default function KycPage() {
     try {
       setLoading(true);
       const [kycRes, customersRes] = await Promise.allSettled([
-        getKycApplications(),
+        getKycApplications(auth),
         getCustomers("ALL", auth),
       ]);
       setApplications(kycRes.status === "fulfilled" && Array.isArray(kycRes.value) ? kycRes.value : []);

@@ -57,10 +57,10 @@ describe("MasterDashboard Component", () => {
     );
 
     expect(await screen.findByText("FinCore Nexus Master Dashboard")).toBeInTheDocument();
-    expect(screen.getByText("Core Banking (M1)")).toBeInTheDocument();
-    expect(screen.getByText("Loans & Credit (M2)")).toBeInTheDocument();
-    expect(screen.getByText("Payments (M3)")).toBeInTheDocument();
-    expect(screen.getByText("KYC & Compliance (M4)")).toBeInTheDocument();
+    expect(screen.getByText("Core Banking Ledger")).toBeInTheDocument();
+    expect(screen.getByText("Loans & Credit Portfolio")).toBeInTheDocument();
+    expect(screen.getByText("Payment Clearing Rails")).toBeInTheDocument();
+    expect(screen.getByText("Identity & Regulatory Compliance")).toBeInTheDocument();
     expect(screen.getByText("84.5 req/s")).toBeInTheDocument();
   });
 });

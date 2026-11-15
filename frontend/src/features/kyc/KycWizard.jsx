@@ -3,8 +3,10 @@ import { UserCheck, ArrowRight, ArrowLeft, CheckCircle2, AlertCircle, Loader2 } 
 import DocumentUpload from "./DocumentUpload";
 import WebcamCapture from "./WebcamCapture";
 import { onboardKyc } from "../../api/kyc";
+import { useAuth } from "../../context/AuthContext";
 
 export default function KycWizard({ onSuccess, onCancel }) {
+  const { auth } = useAuth();
   const [step, setStep] = useState(1);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
@@ -77,7 +79,7 @@ export default function KycWizard({ onSuccess, onCancel }) {
       if (aadhaarFile) data.append("aadhaarFile", aadhaarFile);
       if (selfieFile) data.append("selfieFile", selfieFile);
 
-      const res = await onboardKyc(data);
+      const res = await onboardKyc(data, auth);
       if (onSuccess) onSuccess(res);
     } catch (err) {
       setError(err.message || "KYC onboarding failed. Please check the identification values.");

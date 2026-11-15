@@ -125,7 +125,7 @@ export default function MasterDashboard() {
         <Card className="p-5 border-l-4 border-l-blue-500">
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-              Core Banking (M1)
+              Core Banking Ledger
             </span>
             <Wallet className="w-5 h-5 text-blue-500" />
           </div>
@@ -147,7 +147,7 @@ export default function MasterDashboard() {
         <Card className="p-5 border-l-4 border-l-indigo-500">
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-              Loans & Credit (M2)
+              Loans & Credit Portfolio
             </span>
             <Landmark className="w-5 h-5 text-indigo-500" />
           </div>
@@ -169,7 +169,7 @@ export default function MasterDashboard() {
         <Card className="p-5 border-l-4 border-l-emerald-500">
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-              Payments (M3)
+              Payment Clearing Rails
             </span>
             <Send className="w-5 h-5 text-emerald-500" />
           </div>
@@ -191,7 +191,7 @@ export default function MasterDashboard() {
         <Card className="p-5 border-l-4 border-l-violet-500">
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-              KYC & Compliance (M4)
+              Identity & Regulatory Compliance
             </span>
             <ShieldCheck className="w-5 h-5 text-violet-500" />
           </div>

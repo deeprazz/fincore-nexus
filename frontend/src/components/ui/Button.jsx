@@ -11,15 +11,24 @@ export function Button({
   className = "",
   ...props
 }) {
+  const variantMap = {
+    primary: "primary-button btn-primary",
+    secondary: "secondary-button btn-secondary",
+    danger: "danger-button btn-danger",
+    outline: "outline-button btn-outline",
+  };
+
+  const resolvedClass = variantMap[variant] || "primary-button btn-primary";
+
   return (
     <button
       type={type}
       disabled={disabled || loading}
       onClick={onClick}
-      className={`btn btn-${variant} btn-${size} ${className}`}
+      className={`btn ${resolvedClass} btn-${size} ${className}`}
       {...props}
     >
-      {loading ? <span className="btn-spinner" /> : null}
+      {loading ? <span className="btn-spinner animate-spin" /> : null}
       {children}
     </button>
   );

@@ -4,8 +4,10 @@ import RiskPanel from "./RiskPanel";
 import OcrResultPanel from "./OcrResultPanel";
 import FaceMatchPanel from "./FaceMatchPanel";
 import { approveKyc, rejectKyc } from "../../api/kyc";
+import { useAuth } from "../../context/AuthContext";
 
 export default function KycDetailModal({ application, onClose, onActionComplete }) {
+  const { auth } = useAuth();
   const [reviewNotes, setReviewNotes] = useState("");
   const [processing, setProcessing] = useState(false);
   const [actionError, setActionError] = useState(null);
@@ -33,7 +35,7 @@ export default function KycDetailModal({ application, onClose, onActionComplete 
     setActionError(null);
     setProcessing(true);
     try {
-      await approveKyc(id, reviewNotes || "KYC verified and approved by checker");
+      await approveKyc(id, reviewNotes || "KYC verified and approved by checker", auth);
       if (onActionComplete) onActionComplete();
       onClose();
     } catch (err) {
@@ -51,7 +53,7 @@ export default function KycDetailModal({ application, onClose, onActionComplete 
     setActionError(null);
     setProcessing(true);
     try {
-      await rejectKyc(id, reviewNotes);
+      await rejectKyc(id, reviewNotes, auth);
       if (onActionComplete) onActionComplete();
       onClose();
     } catch (err) {
