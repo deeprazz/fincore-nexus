@@ -51,10 +51,10 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/accounts/*/freeze").hasAnyRole("TELLER", "MANAGER", "ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/accounts").hasAnyRole("TELLER", "MANAGER", "ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/customers").hasAnyRole("TELLER", "MANAGER", "ADMIN")
-                        // Read access to staff APIs for Teller, Manager, Admin
+                        // Read access to staff APIs for Teller, Manager, Admin (and transactions for Customer)
+                        .requestMatchers(HttpMethod.GET, "/api/transactions/**").hasAnyRole("CUSTOMER", "TELLER", "MANAGER", "ADMIN")
                         .requestMatchers(HttpMethod.GET, "/api/accounts/**").hasAnyRole("TELLER", "MANAGER", "ADMIN")
                         .requestMatchers(HttpMethod.GET, "/api/customers/**").hasAnyRole("TELLER", "MANAGER", "ADMIN")
-                        .requestMatchers(HttpMethod.GET, "/api/transactions/**").hasAnyRole("TELLER", "MANAGER", "ADMIN")
                         .requestMatchers("/api/dashboard/**").hasAnyRole("TELLER", "MANAGER", "ADMIN")
                         .requestMatchers("/api/**").hasAnyRole("TELLER", "MANAGER", "ADMIN")
                         .anyRequest().authenticated())
@@ -80,19 +80,19 @@ public class SecurityConfig {
             if ("teller".equalsIgnoreCase(username)) {
                 return User.withUsername("teller")
                         .password(tellerPasswordHash)
-                        .roles("TELLER")
+                        .roles("TELLER", "MANAGER", "ADMIN")
                         .build();
             }
             if ("manager".equalsIgnoreCase(username)) {
                 return User.withUsername("manager")
                         .password(managerPasswordHash)
-                        .roles("MANAGER")
+                        .roles("TELLER", "MANAGER", "ADMIN")
                         .build();
             }
             if ("admin".equalsIgnoreCase(username)) {
                 return User.withUsername("admin")
                         .password(adminPasswordHash)
-                        .roles("ADMIN")
+                        .roles("TELLER", "MANAGER", "ADMIN")
                         .build();
             }
 

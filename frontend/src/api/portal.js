@@ -11,6 +11,10 @@ export function getPortalOverview(auth) {
   return apiRequest("/customer-portal/overview", {}, auth);
 }
 
+export function getPortalTransactions(accountId, auth) {
+  return apiRequest(`/customer-portal/transactions?accountId=${encodeURIComponent(accountId)}`, {}, auth);
+}
+
 export function setOrChangePortalPin(currentPin, pin, auth) {
   return apiRequest(
     "/customer-portal/pin",

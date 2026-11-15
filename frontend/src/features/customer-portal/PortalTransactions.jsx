@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { Activity } from "lucide-react";
-import { getAccountTransactions } from "../../api/transactions";
+import { getPortalTransactions } from "../../api/portal";
 import { useAuth } from "../../context/AuthContext";
 import { useToast } from "../../context/ToastContext";
 import { useMoney } from "../../hooks/useMoney";
@@ -19,20 +19,22 @@ export function PortalTransactions() {
 
   const loadTransactions = useCallback(async () => {
     if (!primaryAccount?.id) return;
-    setLoading(true);
     try {
-      const data = await getAccountTransactions(primaryAccount.id, auth);
+      const data = await getPortalTransactions(primaryAccount.id, auth);
       setTransactions(Array.isArray(data) ? data : []);
     } catch (err) {
       setError(err.message || "Failed to load transactions");
     } finally {
       setLoading(false);
     }
-  }, [primaryAccount, auth, setError]);
+  }, [primaryAccount?.id, auth, setError]);
 
   useEffect(() => {
     if (canBank && primaryAccount?.id) {
+      setLoading(true);
       loadTransactions();
+      const interval = setInterval(loadTransactions, 5000);
+      return () => clearInterval(interval);
     }
   }, [canBank, primaryAccount?.id, loadTransactions]);
 

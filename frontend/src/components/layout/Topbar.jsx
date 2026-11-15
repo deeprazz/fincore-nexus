@@ -62,14 +62,10 @@ export function Topbar({ sidebarOpen, setSidebarOpen, role = "TELLER" }) {
         </div>
       </div>
 
-      <div className="milestone">
-        Milestone 1: Account &amp; Customer Services
-      </div>
-
       <div className="topbar-right">
         <NotificationBell />
         <span className="status-dot" />
-        <span>{auth?.username || "teller"} · Teller</span>
+        <span>{auth?.username || "teller"}</span>
         <button className="secondary-button" onClick={logout} type="button">
           Sign out
         </button>

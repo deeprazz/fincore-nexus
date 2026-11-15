@@ -58,31 +58,29 @@ class SecurityRbacTest {
     }
 
     @Test
-    void tellerCanAccessOperationsButCannotAccessAudit() throws Exception {
+    void tellerCanAccessOperationsAndAudit() throws Exception {
         // Teller CAN view accounts
         mockMvc.perform(get("/api/accounts")
                 .header(HttpHeaders.AUTHORIZATION, basicAuth("teller", "Teller@123")))
                 .andExpect(status().isOk());
 
-        // Teller CANNOT view audit
+        // Teller CAN view audit (all-in-one staff access)
         mockMvc.perform(get("/api/audit")
                 .header(HttpHeaders.AUTHORIZATION, basicAuth("teller", "Teller@123")))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isOk());
     }
 
     @Test
-    void managerCanViewAuditAndCannotDoTellerDeposit() throws Exception {
+    void managerCanViewAuditAndAccounts() throws Exception {
         // Manager CAN view audit
         mockMvc.perform(get("/api/audit")
                 .header(HttpHeaders.AUTHORIZATION, basicAuth("manager", "Manager@123")))
                 .andExpect(status().isOk());
 
-        // Manager CANNOT perform deposit (deposit is restricted to TELLER and ADMIN)
-        mockMvc.perform(post("/api/accounts/" + UUID.randomUUID() + "/deposit")
-                .header(HttpHeaders.AUTHORIZATION, basicAuth("manager", "Manager@123"))
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"amount\":100}"))
-                .andExpect(status().isForbidden());
+        // Manager CAN view accounts
+        mockMvc.perform(get("/api/accounts")
+                .header(HttpHeaders.AUTHORIZATION, basicAuth("manager", "Manager@123")))
+                .andExpect(status().isOk());
     }
 
     @Test

@@ -7,7 +7,7 @@ const AuthContext = createContext(null);
 export function AuthProvider({ children }) {
   const [auth, setAuth] = useState(() => {
     try {
-      const stored = localStorage.getItem("fincore_auth");
+      const stored = sessionStorage.getItem("fincore_auth");
       return stored ? JSON.parse(stored) : null;
     } catch {
       return null;
@@ -23,11 +23,39 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     if (auth) {
-      localStorage.setItem("fincore_auth", JSON.stringify(auth));
+      sessionStorage.setItem("fincore_auth", JSON.stringify(auth));
     } else {
-      localStorage.removeItem("fincore_auth");
+      sessionStorage.removeItem("fincore_auth");
     }
   }, [auth]);
+
+  // On mount and whenever a customer is logged in, load portal data immediately and poll every 4 seconds for live updates
+  useEffect(() => {
+    if (!auth || auth.role !== "CUSTOMER" || !auth.username || !auth.password) return;
+
+    let isMounted = true;
+    const fetchPortal = async () => {
+      const headers = {
+        Authorization: `Basic ${btoa(`${auth.username}:${auth.password}`)}`,
+      };
+      try {
+        const res = await fetch(`${API_BASE_URL}/customer-portal/me`, { headers });
+        if (res.ok && isMounted) {
+          const data = await res.json();
+          setCustomerPortal(data);
+        }
+      } catch {
+        // Ignore background polling errors
+      }
+    };
+
+    fetchPortal();
+    const intervalId = setInterval(fetchPortal, 4000);
+    return () => {
+      isMounted = false;
+      clearInterval(intervalId);
+    };
+  }, [auth?.username, auth?.password, auth?.role]);
 
   async function login(username, password) {
     const candidate = {
@@ -121,7 +149,7 @@ export function AuthProvider({ children }) {
   function logout() {
     setAuth(null);
     setCustomerPortal(null);
-    localStorage.removeItem("fincore_auth");
+    sessionStorage.removeItem("fincore_auth");
   }
 
   async function refreshPortalData() {

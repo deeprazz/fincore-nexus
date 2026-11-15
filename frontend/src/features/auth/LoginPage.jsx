@@ -74,16 +74,14 @@ export function LoginPage() {
           </Link>
         </p>
         <p className="login-help" style={{ fontSize: "0.8125rem", lineHeight: "1.4" }}>
-          Demo Credentials:
+          Demo Staff Credentials:
           <br />
-          • Teller: <strong>teller</strong> / <strong>Teller@123</strong>
+          • Staff Access: <strong>teller</strong> / <strong>Teller@123</strong>
           <br />
-          • Manager: <strong>manager</strong> / <strong>Manager@123</strong>
-          <br />
-          • Admin: <strong>admin</strong> / <strong>Admin@123</strong>
+          <span style={{ color: "#94a3b8" }}>Full banking permissions (Operations, KYC, Accounts &amp; Audit)</span>
         </p>
         <p className="login-warning">
-          New customers start with KYC Pending. Manager approval is required before banking access.
+          New customers register below. Staff approval is required before banking access.
         </p>
       </form>
     </div>

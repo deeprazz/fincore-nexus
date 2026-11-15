@@ -1,11 +1,11 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Wallet, LayoutDashboard, ShieldCheck } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { useMoney } from "../../hooks/useMoney";
 
 export function PortalDashboard() {
-  const { auth, customerPortal } = useAuth();
+  const { auth, customerPortal, refreshPortalData } = useAuth();
   const money = useMoney();
 
   const customerAccounts = customerPortal?.accounts || [];
@@ -15,6 +15,12 @@ export function PortalDashboard() {
     (sum, account) => sum + Number(account.balance || 0),
     0
   );
+
+  useEffect(() => {
+    if (!canBank) return;
+    const id = setInterval(() => refreshPortalData(), 10000);
+    return () => clearInterval(id);
+  }, [canBank]);
 
   return (
     <>

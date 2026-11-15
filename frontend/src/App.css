@@ -1579,339 +1579,6 @@ tbody tr:hover {
   }
 }
 
-/* Customer portal refinements: simple, personal, and section-based */
-.customer-app-shell {
-  background: #f5f6f8;
-  color: #202a36;
-}
-.customer-topbar {
-  background: #fff;
-  border-bottom: 1px solid #e2e5e9;
-}
-.customer-brand-mark {
-  background: #e9eff8;
-  color: #315b91;
-  border-radius: 8px;
-}
-.customer-brand strong {
-  color: #202a36;
-  letter-spacing: -0.02em;
-}
-.customer-brand span {
-  color: #788391;
-  letter-spacing: 0.08em;
-}
-.customer-secure-indicator {
-  color: #647181;
-}
-.customer-user-chip {
-  color: #374151;
-}
-.customer-avatar {
-  background: #e8edf4;
-  color: #355a86;
-}
-.customer-workspace {
-  grid-template-columns: 220px minmax(0, 1fr);
-}
-.customer-sidebar {
-  background: #fff;
-  border-right: 1px solid #e4e7eb;
-}
-.customer-sidebar-label {
-  color: #8a929d;
-  letter-spacing: 0.08em;
-}
-.customer-nav-item {
-  color: #626d7b;
-  border-radius: 7px;
-  font-weight: 500;
-}
-.customer-nav-item:hover {
-  background: #f4f6f8;
-  color: #263445;
-}
-.customer-nav-item.active {
-  background: #eaf0f8;
-  color: #2d5688;
-  font-weight: 650;
-}
-.customer-nav-dot {
-  background: #426b9f;
-}
-.customer-sidebar-bottom {
-  background: #f8f9fb;
-  border-color: #e4e7eb;
-  color: #55759d;
-  border-radius: 8px;
-}
-.customer-sidebar-bottom strong {
-  color: #364354;
-}
-.customer-sidebar-bottom span {
-  color: #778291;
-}
-.customer-main-content {
-  max-width: 1280px;
-  gap: 18px;
-  padding-top: 27px;
-}
-.customer-eyebrow,
-.customer-section-kicker {
-  color: #6b7c91;
-  letter-spacing: 0.08em;
-}
-.customer-page-heading h1 {
-  color: #202a36;
-  font-weight: 650;
-  letter-spacing: -0.035em;
-}
-.customer-page-heading p {
-  color: #687483;
-  line-height: 1.55;
-}
-.customer-welcome-strip {
-  background: #fff;
-  border: 1px solid #e3e6ea;
-  border-radius: 10px;
-  padding: 20px 22px;
-}
-.customer-welcome-label {
-  color: #718096;
-  letter-spacing: 0.08em;
-}
-.customer-welcome-strip h2 {
-  color: #263445;
-  font-size: 18px;
-  font-weight: 650;
-}
-.customer-welcome-strip p {
-  color: #6d7887;
-  line-height: 1.6;
-}
-.customer-metric-card,
-.customer-metric-primary {
-  background: #fff;
-  border: 1px solid #e2e6eb;
-  border-radius: 10px;
-  box-shadow: none;
-}
-.customer-metric-card {
-  padding: 17px 18px;
-  gap: 10px;
-}
-.customer-metric-top {
-  color: #6d7887;
-}
-.customer-metric-top svg {
-  color: #59779c;
-}
-.customer-metric-card > strong {
-  color: #263445;
-  font-size: 25px;
-  font-weight: 650;
-}
-.customer-metric-card small {
-  color: #7a8491;
-}
-.customer-metric-primary {
-  background: #edf3fa;
-  border-color: #d9e3ef;
-}
-.customer-section {
-  background: #fff;
-  border: 1px solid #e2e6eb;
-  border-radius: 10px;
-  padding: 21px;
-  box-shadow: none;
-}
-.customer-section-heading h3 {
-  color: #263445;
-  font-size: 16px;
-  font-weight: 650;
-}
-.customer-muted {
-  color: #737f8d;
-  line-height: 1.6;
-}
-.customer-account-card {
-  background: #fafbfc;
-  border-color: #e3e7ec;
-  border-radius: 9px;
-}
-.customer-account-card > strong {
-  color: #263445;
-}
-.customer-account-card .customer-balance {
-  color: #315f96;
-}
-.customer-account-icon {
-  background: #e9eff6;
-  color: #496b93;
-  border-radius: 8px;
-}
-.customer-status-pill.verified {
-  color: #28724e;
-  background: #e8f4ed;
-  border: 1px solid #cfe7d8;
-}
-.customer-status-pill.pending {
-  color: #8a6329;
-  background: #fbf3e5;
-  border: 1px solid #ead9b8;
-}
-.customer-transfer-form label {
-  color: #4e5b6b;
-  font-weight: 550;
-}
-.customer-transfer-form input,
-.customer-transfer-form select {
-  color: #263445;
-  background: #fff;
-  border-color: #d7dde5;
-  border-radius: 7px;
-}
-.customer-transfer-form input::placeholder {
-  color: #9aa3ae;
-}
-.customer-transfer-form input:focus,
-.customer-transfer-form select:focus {
-  outline: 2px solid #a9bfdc;
-  border-color: #8da9cc;
-}
-.customer-transfer-submit {
-  background: #315f96;
-  border-color: #315f96;
-  border-radius: 7px;
-}
-.customer-transfer-submit:hover {
-  background: #284f7f;
-}
-.customer-feedback {
-  position: sticky;
-  top: 82px;
-  z-index: 15;
-  display: flex;
-  align-items: flex-start;
-  gap: 11px;
-  padding: 13px 15px;
-  border: 1px solid;
-  border-radius: 9px;
-  box-shadow: 0 4px 14px #202a360a;
-}
-.customer-feedback.is-success {
-  color: #285f43;
-  background: #eef7f0;
-  border-color: #cfe6d5;
-}
-.customer-feedback.is-error {
-  color: #8a3e3e;
-  background: #fff2f1;
-  border-color: #efceca;
-}
-.customer-feedback-mark {
-  display: grid;
-  place-items: center;
-  flex: 0 0 22px;
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  background: #ffffffb5;
-  font-weight: 800;
-}
-.customer-feedback > div {
-  flex: 1;
-  min-width: 0;
-}
-.customer-feedback strong {
-  display: block;
-  font-size: 12px;
-  font-weight: 700;
-}
-.customer-feedback p {
-  margin: 3px 0 0;
-  font-size: 12px;
-  line-height: 1.5;
-  overflow-wrap: anywhere;
-}
-.customer-feedback button {
-  border: 0;
-  background: transparent;
-  color: inherit;
-  font-size: 20px;
-  line-height: 1;
-  padding: 0 2px;
-  cursor: pointer;
-}
-.customer-transactions-table th {
-  color: #6f7b89;
-  background: #f8f9fb;
-}
-.customer-transactions-table th,
-.customer-transactions-table td {
-  border-bottom-color: #e8ebef;
-}
-.customer-transactions-table td {
-  color: #3c4857;
-}
-.customer-transactions-table tbody tr:hover {
-  background: #fafbfd;
-}
-.customer-empty-state {
-  border-color: #dfe4ea;
-  background: #fbfcfd;
-}
-.customer-empty-state > span {
-  background: #edf1f6;
-  color: #5a7597;
-}
-.customer-empty-state strong {
-  color: #344255;
-}
-.customer-empty-state p {
-  color: #788391;
-}
-.customer-kyc-pending {
-  background: #fffaf0;
-  border-color: #eee0c4;
-}
-.customer-kyc-pending h3 {
-  color: #594a31;
-}
-.customer-kyc-pending p {
-  color: #74664e;
-}
-.customer-footer {
-  color: #89929e;
-}
-.customer-footer span:last-child {
-  color: #6d7c8f;
-}
-@media (max-width: 720px) {
-  .customer-workspace {
-    display: block;
-  }
-  .customer-sidebar {
-    position: static;
-    height: auto;
-    min-height: 0;
-    border-right: 0;
-    border-bottom: 1px solid #e4e7eb;
-    padding: 10px 12px;
-  }
-  .customer-sidebar nav {
-    overflow-x: auto;
-  }
-  .customer-nav-item {
-    flex: 0 0 auto;
-  }
-  .customer-main-content {
-    padding: 20px 14px 18px;
-  }
-  .customer-feedback {
-    top: 68px;
-  }
-}
 
 /* ==========================================================================
    CUSTOMER BANKING PORTAL — ENTERPRISE SLATE DARK THEME & SPACING SYSTEM
@@ -2525,6 +2192,49 @@ tbody tr:hover {
 
 .customer-transactions-table tbody tr:hover {
   background: #0f1725 !important;
+}
+
+/* Customer Empty State: Clean institutional banking design */
+.customer-empty-state {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-align: center !important;
+  gap: 12px !important;
+  padding: 44px 24px !important;
+  border: 1px dashed #24354e !important;
+  border-radius: 14px !important;
+  background: #090e17 !important;
+  color: #f1f5f9 !important;
+  margin: 8px 0 !important;
+}
+
+.customer-empty-state > span {
+  display: grid !important;
+  place-items: center !important;
+  width: 48px !important;
+  height: 48px !important;
+  border-radius: 12px !important;
+  background: #121e30 !important;
+  color: #38bdf8 !important;
+  border: 1px solid #1e3352 !important;
+}
+
+.customer-empty-state strong {
+  display: block !important;
+  color: #f8fafc !important;
+  font-size: 15px !important;
+  font-weight: 600 !important;
+  margin: 0 !important;
+}
+
+.customer-empty-state p {
+  color: #64748b !important;
+  font-size: 13px !important;
+  max-width: 380px !important;
+  line-height: 1.5 !important;
+  margin: 0 !important;
 }
 
 /* Footer */

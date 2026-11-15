@@ -115,7 +115,7 @@ export function Sidebar({ sidebarOpen, setSidebarOpen, role = "TELLER" }) {
             <ShieldCheck size={18} />
             Secure workspace
           </div>
-          <div className="version">FINCORE NEXUS · MILESTONE 1</div>
+          <div className="version">FINCORE NEXUS · CORE BANKING</div>
         </div>
       </aside>
     </>
