@@ -60,13 +60,14 @@ export async function apiRequestWithResponse(path, options = {}, auth = null) {
         ? API_BASE_URL.replace(":8081/api", ":8084")
         : "");
     url = kycHost ? `${kycHost}${path}` : path;
-  } else if (path.startsWith("/api/notifications")) {
+  } else if (path.startsWith("/api/notifications") || path.startsWith("/notifications")) {
     const notificationHost =
       import.meta.env.VITE_NOTIFICATIONS_API_URL ||
       (API_BASE_URL && API_BASE_URL.includes(":8081")
         ? API_BASE_URL.replace(":8081/api", ":8085")
         : "");
-    url = notificationHost ? `${notificationHost}${path}` : path;
+    const cleanPath = path.startsWith("/api") ? path : `/api${path}`;
+    url = notificationHost ? `${notificationHost}${cleanPath}` : cleanPath;
   } else if (path.startsWith("/api/")) {
     url = `${API_BASE_URL.replace(/\/api\/?$/, "")}${path}`;
   } else {
