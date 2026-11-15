@@ -29,52 +29,53 @@ export async function apiRequestWithResponse(path, options = {}, auth = null) {
   let url;
   if (path.startsWith("http://") || path.startsWith("https://")) {
     url = path;
-  } else if (API_BASE_URL && API_BASE_URL.includes(":8080")) {
-    // Single Unified API Gateway (Port 8080)
+  } else {
+    // Normalize path to always begin with /api
     const normalizedPath = path.startsWith("/api")
       ? path
       : `/api${path.startsWith("/") ? "" : "/"}${path}`;
-    url = `${API_BASE_URL.replace(/\/api\/?$/, "")}${normalizedPath}`;
-  } else if (path.startsWith("/api/loans")) {
-    const loansHost =
-      import.meta.env.VITE_LOANS_API_URL ||
-      (API_BASE_URL && API_BASE_URL.includes(":8081")
-        ? API_BASE_URL.replace(":8081/api", ":8082")
-        : "");
-    url = loansHost ? `${loansHost}${path}` : path;
-  } else if (
-    path.startsWith("/api/payments") ||
-    path.startsWith("/api/beneficiaries") ||
-    path.startsWith("/api/settlement")
-  ) {
-    const paymentsHost =
-      import.meta.env.VITE_PAYMENTS_API_URL ||
-      (API_BASE_URL && API_BASE_URL.includes(":8081")
-        ? API_BASE_URL.replace(":8081/api", ":8083")
-        : "");
-    url = paymentsHost ? `${paymentsHost}${path}` : path;
-  } else if (
-    path.startsWith("/api/kyc") ||
-    path.startsWith("/api/compliance")
-  ) {
-    const kycHost =
-      import.meta.env.VITE_KYC_API_URL ||
-      (API_BASE_URL && API_BASE_URL.includes(":8081")
-        ? API_BASE_URL.replace(":8081/api", ":8084")
-        : "");
-    url = kycHost ? `${kycHost}${path}` : path;
-  } else if (path.startsWith("/api/notifications") || path.startsWith("/notifications")) {
-    const notificationHost =
-      import.meta.env.VITE_NOTIFICATIONS_API_URL ||
-      (API_BASE_URL && API_BASE_URL.includes(":8081")
-        ? API_BASE_URL.replace(":8081/api", ":8085")
-        : "");
-    const cleanPath = path.startsWith("/api") ? path : `/api${path}`;
-    url = notificationHost ? `${notificationHost}${cleanPath}` : cleanPath;
-  } else if (path.startsWith("/api/")) {
-    url = `${API_BASE_URL.replace(/\/api\/?$/, "")}${path}`;
-  } else {
-    url = `${API_BASE_URL}${path}`;
+
+    if (API_BASE_URL && API_BASE_URL.includes(":8080")) {
+      // Single Unified API Gateway (Port 8080)
+      url = `${API_BASE_URL.replace(/\/api\/?$/, "")}${normalizedPath}`;
+    } else if (normalizedPath.startsWith("/api/loans")) {
+      const loansHost =
+        import.meta.env.VITE_LOANS_API_URL ||
+        (API_BASE_URL && API_BASE_URL.includes(":8081")
+          ? API_BASE_URL.replace(":8081/api", ":8082")
+          : "");
+      url = loansHost ? `${loansHost}${normalizedPath}` : normalizedPath;
+    } else if (
+      normalizedPath.startsWith("/api/payments") ||
+      normalizedPath.startsWith("/api/beneficiaries") ||
+      normalizedPath.startsWith("/api/settlement")
+    ) {
+      const paymentsHost =
+        import.meta.env.VITE_PAYMENTS_API_URL ||
+        (API_BASE_URL && API_BASE_URL.includes(":8081")
+          ? API_BASE_URL.replace(":8081/api", ":8083")
+          : "");
+      url = paymentsHost ? `${paymentsHost}${normalizedPath}` : normalizedPath;
+    } else if (
+      normalizedPath.startsWith("/api/kyc") ||
+      normalizedPath.startsWith("/api/compliance")
+    ) {
+      const kycHost =
+        import.meta.env.VITE_KYC_API_URL ||
+        (API_BASE_URL && API_BASE_URL.includes(":8081")
+          ? API_BASE_URL.replace(":8081/api", ":8084")
+          : "");
+      url = kycHost ? `${kycHost}${normalizedPath}` : normalizedPath;
+    } else if (normalizedPath.startsWith("/api/notifications")) {
+      const notificationHost =
+        import.meta.env.VITE_NOTIFICATIONS_API_URL ||
+        (API_BASE_URL && API_BASE_URL.includes(":8081")
+          ? API_BASE_URL.replace(":8081/api", ":8085")
+          : "");
+      url = notificationHost ? `${notificationHost}${normalizedPath}` : normalizedPath;
+    } else {
+      url = `${API_BASE_URL.replace(/\/api\/?$/, "")}${normalizedPath}`;
+    }
   }
 
   let response;

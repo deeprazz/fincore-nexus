@@ -11,7 +11,7 @@ public interface LoanRepository extends JpaRepository<Loan, UUID> {
     List<Loan> findByStatus(LoanStatus status);
     List<Loan> findByStatusAndNpaCategory(LoanStatus status, NpaCategory npaCategory);
 
-    @Query("SELECT SUM(l.principalAmount) FROM Loan l WHERE l.status = 'ACTIVE' AND l.disbursedAt IS NOT NULL AND YEAR(l.disbursedAt) = YEAR(CURRENT_TIMESTAMP)")
+    @Query("SELECT COALESCE(SUM(l.principalAmount), 0) FROM Loan l WHERE l.status = com.fincore.loan_service.loan.LoanStatus.ACTIVE AND l.disbursedAt IS NOT NULL AND EXTRACT(YEAR FROM l.disbursedAt) = EXTRACT(YEAR FROM CURRENT_TIMESTAMP)")
     BigDecimal sumDisbursedYTD();
 
     long countByStatus(LoanStatus status);

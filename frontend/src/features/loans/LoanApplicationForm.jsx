@@ -145,7 +145,7 @@ export function LoanApplicationForm({ onApplicationSubmitted, customers: initial
               <option value="">-- Select Customer --</option>
               {customers.map((c) => (
                 <option key={c.id} value={c.id}>
-                  {c.name || c.email} (Cust #{c.id.substring(0, 8).toUpperCase()})
+                  {c.name || c.email} — KYC: {c.kycStatus || "PENDING"} (Cust #{c.id.substring(0, 8).toUpperCase()})
                 </option>
               ))}
             </select>
@@ -162,6 +162,11 @@ export function LoanApplicationForm({ onApplicationSubmitted, customers: initial
             />
           )}
           {loadingCustomers && <span className="field-help">Loading customers list...</span>}
+          {customers.find((c) => c.id === formData.customerId && c.kycStatus !== "VERIFIED") && (
+            <span className="field-help" style={{ color: "#f59e0b", display: "block", marginTop: "4px", fontSize: "11px" }}>
+              ⚠️ Customer KYC status is <strong>{customers.find((c) => c.id === formData.customerId)?.kycStatus || "PENDING"}</strong>. Loan underwriting requires verified KYC. You can verify this customer in the Customers / KYC tab.
+            </span>
+          )}
         </div>
 
         <div className="form-field">

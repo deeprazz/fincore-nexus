@@ -11,9 +11,12 @@ public interface EmiScheduleRepository extends JpaRepository<EmiSchedule, UUID> 
     List<EmiSchedule> findByLoanIdOrderByInstallmentNumberAsc(UUID loanId);
     List<EmiSchedule> findByLoanIdAndStatus(UUID loanId, EmiStatus status);
 
-    @Query("SELECT e FROM EmiSchedule e WHERE e.dueDate <= :today AND e.status = 'PENDING'")
+    @Query("SELECT e FROM EmiSchedule e WHERE e.dueDate <= :today AND e.status = com.fincore.loan_service.emi.EmiStatus.PENDING")
     List<EmiSchedule> findDueEmis(@Param("today") LocalDate today);
 
-    @Query("SELECT e FROM EmiSchedule e WHERE e.status = 'OVERDUE'")
-    List<EmiSchedule> findOverdueEmis();
+    List<EmiSchedule> findByStatus(EmiStatus status);
+
+    default List<EmiSchedule> findOverdueEmis() {
+        return findByStatus(EmiStatus.OVERDUE);
+    }
 }

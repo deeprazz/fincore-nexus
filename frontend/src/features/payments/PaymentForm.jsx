@@ -83,24 +83,18 @@ export default function PaymentForm({
       {/* Rail Selection */}
       <div>
         <label className="block text-sm font-semibold mb-2">Select Transfer Rail</label>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <div className="rails-grid">
           {RAILS.map((rail) => (
             <div
               key={rail.id}
               onClick={() => setPaymentRail(rail.id)}
-              className={`cursor-pointer p-3 rounded-lg border text-left transition-all ${
-                paymentRail === rail.id
-                  ? "border-primary bg-primary-light shadow-sm"
-                  : "border-border hover:border-muted"
-              }`}
+              className={`rail-card ${paymentRail === rail.id ? "active" : ""}`}
             >
-              <div className="flex items-center justify-between mb-1">
-                <span className="font-bold text-sm">{rail.id}</span>
-                <span className="text-2xs bg-surface px-1.5 py-0.5 rounded border text-muted">
-                  {rail.badge}
-                </span>
+              <div className="rail-card-header">
+                <span className="rail-card-title">{rail.id}</span>
+                <span className="rail-card-badge">{rail.badge}</span>
               </div>
-              <div className="text-xs text-muted">Max: {rail.limit}</div>
+              <div className="rail-card-limit">Max: {rail.limit}</div>
             </div>
           ))}
         </div>
