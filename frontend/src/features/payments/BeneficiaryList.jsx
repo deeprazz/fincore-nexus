@@ -76,14 +76,19 @@ export default function BeneficiaryList({
 
             <div className="flex items-center gap-2 pt-3 border-t">
               {!isVerified ? (
-                <Button
-                  size="sm"
-                  variant="primary"
-                  onClick={() => handleVerify(b.id)}
-                  loading={verifyingId === b.id}
-                >
-                  Verify Penny-Drop
-                </Button>
+                <div className="flex items-center gap-1.5">
+                  <Button
+                    size="sm"
+                    variant="primary"
+                    onClick={() => handleVerify(b.id)}
+                    loading={verifyingId === b.id}
+                  >
+                    Verify Penny-Drop
+                  </Button>
+                  <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 border border-amber-300">
+                    SIMULATED
+                  </span>
+                </div>
               ) : (
                 onSelectForPayment && (
                   <Button

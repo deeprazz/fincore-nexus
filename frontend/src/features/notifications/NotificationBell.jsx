@@ -88,7 +88,10 @@ export default function NotificationBell() {
                   <p>{n.content}</p>
                   <div className="notification-item-footer">
                     <span>To: {n.recipient}</span>
-                    <span className="status-badge verified">{n.status}</span>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 border border-amber-300">SIMULATED</span>
+                      <span className="status-badge verified">{n.status}</span>
+                    </div>
                   </div>
                 </div>
               ))

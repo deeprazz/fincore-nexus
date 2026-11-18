@@ -20,7 +20,10 @@ export default function OcrResultPanel({ application }) {
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-2">
           <FileText className="w-5 h-5 text-indigo-600" />
-          <h3 className="font-semibold text-slate-800">OCR Extraction & Verification</h3>
+          <h3 className="font-semibold text-slate-800">OCR Extraction &amp; Verification</h3>
+          <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-amber-100 text-amber-800 border border-amber-300">
+            SIMULATED FALLBACK
+          </span>
         </div>
         <span
           className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border ${

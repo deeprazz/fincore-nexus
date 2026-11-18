@@ -6,9 +6,9 @@ services:
     image: postgres:17
     container_name: fincore-postgres
     environment:
-      POSTGRES_DB: fincore
-      POSTGRES_USER: fincore
-      POSTGRES_PASSWORD: fincore_dev
+      POSTGRES_DB: ${POSTGRES_DB:-fincore}
+      POSTGRES_USER: ${POSTGRES_USER:-fincore}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-fincore_dev}
     ports:
       - "5432:5432"
     volumes:
@@ -36,7 +36,7 @@ services:
       echo 'All FinCore microservice databases provisioned successfully.';
       "
     environment:
-      PGPASSWORD: fincore_dev
+      PGPASSWORD: ${POSTGRES_PASSWORD:-fincore_dev}
 
   redis:
     image: redis:7-alpine
@@ -104,14 +104,14 @@ services:
       - "8081:8081"
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/fincore
-      SPRING_DATASOURCE_USERNAME: fincore
-      SPRING_DATASOURCE_PASSWORD: fincore_dev
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-fincore}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-fincore_dev}
       SPRING_DATA_REDIS_HOST: redis
       SPRING_DATA_REDIS_PORT: 6379
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
-      FINCORE_SECURITY_TELLER_PASSWORD: Teller@123
-      FINCORE_SECURITY_MANAGER_PASSWORD: Manager@123
-      FINCORE_SECURITY_ADMIN_PASSWORD: Admin@123
+      FINCORE_SECURITY_TELLER_PASSWORD: ${FINCORE_TELLER_PASSWORD:-Teller@123}
+      FINCORE_SECURITY_MANAGER_PASSWORD: ${FINCORE_MANAGER_PASSWORD:-Manager@123}
+      FINCORE_SECURITY_ADMIN_PASSWORD: ${FINCORE_ADMIN_PASSWORD:-Admin@123}
     depends_on:
       postgres:
         condition: service_healthy
@@ -131,8 +131,8 @@ services:
       - "8082:8082"
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/fincore_loan
-      SPRING_DATASOURCE_USERNAME: fincore
-      SPRING_DATASOURCE_PASSWORD: fincore_dev
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-fincore}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-fincore_dev}
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
       CORE_BANKING_URL: http://core-banking:8081
     depends_on:
@@ -152,8 +152,8 @@ services:
       - "8083:8083"
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/fincore_payment
-      SPRING_DATASOURCE_USERNAME: fincore
-      SPRING_DATASOURCE_PASSWORD: fincore_dev
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-fincore}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-fincore_dev}
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
       PAYMENT_CORE_BANKING_URL: http://core-banking:8081
     depends_on:
@@ -173,8 +173,9 @@ services:
       - "8084:8084"
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/fincore_kyc
-      SPRING_DATASOURCE_USERNAME: fincore
-      SPRING_DATASOURCE_PASSWORD: fincore_dev
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-fincore}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-fincore_dev}
+      KYC_AES_SECRET_KEY: ${KYC_AES_SECRET_KEY:-FinCoreNexusKycSecretKey256BitSecure}
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
       KYC_CORE_BANKING_URL: http://core-banking:8081
     depends_on:
@@ -194,8 +195,8 @@ services:
       - "8085:8085"
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/fincore_notification
-      SPRING_DATASOURCE_USERNAME: fincore
-      SPRING_DATASOURCE_PASSWORD: fincore_dev
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-fincore}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-fincore_dev}
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
     depends_on:
       postgres:

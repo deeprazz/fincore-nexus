@@ -5,9 +5,9 @@ spring:
   application:
     name: kyc-service
   datasource:
-    url: jdbc:postgresql://localhost:5432/fincore_kyc
-    username: fincore
-    password: fincore_dev
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/fincore_kyc}
+    username: ${SPRING_DATASOURCE_USERNAME:fincore}
+    password: ${SPRING_DATASOURCE_PASSWORD:fincore_dev}
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
@@ -40,8 +40,8 @@ management:
 
 kyc:
   encryption:
-    # 256-bit AES key (32 bytes UTF-8)
-    secret-key: "FinCoreNexusKycSecretKey256BitSecure"
+    # 256-bit AES key (32 bytes UTF-8 from env)
+    secret-key: ${KYC_AES_SECRET_KEY:FinCoreNexusKycSecretKey256BitSecure}
   storage:
     upload-dir: "target/uploads/kyc"
   core-banking:

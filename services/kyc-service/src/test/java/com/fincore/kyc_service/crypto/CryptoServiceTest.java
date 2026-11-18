@@ -2,6 +2,7 @@ package com.fincore.kyc_service.crypto;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.mock.env.MockEnvironment;
 
 import java.nio.charset.StandardCharsets;
 
@@ -31,5 +32,25 @@ class CryptoServiceTest {
         String decryptedText = new String(decryptedBytes, StandardCharsets.UTF_8);
 
         assertEquals(originalText, decryptedText);
+    }
+
+    @Test
+    void shouldRefuseToStartInProductionWithDefaultDevKey() {
+        MockEnvironment prodEnv = new MockEnvironment();
+        prodEnv.setActiveProfiles("prod");
+
+        assertThrows(IllegalStateException.class, () -> {
+            new CryptoService(CryptoService.DEFAULT_DEV_KEY, prodEnv);
+        });
+    }
+
+    @Test
+    void shouldAllowDefaultDevKeyInDevOrTestProfile() {
+        MockEnvironment devEnv = new MockEnvironment();
+        devEnv.setActiveProfiles("dev", "test");
+
+        assertDoesNotThrow(() -> {
+            new CryptoService(CryptoService.DEFAULT_DEV_KEY, devEnv);
+        });
     }
 }

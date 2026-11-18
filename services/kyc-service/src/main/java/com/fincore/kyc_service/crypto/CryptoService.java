@@ -1,6 +1,7 @@
 package com.fincore.kyc_service.crypto;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.Cipher;
@@ -9,11 +10,14 @@ import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
+import java.util.Arrays;
 import java.util.Base64;
+import java.util.List;
 
 @Service
 public class CryptoService {
 
+    public static final String DEFAULT_DEV_KEY = "FinCoreNexusKycSecretKey256BitSecure";
     private static final String ALGORITHM = "AES/GCM/NoPadding";
     private static final int GCM_TAG_LENGTH = 128;
     private static final int IV_LENGTH = 12;
@@ -21,11 +25,30 @@ public class CryptoService {
     private final SecretKey secretKey;
     private final SecureRandom secureRandom = new SecureRandom();
 
-    public CryptoService(@Value("${kyc.encryption.secret-key:FinCoreNexusKycSecretKey256BitSecure}") String rawKey) {
+    public CryptoService(
+            @Value("${kyc.encryption.secret-key:" + DEFAULT_DEV_KEY + "}") String rawKey,
+            Environment env) {
+
+        if (env != null) {
+            List<String> activeProfiles = Arrays.asList(env.getActiveProfiles());
+            boolean isNonDevProfile = activeProfiles.contains("prod") || activeProfiles.contains("production");
+
+            if (isNonDevProfile && DEFAULT_DEV_KEY.equals(rawKey)) {
+                throw new IllegalStateException(
+                        "FATAL SECURITY VIOLATION: KYC Service cannot start in a non-dev / production profile " +
+                        "using the default development AES key. Provide a secure key via the KYC_AES_SECRET_KEY environment variable."
+                );
+            }
+        }
+
         byte[] keyBytes = rawKey.getBytes(StandardCharsets.UTF_8);
         byte[] key256 = new byte[32];
         System.arraycopy(keyBytes, 0, key256, 0, Math.min(keyBytes.length, 32));
         this.secretKey = new SecretKeySpec(key256, "AES");
+    }
+
+    public CryptoService(String rawKey) {
+        this(rawKey, null);
     }
 
     public record EncryptedResult(byte[] cipherBytes, String ivBase64) {}
