@@ -58,13 +58,40 @@ export function AccountForm({ customers = [], onAccountCreated }) {
             disabled={loading || !customers.length}
           >
             <option value="">Select customer</option>
-            {customers.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name} — {c.email} ({c.kycStatus})
-              </option>
-            ))}
+            {customers.map((c) => {
+              const aadhaarShort = c.aadhaarNumber ? `Aadhaar: •••• ${c.aadhaarNumber.slice(-4)}` : "";
+              const pan = c.panNumber ? `PAN: ${c.panNumber}` : "";
+              const phone = c.phoneNumber ? `Ph: ${c.phoneNumber}` : "";
+              const extra = [phone, aadhaarShort, pan].filter(Boolean).join(" | ");
+              return (
+                <option key={c.id} value={c.id}>
+                  {c.name} ({c.email}) {extra ? `— ${extra}` : ""} [{c.kycStatus || "PENDING"}]
+                </option>
+              );
+            })}
           </select>
         </label>
+        {customerId && (() => {
+          const selected = customers.find((c) => c.id === customerId);
+          if (selected && selected.kycStatus !== "VERIFIED") {
+            return (
+              <div
+                style={{
+                  padding: "10px 14px",
+                  background: "rgba(245, 158, 11, 0.12)",
+                  border: "1px solid rgba(245, 158, 11, 0.35)",
+                  borderRadius: "8px",
+                  fontSize: "12px",
+                  color: "#fbbf24",
+                }}
+              >
+                ⚠️ <strong>KYC Compliance Warning:</strong> {selected.name} has KYC status{" "}
+                <strong>{selected.kycStatus || "PENDING"}</strong>. Please confirm their KYC in the <strong>KYC Hub</strong> or <strong>Customers</strong> tab before issuing an account.
+              </div>
+            );
+          }
+          return null;
+        })()}
         <label>
           Initial balance (₹)
           <input

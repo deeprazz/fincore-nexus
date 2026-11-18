@@ -43,40 +43,51 @@ try {
 }
 
 if ($dockerRunning) {
-    $runningNames = docker ps --format "{{.Names}}" 2>&1
-    $allNames = docker ps -a --format "{{.Names}}" 2>&1
+    $runningNames = @(docker ps --format "{{.Names}}" 2>&1 | ForEach-Object { "$_".Trim() })
     $requiredContainers = @("fincore-postgres", "fincore-redis", "fincore-kafka")
     
-    $missingFromRunning = @()
+    $needsStart = $false
     foreach ($name in $requiredContainers) {
         if ($runningNames -notcontains $name) {
-            $missingFromRunning += $name
+            $needsStart = $true
+            break
         }
     }
 
-    if ($missingFromRunning.Count -eq 0) {
+    if (-not $needsStart) {
         Write-Host "  -> [OK] Postgres, Redis, and Kafka containers are already running and healthy." -ForegroundColor Green
     } else {
-        # Check if existing containers are merely stopped
-        $toStart = @()
-        $toCreate = @()
-        foreach ($name in $missingFromRunning) {
-            if ($allNames -contains $name) {
-                $toStart += $name
-            } else {
-                $toCreate += $name
-            }
-        }
-
-        if ($toStart.Count -gt 0) {
-            Write-Host "  -> Starting existing containers: $($toStart -join ', ')..." -ForegroundColor Cyan
-            docker start $toStart | Out-Null
-        }
-
-        if ($toCreate.Count -gt 0) {
-            Write-Host "  -> Creating missing backing services via docker compose..." -ForegroundColor Cyan
+        Write-Host "  -> Launching backing services via Docker Compose..." -ForegroundColor Cyan
+        $composeOutput = docker compose up -d --remove-orphans postgres db-init redis kafka 2>&1
+        if ($LASTEXITCODE -ne 0) {
+            Write-Host "  -> Conflict detected ($composeOutput). Recreating stale containers..." -ForegroundColor Yellow
+            docker rm -f fincore-postgres fincore-db-init fincore-redis fincore-kafka 2>&1 | Out-Null
             docker compose up -d postgres db-init redis kafka
         }
+    }
+
+    # Ensure all microservice PostgreSQL databases are created and ready
+    Write-Host "  -> Verifying microservice database health..." -ForegroundColor Cyan
+    $pgReady = $false
+    for ($i = 0; $i -lt 15; $i++) {
+        $null = docker exec fincore-postgres pg_isready -U fincore -d fincore 2>&1
+        if ($LASTEXITCODE -eq 0) {
+            $pgReady = $true
+            break
+        }
+        Start-Sleep -Seconds 1
+    }
+
+    if ($pgReady) {
+        $dbs = @("fincore_loan", "fincore_payment", "fincore_kyc", "fincore_notification")
+        foreach ($db in $dbs) {
+            $exists = docker exec fincore-postgres psql -U fincore -d fincore -tc "SELECT 1 FROM pg_database WHERE datname = '$db'" 2>&1
+            if ($exists -notmatch "1") {
+                Write-Host "     Creating microservice database: $db..." -ForegroundColor DarkCyan
+                docker exec fincore-postgres psql -U fincore -d fincore -c "CREATE DATABASE $db;" 2>&1 | Out-Null
+            }
+        }
+        Write-Host "  -> [OK] All 4 microservice databases verified (fincore_loan, fincore_payment, fincore_kyc, fincore_notification)." -ForegroundColor Green
     }
 } else {
     Write-Host "  -> [NOTICE] Docker is not running or not accessible in current context." -ForegroundColor DarkYellow
@@ -87,8 +98,13 @@ if ($dockerRunning) {
 # Helper: Check if a TCP port is in use
 # ------------------------------------------------------------------------------
 function Test-PortInUse([int]$Port) {
-    $conn = Get-NetTCPConnection -LocalPort $Port -State Listen -ErrorAction SilentlyContinue
-    return ($null -ne $conn)
+    try {
+        $conn = Get-NetTCPConnection -LocalPort $Port -State Listen -ErrorAction Stop
+        return ($null -ne $conn)
+    } catch {
+        $netstatMatch = netstat -ano 2>$null | Select-String ":$Port\s+.*LISTENING"
+        return ($null -ne $netstatMatch)
+    }
 }
 
 # ------------------------------------------------------------------------------
@@ -121,7 +137,7 @@ foreach ($svc in $services) {
     Write-Host "  [START] Starting $svcName on port $svcPort..." -ForegroundColor Cyan
 
     $svcScript = @"
-`$host.UI.RawUI.WindowTitle = 'FinCore [$svcPort] $svcName'
+try { [Console]::Title = 'FinCore [$svcPort] $svcName' } catch {}
 `$env:JAVA_HOME = '$JavaHome'
 Set-Location '$svcPath'
 Write-Host '==================================================================' -ForegroundColor Cyan
@@ -146,7 +162,7 @@ if (-not $NoFrontend) {
         $frontendPath = Join-Path $RootDir "frontend"
         Write-Host "  [START] Starting React 19 Frontend on port 5173..." -ForegroundColor Cyan
         $frontendScript = @"
-`$host.UI.RawUI.WindowTitle = 'FinCore [5173] React Frontend'
+try { [Console]::Title = 'FinCore [5173] React Frontend' } catch {}
 Set-Location '$frontendPath'
 Write-Host '==================================================================' -ForegroundColor Cyan
 Write-Host ' [FinCore] Starting React 19 Frontend on Port 5173... ' -ForegroundColor Cyan

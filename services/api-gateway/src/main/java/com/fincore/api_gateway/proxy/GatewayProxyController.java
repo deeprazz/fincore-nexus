@@ -13,9 +13,11 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.HttpURLConnection;
 import java.net.URI;
-import java.net.URL;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.time.Duration;
 import java.util.*;
 
 @RestController
@@ -24,6 +26,7 @@ public class GatewayProxyController {
     private static final Logger log = LoggerFactory.getLogger(GatewayProxyController.class);
 
     private final RateLimiterService rateLimiterService;
+    private final HttpClient httpClient;
 
     @Value("${gateway.routes.core:http://localhost:8081}")
     private String coreUrl;
@@ -42,6 +45,10 @@ public class GatewayProxyController {
 
     public GatewayProxyController(RateLimiterService rateLimiterService) {
         this.rateLimiterService = rateLimiterService;
+        this.httpClient = HttpClient.newBuilder()
+                .connectTimeout(Duration.ofSeconds(10))
+                .followRedirects(HttpClient.Redirect.NEVER)
+                .build();
     }
 
     @RequestMapping("/api/**")
@@ -61,61 +68,64 @@ public class GatewayProxyController {
 
         log.debug("Proxying {} {} -> {}", request.getMethod(), path, targetUrlString);
 
-        URL targetUrl = URI.create(targetUrlString).toURL();
-        HttpURLConnection connection = (HttpURLConnection) targetUrl.openConnection();
-        connection.setRequestMethod(request.getMethod());
-        connection.setConnectTimeout(10000);
-        connection.setReadTimeout(30000);
-        connection.setInstanceFollowRedirects(false);
+        HttpRequest.Builder reqBuilder = HttpRequest.newBuilder()
+                .uri(URI.create(targetUrlString))
+                .timeout(Duration.ofSeconds(30));
 
         // Copy incoming headers
         Enumeration<String> headerNames = request.getHeaderNames();
         while (headerNames.hasMoreElements()) {
             String name = headerNames.nextElement();
-            if ("host".equalsIgnoreCase(name) || "content-length".equalsIgnoreCase(name)) {
+            if ("host".equalsIgnoreCase(name) || "content-length".equalsIgnoreCase(name) || "connection".equalsIgnoreCase(name)) {
                 continue;
             }
             Enumeration<String> values = request.getHeaders(name);
             while (values.hasMoreElements()) {
-                connection.addRequestProperty(name, values.nextElement());
+                reqBuilder.header(name, values.nextElement());
             }
         }
 
-        // Copy body if present
+        // Handle method and body
         boolean hasBody = "POST".equalsIgnoreCase(request.getMethod())
                 || "PUT".equalsIgnoreCase(request.getMethod())
                 || "PATCH".equalsIgnoreCase(request.getMethod());
 
         if (hasBody) {
-            connection.setDoOutput(true);
-            try (InputStream in = request.getInputStream(); OutputStream out = connection.getOutputStream()) {
+            byte[] bodyBytes = request.getInputStream().readAllBytes();
+            reqBuilder.method(request.getMethod(), HttpRequest.BodyPublishers.ofByteArray(bodyBytes));
+        } else if ("DELETE".equalsIgnoreCase(request.getMethod())) {
+            reqBuilder.DELETE();
+        } else {
+            reqBuilder.GET();
+        }
+
+        try {
+            HttpResponse<InputStream> targetResponse = httpClient.send(reqBuilder.build(), HttpResponse.BodyHandlers.ofInputStream());
+            response.setStatus(targetResponse.statusCode());
+
+            // Copy response headers (skip hop-by-hop and downstream CORS headers managed by Gateway CorsFilter)
+            targetResponse.headers().map().forEach((headerName, values) -> {
+                String lower = headerName.toLowerCase(Locale.ROOT);
+                if ("transfer-encoding".equals(lower)
+                        || "content-length".equals(lower)
+                        || "connection".equals(lower)
+                        || lower.startsWith("access-control-")) {
+                    return;
+                }
+                for (String val : values) {
+                    response.addHeader(headerName, val);
+                }
+            });
+
+            try (InputStream in = targetResponse.body(); OutputStream out = response.getOutputStream()) {
                 in.transferTo(out);
                 out.flush();
             }
-        }
-
-        // Handle target response
-        int statusCode = connection.getResponseCode();
-        response.setStatus(statusCode);
-
-        // Copy response headers
-        for (Map.Entry<String, List<String>> entry : connection.getHeaderFields().entrySet()) {
-            String headerName = entry.getKey();
-            if (headerName == null || "transfer-encoding".equalsIgnoreCase(headerName)) {
-                continue;
-            }
-            for (String val : entry.getValue()) {
-                response.addHeader(headerName, val);
-            }
-        }
-
-        // Stream response body back
-        InputStream responseStream = (statusCode >= 400) ? connection.getErrorStream() : connection.getInputStream();
-        if (responseStream != null) {
-            try (InputStream in = responseStream; OutputStream out = response.getOutputStream()) {
-                in.transferTo(out);
-                out.flush();
-            }
+        } catch (Exception e) {
+            log.error("Proxy error forwarding to {}: {}", targetUrlString, e.getMessage());
+            response.setStatus(HttpStatus.SERVICE_UNAVAILABLE.value());
+            response.setContentType("application/json");
+            response.getWriter().write("{\"error\": \"Service unavailable: " + e.getMessage() + "\"}");
         }
     }
 

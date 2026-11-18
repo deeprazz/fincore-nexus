@@ -1,4 +1,3 @@
-
 package com.fincore.core_banking_services.customer;
 
 import jakarta.persistence.*;
@@ -17,6 +16,15 @@ public class Customer {
 
     @Column(nullable = false, unique = true)
     private String email;
+
+    @Column(name = "phone_number")
+    private String phoneNumber;
+
+    @Column(name = "aadhaar_number")
+    private String aadhaarNumber;
+
+    @Column(name = "pan_number")
+    private String panNumber;
 
     @Column(name = "password_hash")
     private String passwordHash;
@@ -41,14 +49,21 @@ public class Customer {
     }
 
     public Customer(String name, String email) {
-        this(name, email, null);
+        this(name, email, null, null, null, null);
     }
 
     public Customer(String name, String email, String passwordHash) {
+        this(name, email, passwordHash, null, null, null);
+    }
+
+    public Customer(String name, String email, String passwordHash, String phoneNumber, String aadhaarNumber, String panNumber) {
         this.id = UUID.randomUUID();
         this.name = name;
         this.email = email;
         this.passwordHash = passwordHash;
+        this.phoneNumber = phoneNumber;
+        this.aadhaarNumber = aadhaarNumber;
+        this.panNumber = panNumber;
         this.kycStatus = KycStatus.PENDING;
         this.createdAt = Instant.now();
     }
@@ -65,7 +80,33 @@ public class Customer {
         return email;
     }
 
+    public String getPhoneNumber() {
+        return phoneNumber;
+    }
+
+    public void setPhoneNumber(String phoneNumber) {
+        this.phoneNumber = phoneNumber;
+    }
+
+    public String getAadhaarNumber() {
+        return aadhaarNumber;
+    }
+
+    public void setAadhaarNumber(String aadhaarNumber) {
+        this.aadhaarNumber = aadhaarNumber;
+    }
+
+    public String getPanNumber() {
+        return panNumber;
+    }
+
+    public void setPanNumber(String panNumber) {
+        this.panNumber = panNumber;
+    }
+
     public String getPasswordHash() { return passwordHash; }
+
+    public void setPasswordHash(String passwordHash) { this.passwordHash = passwordHash; }
 
     public String getTransactionPinHash() { return transactionPinHash; }
 

@@ -27,21 +27,35 @@ describe("CustomerForm component", () => {
 
     render(<CustomerForm onCustomerCreated={onCustomerCreated} />);
 
-    const nameInput = screen.getByPlaceholderText("Enter customer's full name");
-    const emailInput = screen.getByPlaceholderText("customer@example.com");
-    const submitBtn = screen.getByRole("button", { name: /Register Customer/i });
+    const nameInput = screen.getByPlaceholderText(/Ramesh Kumar/i);
+    const emailInput = screen.getByPlaceholderText(/ramesh@example.com/i);
+    const phoneInput = screen.getByPlaceholderText(/9876543210/i);
+    const aadhaarInput = screen.getByPlaceholderText(/1234 5678 9012/i);
+    const panInput = screen.getByPlaceholderText(/ABCDE1234F/i);
+    const submitBtn = screen.getByRole("button", { name: /Register Customer Profile/i });
 
     fireEvent.change(nameInput, { target: { value: "Alice Smith" } });
     fireEvent.change(emailInput, { target: { value: "alice@example.com" } });
+    fireEvent.change(phoneInput, { target: { value: "9876543210" } });
+    fireEvent.change(aadhaarInput, { target: { value: "123456789012" } });
+    fireEvent.change(panInput, { target: { value: "ABCDE1234F" } });
     fireEvent.click(submitBtn);
 
     await waitFor(() => {
       expect(createCustomerSpy).toHaveBeenCalledWith(
-        "Alice Smith",
-        "alice@example.com",
+        {
+          name: "Alice Smith",
+          email: "alice@example.com",
+          phoneNumber: "9876543210",
+          aadhaarNumber: "123456789012",
+          panNumber: "ABCDE1234F",
+          password: "Customer@123",
+        },
         { username: "teller", password: "123" }
       );
-      expect(setSuccess).toHaveBeenCalledWith("Customer profile created successfully.");
+      expect(setSuccess).toHaveBeenCalledWith(
+        "Customer profile created successfully with PENDING KYC. You can now confirm their KYC below."
+      );
       expect(onCustomerCreated).toHaveBeenCalled();
     });
   });

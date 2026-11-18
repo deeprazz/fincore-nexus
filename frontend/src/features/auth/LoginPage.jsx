@@ -1,28 +1,45 @@
-import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { Activity, ShieldCheck } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { Link, useNavigate, useLocation } from "react-router-dom";
+import { Activity, ShieldCheck, CheckCircle2 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import ThemeToggle from "../../components/ui/ThemeToggle";
 
 export function LoginPage() {
-  const [activeTab, setActiveTab] = useState("staff");
-  const [username, setUsername] = useState("teller");
-  const [password, setPassword] = useState("Teller@123");
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { login } = useAuth();
+
+  const [activeTab, setActiveTab] = useState(
+    location.state?.registeredEmail ? "customer" : "staff"
+  );
+  const [username, setUsername] = useState(
+    location.state?.registeredEmail || "teller"
+  );
+  const [password, setPassword] = useState(
+    location.state?.registeredEmail ? "" : "Teller@123"
+  );
+  const [successMsg, setSuccessMsg] = useState(location.state?.message || "");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const { login } = useAuth();
-  const navigate = useNavigate();
+  useEffect(() => {
+    if (location.state?.registeredEmail) {
+      setActiveTab("customer");
+      setUsername(location.state.registeredEmail);
+      setPassword("");
+    }
+  }, [location.state]);
 
   const handleTabChange = (tab) => {
     setActiveTab(tab);
     setError("");
+    setSuccessMsg("");
     if (tab === "staff") {
       setUsername("teller");
       setPassword("Teller@123");
     } else {
-      setUsername("aman@example.com");
-      setPassword("Aman@123");
+      setUsername(location.state?.registeredEmail || "");
+      setPassword("");
     }
   };
 
@@ -79,6 +96,27 @@ export function LoginPage() {
           </button>
         </div>
 
+        {successMsg && (
+          <div
+            className="alert-success"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+              padding: "10px 14px",
+              background: "rgba(16, 185, 129, 0.15)",
+              border: "1px solid rgba(16, 185, 129, 0.4)",
+              color: "#10b981",
+              borderRadius: "8px",
+              fontSize: "12px",
+              marginBottom: "12px",
+            }}
+          >
+            <CheckCircle2 size={16} style={{ flexShrink: 0 }} />
+            <span>{successMsg}</span>
+          </div>
+        )}
+
         {error && <div className="alert-error">{error}</div>}
 
         <label>
@@ -111,20 +149,13 @@ export function LoginPage() {
         </button>
 
         <div className="login-quick-demo">
-          <span className="quick-demo-label">Quick Sign-in:</span>
+          <span className="quick-demo-label">Staff Sign-in:</span>
           <button
             type="button"
             className="quick-demo-pill"
             onClick={() => handleTabChange("staff")}
           >
             Staff (teller)
-          </button>
-          <button
-            type="button"
-            className="quick-demo-pill"
-            onClick={() => handleTabChange("customer")}
-          >
-            Customer (aman)
           </button>
         </div>
 

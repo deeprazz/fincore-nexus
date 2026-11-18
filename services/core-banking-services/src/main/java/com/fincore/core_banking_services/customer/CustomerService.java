@@ -38,7 +38,7 @@ public class CustomerService {
 
     /** Public self-registration always creates a CUSTOMER with KYC pending. */
     @Transactional
-    public CustomerResponse selfRegister(String name, String email, String rawPassword) {
+    public CustomerResponse selfRegister(String name, String email, String rawPassword, String phoneNumber, String aadhaarNumber, String panNumber) {
         String normalizedName = name == null ? "" : name.trim();
         String normalizedEmail = email == null ? "" : email.trim().toLowerCase(java.util.Locale.ROOT);
 
@@ -52,9 +52,20 @@ public class CustomerService {
         }
 
         Customer saved = repo.save(new Customer(
-                normalizedName, normalizedEmail, passwordEncoder.encode(rawPassword)));
+                normalizedName,
+                normalizedEmail,
+                passwordEncoder.encode(rawPassword),
+                phoneNumber != null ? phoneNumber.trim() : null,
+                aadhaarNumber != null ? aadhaarNumber.trim() : null,
+                panNumber != null ? panNumber.trim().toUpperCase(java.util.Locale.ROOT) : null
+        ));
         audit("CUSTOMER_SELF_REGISTERED", saved, "self-registration; kycStatus=PENDING");
         return CustomerResponse.from(saved);
+    }
+
+    @Transactional
+    public CustomerResponse selfRegister(String name, String email, String rawPassword) {
+        return selfRegister(name, email, rawPassword, null, null, null);
     }
 
     private void audit(String action, Customer customer, String details) {
@@ -71,14 +82,26 @@ public class CustomerService {
 
     @Transactional
     public CustomerResponse create(CreateCustomerRequest req) {
-        if (repo.existsByEmail(req.email())) {
+        String normalizedEmail = req.email() == null ? "" : req.email().trim().toLowerCase(java.util.Locale.ROOT);
+        if (repo.existsByEmail(normalizedEmail)) {
             throw new ResponseStatusException(
                     HttpStatus.CONFLICT,
                     "Email already registered"
             );
         }
 
-        Customer saved = repo.save(new Customer(req.name(), req.email()));
+        String passwordHash = (req.password() != null && !req.password().isBlank())
+                ? passwordEncoder.encode(req.password())
+                : passwordEncoder.encode("Customer@123");
+
+        Customer saved = repo.save(new Customer(
+                req.name().trim(),
+                normalizedEmail,
+                passwordHash,
+                req.phoneNumber() != null ? req.phoneNumber().trim() : null,
+                req.aadhaarNumber() != null ? req.aadhaarNumber().trim() : null,
+                req.panNumber() != null ? req.panNumber().trim().toUpperCase(java.util.Locale.ROOT) : null
+        ));
         audit("CUSTOMER_CREATED", saved,
                 "customer created; kycStatus=" + saved.getKycStatus());
         return CustomerResponse.from(saved);

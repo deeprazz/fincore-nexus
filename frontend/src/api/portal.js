@@ -1,9 +1,22 @@
 import { apiRequest, apiRequestWithResponse } from "./client";
 
-export function registerCustomer(name, email, password) {
+export function registerCustomer(nameOrData, email, password, phoneNumber, aadhaarNumber, panNumber) {
+  let body;
+  if (typeof nameOrData === "object" && nameOrData !== null) {
+    body = JSON.stringify(nameOrData);
+  } else {
+    body = JSON.stringify({
+      name: nameOrData,
+      email,
+      password,
+      phoneNumber,
+      aadhaarNumber,
+      panNumber,
+    });
+  }
   return apiRequest("/auth/register", {
     method: "POST",
-    body: JSON.stringify({ name, email, password }),
+    body,
   });
 }
 

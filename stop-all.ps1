@@ -30,10 +30,37 @@ if (-not $KeepFrontend) {
 $stoppedPids = @()
 
 foreach ($port in $portsToStop) {
-    $connections = Get-NetTCPConnection -LocalPort $port -State Listen -ErrorAction SilentlyContinue
-    if ($connections) {
-        foreach ($conn in $connections) {
-            $procId = $conn.OwningProcess
+    $pidsToKill = @()
+    
+    # Method 1: Get-NetTCPConnection
+    try {
+        $connections = Get-NetTCPConnection -LocalPort $port -State Listen -ErrorAction Stop
+        if ($connections) {
+            foreach ($conn in $connections) {
+                if ($conn.OwningProcess -gt 0) {
+                    $pidsToKill += $conn.OwningProcess
+                }
+            }
+        }
+    } catch {
+        # Fallback to netstat
+    }
+
+    # Method 2: netstat -ano fallback
+    try {
+        $lines = netstat -ano 2>$null | Select-String ":$port\s+.*LISTENING"
+        foreach ($line in $lines) {
+            $parts = ($line.ToString().Trim() -split '\s+')
+            $lastPart = $parts[-1]
+            if ($lastPart -match '^\d+$') {
+                $pidsToKill += [int]$lastPart
+            }
+        }
+    } catch {}
+
+    $uniquePids = @($pidsToKill | Select-Object -Unique)
+    if ($uniquePids.Count -gt 0) {
+        foreach ($procId in $uniquePids) {
             if ($procId -gt 0 -and $stoppedPids -notcontains $procId) {
                 try {
                     $proc = Get-Process -Id $procId -ErrorAction SilentlyContinue

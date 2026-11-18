@@ -7,4 +7,11 @@ import jakarta.validation.constraints.Size;
 public record CustomerRegistrationRequest(
         @NotBlank @Size(max=100) String name,
         @NotBlank @Email @Size(max=255) String email,
-        @NotBlank @Size(min=8, max=72) String password) {}
+        @NotBlank @Size(min=8, max=72) String password,
+        String phoneNumber,
+        String aadhaarNumber,
+        String panNumber) {
+    public CustomerRegistrationRequest(String name, String email, String password) {
+        this(name, email, password, null, null, null);
+    }
+}

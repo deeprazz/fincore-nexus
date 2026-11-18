@@ -19,7 +19,14 @@ public class AuthController {
     @PostMapping("/register")
     @ResponseStatus(HttpStatus.CREATED)
     public CustomerResponse register(@Valid @RequestBody CustomerRegistrationRequest request) {
-        return customers.selfRegister(request.name(), request.email(), request.password());
+        return customers.selfRegister(
+                request.name(),
+                request.email(),
+                request.password(),
+                request.phoneNumber(),
+                request.aadhaarNumber(),
+                request.panNumber()
+        );
     }
 
     @GetMapping("/me")
