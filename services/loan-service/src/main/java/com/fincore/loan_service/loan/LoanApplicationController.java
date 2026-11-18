@@ -22,8 +22,13 @@ public class LoanApplicationController {
     }
 
     @PostMapping
-    public ResponseEntity<LoanApplicationResponse> submit(@Valid @RequestBody LoanApplicationRequest req) {
-        LoanApplication app = applicationService.submitApplication(req);
+    public ResponseEntity<LoanApplicationResponse> submit(
+            @Valid @RequestBody LoanApplicationRequest req,
+            Authentication auth) {
+        String createdBy = (auth != null && auth.getName() != null && !auth.getName().isBlank())
+                ? auth.getName()
+                : "teller";
+        LoanApplication app = applicationService.submitApplication(req, createdBy);
         return ResponseEntity.ok(LoanApplicationResponse.from(app));
     }
 

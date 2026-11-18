@@ -64,6 +64,10 @@ public class LoanApplicationService {
     }
 
     public LoanApplication submitApplication(LoanApplicationRequest req) {
+        return submitApplication(req, "system");
+    }
+
+    public LoanApplication submitApplication(LoanApplicationRequest req, String createdBy) {
         // Check KYC
         String kycStatus = coreBankingClient.getCustomerKycStatus(req.getCustomerId());
         if (!"VERIFIED".equals(kycStatus)) {
@@ -98,6 +102,7 @@ public class LoanApplicationService {
         app.setEmploymentType(req.getEmploymentType());
         app.setExistingObligations(req.getExistingObligations() != null ? req.getExistingObligations() : BigDecimal.ZERO);
         app.setCreditScore(result.getScore());
+        app.setCreatedBy(createdBy != null && !createdBy.isBlank() ? createdBy : "system");
 
         if ("REJECTED".equals(result.getDecision())) {
             app.setStatus(ApplicationStatus.REJECTED);
@@ -108,7 +113,8 @@ public class LoanApplicationService {
         }
 
         LoanApplication saved = applicationRepository.save(app);
-        recordEvent(null, saved.getId(), "APPLICATION_SUBMITTED", "{\"score\":" + result.getScore() + ",\"decision\":\"" + result.getDecision() + "\"}");
+        recordEvent(null, saved.getId(), "APPLICATION_SUBMITTED",
+                "{\"score\":" + result.getScore() + ",\"decision\":\"" + result.getDecision() + "\",\"createdBy\":\"" + app.getCreatedBy() + "\"}");
         return saved;
     }
 
@@ -117,6 +123,16 @@ public class LoanApplicationService {
                 .orElseThrow(() -> new IllegalArgumentException("Application not found: " + applicationId));
         if (app.getStatus() != ApplicationStatus.UNDER_REVIEW) {
             throw new IllegalStateException("Cannot approve application in status: " + app.getStatus());
+        }
+
+        // Maker-Checker Dual Authorization Rule: Submitter cannot approve their own application
+        if (app.getCreatedBy() != null && app.getCreatedBy().equalsIgnoreCase(reviewerId)) {
+            recordEvent(null, app.getId(), "LOAN_APPROVAL_BLOCKED_MAKER_CHECKER",
+                    "{\"reviewerId\":\"" + reviewerId + "\",\"createdBy\":\"" + app.getCreatedBy() + "\",\"reason\":\"Maker cannot approve own application\"}");
+            throw new org.springframework.web.server.ResponseStatusException(
+                    org.springframework.http.HttpStatus.FORBIDDEN,
+                    "Maker-checker violation: Application cannot be approved by the creator (" + reviewerId + ")"
+            );
         }
 
         app.setStatus(ApplicationStatus.APPROVED);

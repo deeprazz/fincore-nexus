@@ -148,6 +148,16 @@ public class AccountService {
     }
 
     @Transactional
+    public AccountResponse executeDirectWithdrawal(UUID accountId, BigDecimal amount) {
+        return withdraw(accountId, amount);
+    }
+
+    @Transactional
+    public void executeDirectTransfer(UUID fromAccountId, UUID toAccountId, BigDecimal amount) {
+        transfer(new TransferRequest(fromAccountId, toAccountId, amount));
+    }
+
+    @Transactional
     public AccountResponse deposit(UUID accountId, BigDecimal amount) {
         Account account = repository.findByIdForUpdate(accountId)
                 .orElseThrow(() ->

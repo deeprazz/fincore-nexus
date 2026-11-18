@@ -15,6 +15,7 @@ public record LoanApplicationResponse(
         Integer creditScore,
         String rejectionReason,
         String reviewerId,
+        String createdBy,
         OffsetDateTime reviewedAt,
         OffsetDateTime createdAt,
         OffsetDateTime updatedAt
@@ -24,7 +25,7 @@ public record LoanApplicationResponse(
                 app.getId(), app.getCustomerId(), app.getRequestedAmount(),
                 app.getTenureMonths(), app.getPurpose(), app.getEmploymentType(),
                 app.getStatus(), app.getCreditScore(), app.getRejectionReason(),
-                app.getReviewerId(), app.getReviewedAt(), app.getCreatedAt(), app.getUpdatedAt()
+                app.getReviewerId(), app.getCreatedBy(), app.getReviewedAt(), app.getCreatedAt(), app.getUpdatedAt()
         );
     }
 }

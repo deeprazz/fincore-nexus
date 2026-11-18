@@ -19,6 +19,7 @@ import { KycStatusControl } from "./features/customers/KycStatusControl";
 import { OperationsPage } from "./features/operations/OperationsPage";
 import { TransactionsPage } from "./features/transactions/TransactionsPage";
 import { StatementPage } from "./features/statements/StatementPage";
+import { PendingApprovalsPage } from "./features/approvals/PendingApprovalsPage";
 import { AuditPage } from "./features/audit/AuditPage";
 import { SettingsPage } from "./features/settings/SettingsPage";
 import { PortalDashboard } from "./features/customer-portal/PortalDashboard";
@@ -57,6 +58,7 @@ export function App() {
                 <Route path="/kyc" element={<KycPage />} />
                 <Route path="/compliance" element={<CompliancePage />} />
                 <Route path="/operations" element={<OperationsPage />} />
+                <Route path="/approvals" element={<PendingApprovalsPage />} />
                 <Route path="/transactions" element={<TransactionsPage />} />
                 <Route path="/statements" element={<StatementPage />} />
                 <Route path="/audit" element={<AuditPage />} />

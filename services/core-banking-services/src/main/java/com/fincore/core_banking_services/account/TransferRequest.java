@@ -10,6 +10,14 @@ public class TransferRequest {
     private UUID toAccountId;
     private BigDecimal amount;
 
+    public TransferRequest() {}
+
+    public TransferRequest(UUID fromAccountId, UUID toAccountId, BigDecimal amount) {
+        this.fromAccountId = fromAccountId;
+        this.toAccountId = toAccountId;
+        this.amount = amount;
+    }
+
     public UUID getFromAccountId() {
         return fromAccountId;
     }

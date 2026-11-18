@@ -87,10 +87,10 @@ public class ComplianceService {
         checks.add(new PciControlCheck(
                 "PCI-DSS-7.1",
                 "Strict RBAC & Maker-Checker Separation",
-                "Restrict access to cardholder and KYC data by business need-to-know with dual authorization.",
+                "Restrict access to cardholder, lending, and banking transactions by business need-to-know with dual authorization (maker ≠ checker).",
                 true,
                 "PASS",
-                "Verified: Spring Security restricts KYC approvals to ROLE_MANAGER and ROLE_ADMIN. Maker-checker prevents submitter self-approval."
+                "Verified: Strict maker ≠ checker dual-control authorization enforced across KYC onboarding, lending approvals, and core banking transactions (> ₹200,000). Spring Security blocks self-approval with HTTP 403 Forbidden."
         ));
 
         // 6. Control PCI-DSS-4.1: Strong Cryptography in Transit

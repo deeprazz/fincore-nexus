@@ -98,6 +98,38 @@ class LoanSecurityRbacTest {
     }
 
     @Test
+    void makerCannotApproveOwnLoanApplication() throws Exception {
+        when(coreBankingClient.getCustomerKycStatus(any())).thenReturn("VERIFIED");
+
+        String submitJson = """
+            {
+                "customerId": "85b4fa72-8b12-4438-8b92-2c5786fdaccc",
+                "requestedAmount": 50000.00,
+                "tenureMonths": 12,
+                "purpose": "Personal",
+                "annualIncome": 600000.00,
+                "employmentType": "SALARIED",
+                "existingObligations": 0
+            }
+        """;
+
+        String res = mockMvc.perform(post("/api/loans/applications")
+                .header(HttpHeaders.AUTHORIZATION, basicAuth("manager", "Manager@123"))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(submitJson))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+
+        com.fasterxml.jackson.databind.JsonNode node = new com.fasterxml.jackson.databind.ObjectMapper().readTree(res);
+        String appId = node.get("id").asText();
+
+        // Manager attempts to self-approve -> BLOCKED with 403 Forbidden
+        mockMvc.perform(patch("/api/loans/applications/" + appId + "/approve")
+                .header(HttpHeaders.AUTHORIZATION, basicAuth("manager", "Manager@123")))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
     void unauthenticatedGetsUnauthorized() throws Exception {
         mockMvc.perform(get("/api/loans"))
                 .andExpect(status().isUnauthorized());

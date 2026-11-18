@@ -44,7 +44,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/me").authenticated()
                         .requestMatchers("/actuator/**").permitAll()
                         .requestMatchers("/api/customer-portal/**").hasRole("CUSTOMER")
-                        // Approvals: KYC verify, account unfreeze, account close strictly require MANAGER or ADMIN
+                        // Approvals: Pending approval management, KYC verify, account unfreeze, account close strictly require MANAGER or ADMIN
+                        .requestMatchers("/api/approvals/**").hasAnyRole("MANAGER", "ADMIN")
                         .requestMatchers("/api/customers/*/kyc").hasAnyRole("MANAGER", "ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/accounts/*/unfreeze").hasAnyRole("MANAGER", "ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/accounts/*/close").hasAnyRole("MANAGER", "ADMIN")

@@ -45,6 +45,9 @@ public class LoanApplication {
     @Column(name = "reviewer_id")
     private String reviewerId;
 
+    @Column(name = "created_by")
+    private String createdBy;
+
     @Column(name = "reviewed_at")
     private OffsetDateTime reviewedAt;
 
@@ -81,6 +84,8 @@ public class LoanApplication {
     public void setRejectionReason(String rejectionReason) { this.rejectionReason = rejectionReason; }
     public String getReviewerId() { return reviewerId; }
     public void setReviewerId(String reviewerId) { this.reviewerId = reviewerId; }
+    public String getCreatedBy() { return createdBy; }
+    public void setCreatedBy(String createdBy) { this.createdBy = createdBy; }
     public OffsetDateTime getReviewedAt() { return reviewedAt; }
     public void setReviewedAt(OffsetDateTime reviewedAt) { this.reviewedAt = reviewedAt; }
     public OffsetDateTime getCreatedAt() { return createdAt; }

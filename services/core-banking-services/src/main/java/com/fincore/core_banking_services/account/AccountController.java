@@ -15,9 +15,18 @@ import java.util.UUID;
 public class AccountController {
 
     private final AccountService accountService;
+    private final com.fincore.core_banking_services.approval.ApprovalService approvalService;
+
+    @org.springframework.beans.factory.annotation.Autowired
+    public AccountController(
+            AccountService accountService,
+            com.fincore.core_banking_services.approval.ApprovalService approvalService) {
+        this.accountService = accountService;
+        this.approvalService = approvalService;
+    }
 
     public AccountController(AccountService accountService) {
-        this.accountService = accountService;
+        this(accountService, null);
     }
 
     @GetMapping("/{id}")
@@ -54,9 +63,26 @@ public class AccountController {
     }
 
     @PostMapping("/{id}/withdraw")
-    public ResponseEntity<AccountResponse> withdraw(
+    public ResponseEntity<?> withdraw(
             @PathVariable UUID id,
-            @RequestBody WithdrawRequest request) {
+            @RequestBody WithdrawRequest request,
+            org.springframework.security.core.Authentication auth) {
+
+        if (approvalService != null && approvalService.isThresholdExceeded(request.getAmount())) {
+            String maker = (auth != null && auth.getName() != null && !auth.getName().isBlank())
+                    ? auth.getName()
+                    : "teller";
+            com.fincore.core_banking_services.approval.PendingApproval pending =
+                    approvalService.submitPendingApproval("WITHDRAWAL", id, null, request.getAmount(),
+                            "Large withdrawal exceeding approval threshold", maker);
+            return ResponseEntity.status(org.springframework.http.HttpStatus.ACCEPTED).body(
+                    java.util.Map.of(
+                            "status", "PENDING_APPROVAL",
+                            "approvalId", pending.getId().toString(),
+                            "message", "Withdrawal of ₹" + request.getAmount() + " exceeds threshold (₹" + approvalService.getThreshold() + ") and has been placed in PENDING_APPROVAL."
+                    )
+            );
+        }
 
         return ResponseEntity.ok(
                 accountService.withdraw(id, request.getAmount()));
@@ -72,11 +98,28 @@ public class AccountController {
     }
 
     @PostMapping("/transfer")
-    public ResponseEntity<String> transfer(
-            @RequestBody TransferRequest request) {
+    public ResponseEntity<?> transfer(
+            @RequestBody TransferRequest request,
+            org.springframework.security.core.Authentication auth) {
+
+        if (approvalService != null && approvalService.isThresholdExceeded(request.getAmount())) {
+            String maker = (auth != null && auth.getName() != null && !auth.getName().isBlank())
+                    ? auth.getName()
+                    : "teller";
+            com.fincore.core_banking_services.approval.PendingApproval pending =
+                    approvalService.submitPendingApproval("TRANSFER", request.getFromAccountId(), request.getToAccountId(),
+                            request.getAmount(), "Large transfer exceeding approval threshold", maker);
+            return ResponseEntity.status(org.springframework.http.HttpStatus.ACCEPTED).body(
+                    java.util.Map.of(
+                            "status", "PENDING_APPROVAL",
+                            "approvalId", pending.getId().toString(),
+                            "message", "Transfer of ₹" + request.getAmount() + " exceeds threshold (₹" + approvalService.getThreshold() + ") and has been placed in PENDING_APPROVAL."
+                    )
+            );
+        }
 
         accountService.transfer(request);
-        return ResponseEntity.ok("Transfer successful");
+        return ResponseEntity.ok(java.util.Map.of("status", "SUCCESS", "message", "Transfer successful"));
     }
 
     @PostMapping("/{id}/freeze")

@@ -12,6 +12,7 @@ import {
   Landmark,
   Send,
   UserCheck,
+  ShieldAlert,
 } from "lucide-react";
 
 export function Sidebar({ sidebarOpen, setSidebarOpen, role = "TELLER" }) {
@@ -69,6 +70,7 @@ export function Sidebar({ sidebarOpen, setSidebarOpen, role = "TELLER" }) {
     { label: "Customers", to: "/customers", icon: Users },
     { label: "Transactions", to: "/transactions", icon: ArrowLeftRight },
     { label: "Operations", to: "/operations", icon: Activity },
+    { label: "Approvals", to: "/approvals", icon: ShieldAlert },
     { label: "Statements", to: "/statements", icon: FileText },
     { label: "KYC", to: "/kyc", icon: UserCheck },
     { label: "Compliance", to: "/compliance", icon: ShieldCheck },
