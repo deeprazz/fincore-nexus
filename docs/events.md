@@ -8,6 +8,25 @@ All event consumers implement **distributed idempotency** backed by a `processed
 
 ## Event Topics & Choreography
 
+### Transactional Outbox Pattern (Across All Event Producers)
+All asynchronous event publications originate via the **Transactional Outbox Pattern**:
+1. Business state changes and an `OutboxEvent` are committed atomically within the same local PostgreSQL database transaction.
+2. A dedicated `@Scheduled(fixedDelay = 500)` `OutboxRelay` continuously polls unsent outbox rows (`sentAt IS NULL`), publishes to Apache Kafka with guaranteed entity-deterministic partition keys, awaits broker ACK, and marks the event as `sent_at = NOW()`.
+3. If Kafka or broker connection is temporarily unavailable at the exact moment of transaction commit, no events are lost; the relay delivers them on the next tick (at-least-once delivery).
+4. All downstream consumers maintain idempotent processing via unique key checks against their local `processed_event` tables.
+
+| Service | Event Topic | Aggregate Type | Deterministic Message Key | Outbox Table |
+|---|---|---|---|---|
+| `core-banking-services` | `transaction.completed` | `Account` | `accountId` | `core.outbox_event` |
+| `loan-service` | `loan.approved` | `Loan` | `loanId` | `fincore_loan.outbox_event` |
+| `loan-service` | `emi.debit.requested` | `EmiSchedule` | `emiId` / `loanId` | `fincore_loan.outbox_event` |
+| `payment-service` | `payment.initiated` | `Payment` | `paymentId` | `fincore_payment.outbox_event` |
+| `payment-service` | `payment.completed` | `Payment` | `paymentId` | `fincore_payment.outbox_event` |
+| `payment-service` | `payment.failed` | `Payment` | `paymentId` | `fincore_payment.outbox_event` |
+| `payment-service` | `payment.settled` | `Payment` | `paymentId` | `fincore_payment.outbox_event` |
+| `kyc-service` | `kyc.approved` | `Customer` | `customerId` | `fincore_kyc.outbox_event` |
+| `kyc-service` | `kyc.rejected` | `Customer` | `customerId` | `fincore_kyc.outbox_event` |
+
 ```mermaid
 sequenceDiagram
     autonumber

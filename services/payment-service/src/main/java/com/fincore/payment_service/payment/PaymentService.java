@@ -1,6 +1,9 @@
 package com.fincore.payment_service.payment;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fincore.payment_service.audit.PaymentAuditService;
+import com.fincore.payment_service.event.OutboxEvent;
+import com.fincore.payment_service.event.OutboxEventRepository;
 import com.fincore.payment_service.beneficiary.Beneficiary;
 import com.fincore.payment_service.beneficiary.BeneficiaryRepository;
 import com.fincore.payment_service.beneficiary.BeneficiaryStatus;
@@ -45,6 +48,8 @@ public class PaymentService {
     private final CoreBankingClient coreBankingClient;
     private final KafkaTemplate<String, Object> kafkaTemplate;
     private final PaymentAuditService auditService;
+    private final OutboxEventRepository outboxEventRepository;
+    private final ObjectMapper objectMapper;
 
     @Value("${fincore.payment.imps-max-limit:500000.00}")
     private BigDecimal impsMaxLimit;
@@ -69,7 +74,9 @@ public class PaymentService {
                           SettlementEngine settlementEngine,
                           CoreBankingClient coreBankingClient,
                           KafkaTemplate<String, Object> kafkaTemplate,
-                          PaymentAuditService auditService) {
+                          PaymentAuditService auditService,
+                          OutboxEventRepository outboxEventRepository,
+                          ObjectMapper objectMapper) {
         this.paymentRepository = paymentRepository;
         this.beneficiaryRepository = beneficiaryRepository;
         this.sagaRepository = sagaRepository;
@@ -79,6 +86,8 @@ public class PaymentService {
         this.coreBankingClient = coreBankingClient;
         this.kafkaTemplate = kafkaTemplate;
         this.auditService = auditService;
+        this.outboxEventRepository = outboxEventRepository;
+        this.objectMapper = objectMapper;
     }
 
     public PaymentResponse initiatePayment(PaymentRequest req) {
@@ -176,15 +185,15 @@ public class PaymentService {
             auditService.record("PAYMENT_FAILED", "Payment", finalPayment.getId(), "fraud-engine",
                     "Payment blocked by fraud detection rules: " + fraudResult.getTriggeredRulesAsString());
 
-            kafkaTemplate.send("payment.failed", utr, new PaymentFailedEvent(
+            publishOutboxEvent("payment.failed", finalPayment.getId().toString(), new PaymentFailedEvent(
                     correlationId, finalPayment.getId(), finalPayment.getCustomerId(),
                     finalPayment.getAmount(), utr, finalPayment.getFailureReason()
             ));
             return PaymentResponse.from(finalPayment);
         }
 
-        // Publish payment.initiated event
-        kafkaTemplate.send("payment.initiated", utr, new PaymentInitiatedEvent(
+        // Publish payment.initiated event (Transactional Outbox)
+        publishOutboxEvent("payment.initiated", savedPayment.getId().toString(), new PaymentInitiatedEvent(
                 correlationId, savedPayment.getId(), savedPayment.getCustomerId(),
                 savedPayment.getSourceAccountId(), savedPayment.getAmount(),
                 savedPayment.getPaymentRail(), utr
@@ -212,7 +221,7 @@ public class PaymentService {
             auditService.record("PAYMENT_FAILED", "Payment", finalPayment.getId(), "core-banking",
                     "Source account debit rejected or insufficient funds: " + savedPayment.getFailureReason());
 
-            kafkaTemplate.send("payment.failed", utr, new PaymentFailedEvent(
+            publishOutboxEvent("payment.failed", finalPayment.getId().toString(), new PaymentFailedEvent(
                     correlationId, finalPayment.getId(), finalPayment.getCustomerId(),
                     finalPayment.getAmount(), utr, finalPayment.getFailureReason()
             ));
@@ -254,7 +263,7 @@ public class PaymentService {
             auditService.record("PAYMENT_REVERSED", "Payment", finalPayment.getId(), "saga",
                     "Destination credit failed; funds reversed to source account: " + finalPayment.getFailureReason());
 
-            kafkaTemplate.send("payment.failed", utr, new PaymentFailedEvent(
+            publishOutboxEvent("payment.failed", finalPayment.getId().toString(), new PaymentFailedEvent(
                     correlationId, finalPayment.getId(), finalPayment.getCustomerId(),
                     finalPayment.getAmount(), utr, finalPayment.getFailureReason()
             ));
@@ -282,8 +291,8 @@ public class PaymentService {
         auditService.record("PAYMENT_SETTLED", "Payment", finalPayment.getId(), "settlement-engine",
                 "Payment settled: rail=" + finalPayment.getPaymentRail() + ", utr=" + utr);
 
-        // Publish payment.completed event (Notification Service consumes this!)
-        kafkaTemplate.send("payment.completed", utr, new PaymentCompletedEvent(
+        // Publish payment.completed event (Transactional Outbox)
+        publishOutboxEvent("payment.completed", finalPayment.getId().toString(), new PaymentCompletedEvent(
                 correlationId,
                 finalPayment.getId(),
                 finalPayment.getCustomerId(),
@@ -296,6 +305,20 @@ public class PaymentService {
         ));
 
         return PaymentResponse.from(finalPayment);
+    }
+
+    private void publishOutboxEvent(String topic, String aggregateId, Object payload) {
+        try {
+            outboxEventRepository.save(new OutboxEvent(
+                    "Payment",
+                    aggregateId,
+                    topic,
+                    objectMapper.writeValueAsString(payload)
+            ));
+        } catch (Exception e) {
+            log.error("Failed to serialize outbox event for topic {}: {}", topic, e.getMessage());
+            throw new RuntimeException("Failed to persist transactional outbox event", e);
+        }
     }
 
     private void validateRailLimits(PaymentRail rail, BigDecimal amount, String vpa) {

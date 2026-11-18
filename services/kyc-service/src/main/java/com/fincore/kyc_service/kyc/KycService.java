@@ -1,9 +1,12 @@
 package com.fincore.kyc_service.kyc;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fincore.kyc_service.audit.KycAuditService;
 import com.fincore.kyc_service.crypto.CryptoService;
 import com.fincore.kyc_service.event.KycApprovedEvent;
 import com.fincore.kyc_service.event.KycRejectedEvent;
+import com.fincore.kyc_service.event.OutboxEvent;
+import com.fincore.kyc_service.event.OutboxEventRepository;
 import com.fincore.kyc_service.face.FaceMatchProvider;
 import com.fincore.kyc_service.face.FaceMatchResult;
 import com.fincore.kyc_service.face.LivenessProvider;
@@ -51,6 +54,8 @@ public class KycService {
     private final RiskAssessmentEngine riskAssessmentEngine;
     private final KycAuditService auditService;
     private final KafkaTemplate<String, Object> kafkaTemplate;
+    private final OutboxEventRepository outboxEventRepository;
+    private final ObjectMapper objectMapper;
 
     @Value("${kyc.storage.upload-dir:target/uploads/kyc}")
     private String uploadDir;
@@ -66,7 +71,9 @@ public class KycService {
             LivenessProvider livenessProvider,
             RiskAssessmentEngine riskAssessmentEngine,
             KycAuditService auditService,
-            KafkaTemplate<String, Object> kafkaTemplate
+            KafkaTemplate<String, Object> kafkaTemplate,
+            OutboxEventRepository outboxEventRepository,
+            ObjectMapper objectMapper
     ) {
         this.applicationRepository = applicationRepository;
         this.documentRepository = documentRepository;
@@ -79,6 +86,8 @@ public class KycService {
         this.riskAssessmentEngine = riskAssessmentEngine;
         this.auditService = auditService;
         this.kafkaTemplate = kafkaTemplate;
+        this.outboxEventRepository = outboxEventRepository;
+        this.objectMapper = objectMapper;
     }
 
     @Transactional
@@ -210,7 +219,7 @@ public class KycService {
                 "Approved by checker " + reviewedBy + ". Notes: " + request.notes()
         );
 
-        // Emit Kafka event
+        // Emit Kafka event (Transactional Outbox)
         KycApprovedEvent event = new KycApprovedEvent(
                 saved.getCustomerId(),
                 saved.getId(),
@@ -218,8 +227,18 @@ public class KycService {
                 saved.getPanNumberMasked(),
                 Instant.now()
         );
-        kafkaTemplate.send("kyc.approved", saved.getCustomerId().toString(), event);
-        log.info("Emitted kyc.approved event for customer: {}", saved.getCustomerId());
+        try {
+            outboxEventRepository.save(new OutboxEvent(
+                    "Customer",
+                    saved.getCustomerId().toString(),
+                    "kyc.approved",
+                    objectMapper.writeValueAsString(event)
+            ));
+            log.info("Persisted transactional outbox kyc.approved event for customer: {}", saved.getCustomerId());
+        } catch (Exception e) {
+            log.error("Failed to write outbox event for kyc.approved: {}", e.getMessage());
+            throw new RuntimeException("Failed to persist transactional outbox event", e);
+        }
 
         return KycResponse.from(saved);
     }
@@ -247,15 +266,25 @@ public class KycService {
                 "Rejected by checker " + reviewedBy + ". Reason: " + request.notes()
         );
 
-        // Emit Kafka event
+        // Emit Kafka event (Transactional Outbox)
         KycRejectedEvent event = new KycRejectedEvent(
                 saved.getCustomerId(),
                 saved.getId(),
                 request.notes(),
                 Instant.now()
         );
-        kafkaTemplate.send("kyc.rejected", saved.getCustomerId().toString(), event);
-        log.info("Emitted kyc.rejected event for customer: {}", saved.getCustomerId());
+        try {
+            outboxEventRepository.save(new OutboxEvent(
+                    "Customer",
+                    saved.getCustomerId().toString(),
+                    "kyc.rejected",
+                    objectMapper.writeValueAsString(event)
+            ));
+            log.info("Persisted transactional outbox kyc.rejected event for customer: {}", saved.getCustomerId());
+        } catch (Exception e) {
+            log.error("Failed to write outbox event for kyc.rejected: {}", e.getMessage());
+            throw new RuntimeException("Failed to persist transactional outbox event", e);
+        }
 
         return KycResponse.from(saved);
     }

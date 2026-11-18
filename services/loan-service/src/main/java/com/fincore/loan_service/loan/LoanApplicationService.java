@@ -1,5 +1,6 @@
 package com.fincore.loan_service.loan;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fincore.loan_service.audit.LoanAuditService;
 import com.fincore.loan_service.client.CoreBankingClient;
 import com.fincore.loan_service.credit.CreditAssessmentEngine;
@@ -41,6 +42,8 @@ public class LoanApplicationService {
     private final CoreBankingClient coreBankingClient;
     private final KafkaTemplate<String, Object> kafkaTemplate;
     private final LoanAuditService loanAuditService;
+    private final OutboxEventRepository outboxEventRepository;
+    private final ObjectMapper objectMapper;
 
     public LoanApplicationService(
             LoanApplicationRepository applicationRepository,
@@ -53,7 +56,9 @@ public class LoanApplicationService {
             EmiCalculator emiCalculator,
             CoreBankingClient coreBankingClient,
             KafkaTemplate<String, Object> kafkaTemplate,
-            LoanAuditService loanAuditService) {
+            LoanAuditService loanAuditService,
+            OutboxEventRepository outboxEventRepository,
+            ObjectMapper objectMapper) {
         this.applicationRepository = applicationRepository;
         this.loanRepository = loanRepository;
         this.emiScheduleRepository = emiScheduleRepository;
@@ -65,6 +70,8 @@ public class LoanApplicationService {
         this.coreBankingClient = coreBankingClient;
         this.kafkaTemplate = kafkaTemplate;
         this.loanAuditService = loanAuditService;
+        this.outboxEventRepository = outboxEventRepository;
+        this.objectMapper = objectMapper;
     }
 
     public LoanApplication submitApplication(LoanApplicationRequest req) {
@@ -183,7 +190,17 @@ public class LoanApplicationService {
                 savedLoan.getPrincipalAmount(),
                 "INR"
         );
-        kafkaTemplate.send("loan.approved", correlationId.toString(), event);
+        try {
+            outboxEventRepository.save(new OutboxEvent(
+                    "Loan",
+                    savedLoan.getId().toString(),
+                    "loan.approved",
+                    objectMapper.writeValueAsString(event)
+            ));
+        } catch (Exception e) {
+            log.error("Failed to write outbox event for loan.approved: {}", e.getMessage());
+            throw new RuntimeException("Failed to persist transactional outbox event", e);
+        }
         recordEvent(savedLoan.getId(), app.getId(), "LOAN_APPROVED", "{\"correlationId\":\"" + correlationId + "\"}");
         loanAuditService.record("APPLICATION_APPROVED", "LoanApplication", app.getId(), reviewerId,
                 "Loan application approved, contract=" + savedLoan.getId() + ", amount=" + savedLoan.getPrincipalAmount());

@@ -1,10 +1,12 @@
 package com.fincore.payment_service.settlement;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fincore.payment_service.event.OutboxEvent;
+import com.fincore.payment_service.event.OutboxEventRepository;
 import com.fincore.payment_service.event.PaymentSettledEvent;
 import com.fincore.payment_service.payment.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,14 +24,17 @@ public class SettlementEngine {
 
     private final PaymentRepository paymentRepository;
     private final SettlementBatchRepository batchRepository;
-    private final KafkaTemplate<String, Object> kafkaTemplate;
+    private final OutboxEventRepository outboxEventRepository;
+    private final ObjectMapper objectMapper;
 
     public SettlementEngine(PaymentRepository paymentRepository,
                             SettlementBatchRepository batchRepository,
-                            KafkaTemplate<String, Object> kafkaTemplate) {
+                            OutboxEventRepository outboxEventRepository,
+                            ObjectMapper objectMapper) {
         this.paymentRepository = paymentRepository;
         this.batchRepository = batchRepository;
-        this.kafkaTemplate = kafkaTemplate;
+        this.outboxEventRepository = outboxEventRepository;
+        this.objectMapper = objectMapper;
     }
 
     /**
@@ -44,7 +49,16 @@ public class SettlementEngine {
                 payment.getId(), payment.getUtr(), payment.getPaymentRail(),
                 payment.getAmount(), payment.getSettledAt()
         );
-        kafkaTemplate.send("payment.settled", payment.getUtr(), event);
+        try {
+            outboxEventRepository.save(new OutboxEvent(
+                    "Payment",
+                    payment.getId().toString(),
+                    "payment.settled",
+                    objectMapper.writeValueAsString(event)
+            ));
+        } catch (Exception e) {
+            log.error("Failed to queue outbox event for payment.settled: {}", e.getMessage());
+        }
         log.info("Instant settlement completed for payment {} (UTR: {}, Rail: {})", payment.getId(), payment.getUtr(), payment.getPaymentRail());
     }
 
@@ -70,7 +84,16 @@ public class SettlementEngine {
             PaymentSettledEvent event = new PaymentSettledEvent(
                     p.getId(), p.getUtr(), p.getPaymentRail(), p.getAmount(), p.getSettledAt()
             );
-            kafkaTemplate.send("payment.settled", p.getUtr(), event);
+            try {
+                outboxEventRepository.save(new OutboxEvent(
+                        "Payment",
+                        p.getId().toString(),
+                        "payment.settled",
+                        objectMapper.writeValueAsString(event)
+                ));
+            } catch (Exception e) {
+                log.error("Failed to queue batch outbox event for payment.settled: {}", e.getMessage());
+            }
         }
 
         SettlementBatch batch = new SettlementBatch();

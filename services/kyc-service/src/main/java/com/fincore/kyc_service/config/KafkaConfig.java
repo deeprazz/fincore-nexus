@@ -14,6 +14,7 @@ import org.springframework.kafka.config.TopicBuilder;
 import org.springframework.kafka.core.*;
 import org.springframework.kafka.support.serializer.JsonDeserializer;
 import org.springframework.kafka.support.serializer.JsonSerializer;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -27,6 +28,11 @@ public class KafkaConfig {
 
     @Value("${spring.kafka.consumer.group-id:kyc-service-group}")
     private String groupId;
+
+    @Bean
+    public ObjectMapper objectMapper() {
+        return new ObjectMapper().findAndRegisterModules();
+    }
 
     @Bean
     public ProducerFactory<String, Object> producerFactory() {
