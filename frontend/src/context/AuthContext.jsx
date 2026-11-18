@@ -1,8 +1,23 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
+import Keycloak from "keycloak-js";
 import { API_BASE_URL } from "../utils/constants";
 import { setLatencyListener } from "../api/client";
 
 const AuthContext = createContext(null);
+
+const isKeycloakMode = typeof window !== "undefined" && import.meta.env?.VITE_AUTH_MODE === "keycloak";
+let keycloakInstance = null;
+if (isKeycloakMode) {
+  try {
+    keycloakInstance = new Keycloak({
+      url: import.meta.env?.VITE_KEYCLOAK_URL || "http://localhost:8089",
+      realm: import.meta.env?.VITE_KEYCLOAK_REALM || "fincore-nexus",
+      clientId: import.meta.env?.VITE_KEYCLOAK_CLIENT_ID || "fincore-frontend",
+    });
+  } catch (e) {
+    console.warn("Keycloak instantiation skipped:", e);
+  }
+}
 
 export function AuthProvider({ children }) {
   const [auth, setAuth] = useState(() => {
@@ -16,6 +31,61 @@ export function AuthProvider({ children }) {
 
   const [customerPortal, setCustomerPortal] = useState(null);
   const [apiLatency, setApiLatency] = useState(null);
+  const [keycloakReady, setKeycloakReady] = useState(!isKeycloakMode);
+
+  useEffect(() => {
+    if (!isKeycloakMode || !keycloakInstance) {
+      setKeycloakReady(true);
+      return;
+    }
+
+    keycloakInstance
+      .init({
+        onLoad: "check-sso",
+        pkceMethod: "S256",
+        checkLoginIframe: false,
+      })
+      .then((authenticated) => {
+        setKeycloakReady(true);
+        if (authenticated) {
+          const roles = keycloakInstance.tokenParsed?.realm_access?.roles || [];
+          const primaryRole = roles.includes("ADMIN")
+            ? "ADMIN"
+            : roles.includes("MANAGER")
+            ? "MANAGER"
+            : roles.includes("TELLER")
+            ? "TELLER"
+            : roles.includes("CUSTOMER")
+            ? "CUSTOMER"
+            : "TELLER";
+
+          const authData = {
+            token: keycloakInstance.token,
+            username: keycloakInstance.tokenParsed?.preferred_username || "keycloak_user",
+            role: primaryRole,
+            roles,
+          };
+          setAuth(authData);
+
+          const refreshInterval = setInterval(() => {
+            keycloakInstance.updateToken(70).then((refreshed) => {
+              if (refreshed) {
+                setAuth((prev) => ({
+                  ...prev,
+                  token: keycloakInstance.token,
+                }));
+              }
+            }).catch(() => {});
+          }, 60000);
+
+          return () => clearInterval(refreshInterval);
+        }
+      })
+      .catch((err) => {
+        console.warn("Keycloak init failed:", err);
+        setKeycloakReady(true);
+      });
+  }, []);
 
   useEffect(() => {
     setLatencyListener((latency) => setApiLatency(latency));
@@ -146,7 +216,16 @@ export function AuthProvider({ children }) {
     return authData;
   }
 
+  function loginWithKeycloak() {
+    if (keycloakInstance) {
+      keycloakInstance.login();
+    }
+  }
+
   function logout() {
+    if (keycloakInstance && keycloakInstance.authenticated) {
+      keycloakInstance.logout();
+    }
     setAuth(null);
     setCustomerPortal(null);
     sessionStorage.removeItem("fincore_auth");
@@ -154,9 +233,9 @@ export function AuthProvider({ children }) {
 
   async function refreshPortalData() {
     if (!auth || auth.role !== "CUSTOMER") return null;
-    const headers = {
-      Authorization: `Basic ${btoa(`${auth.username}:${auth.password}`)}`,
-    };
+    const headers = auth.token
+      ? { Authorization: `Bearer ${auth.token}` }
+      : { Authorization: `Basic ${btoa(`${auth.username}:${auth.password}`)}` };
     try {
       const res = await fetch(`${API_BASE_URL}/customer-portal/me`, { headers });
       if (res.ok) {
@@ -178,9 +257,12 @@ export function AuthProvider({ children }) {
         setCustomerPortal,
         login,
         loginWithToken,
+        loginWithKeycloak,
         logout,
         refreshPortalData,
         apiLatency,
+        isKeycloakMode,
+        keycloakReady,
       }}
     >
       {children}

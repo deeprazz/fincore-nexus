@@ -192,6 +192,37 @@ To shut down all running services at once:
 
 ---
 
+### Authentication & IAM Modes: Keycloak OAuth2 vs. Local Basic Fallback
+
+FinCore Nexus provides a dual authentication architecture supporting enterprise Single Sign-On (SSO) with OpenID Connect / Keycloak alongside a resilient `local-basic` mode for developer convenience and isolated unit testing:
+
+| Authentication Mode | Backend Spring Profile | Frontend Configuration (`.env`) | Token / Header Format | Best Used For |
+|---|---|---|---|---|
+| **Local Basic (Default)** | `default`, `local-basic`, `test` | `VITE_AUTH_MODE=basic` | `Authorization: Basic <base64>` | Local development, rapid testing, unit & integration test suites. |
+| **Keycloak OAuth2 / OIDC** | `keycloak` | `VITE_AUTH_MODE=keycloak` | `Authorization: Bearer <jwt>` | Production, Docker Compose environments, enterprise SSO with PKCE. |
+
+#### 1. Keycloak OAuth2 Mode
+- **Realm**: `fincore-nexus` (pre-configured under `infra/keycloak/fincore-realm.json`).
+- **Authorization Flow**: Authorization Code Flow with PKCE (`S256`) via `keycloak-js`.
+- **Role Mapping**: Keycloak JWT claim `realm_access.roles` is automatically translated to Spring Security authorities (`ROLE_TELLER`, `ROLE_MANAGER`, `ROLE_ADMIN`, `ROLE_CUSTOMER`).
+- **Resource Server**: Backend microservices decode and validate Bearer tokens using `spring-boot-starter-oauth2-resource-server`.
+- **RBAC Matrix**:
+  - `teller` token (`ROLE_TELLER`): Accesses operational endpoints (200 OK); forbidden from approvals (403 Forbidden).
+  - `manager` token (`ROLE_TELLER`, `ROLE_MANAGER`): Authorized for loan & KYC approvals, collections, and large transfer approvals (200 OK).
+  - `admin` token (`ROLE_ADMIN`, `ROLE_MANAGER`, `ROLE_TELLER`): Authorized for system configuration and compliance audits.
+  - No token: Rejected with HTTP 401 Unauthorized.
+
+#### 2. Local Basic Fallback Mode
+- Enabled by default when Keycloak is offline or when running microservices standalone.
+- Uses HTTP Basic authentication against Spring Security's configured user store.
+- Demo credentials:
+  - **Teller**: `teller` / `Teller@123`
+  - **Manager**: `manager` / `Manager@123`
+  - **Admin**: `admin` / `Admin@123`
+  - **Customer**: `ankit@gmail.com` / `Customer@123` (or any verified customer email)
+
+---
+
 ### Option C: Local Developer Mode (Manual Execution)
 
 If developing locally with immediate hot-reload:

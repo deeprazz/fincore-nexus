@@ -7,7 +7,7 @@ import ThemeToggle from "../../components/ui/ThemeToggle";
 export function LoginPage() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login, isKeycloakMode, loginWithKeycloak } = useAuth();
 
   const [activeTab, setActiveTab] = useState(
     location.state?.registeredEmail ? "customer" : "staff"
@@ -144,18 +144,45 @@ export function LoginPage() {
           />
         </label>
 
+        {isKeycloakMode && (
+          <div style={{ marginBottom: "16px" }}>
+            <button
+              type="button"
+              className="primary-button"
+              style={{ width: "100%", background: "linear-gradient(135deg, #4f46e5, #4338ca)" }}
+              onClick={loginWithKeycloak}
+            >
+              Sign in with Keycloak (SSO / PKCE)
+            </button>
+            <div style={{ textAlign: "center", margin: "10px 0", color: "var(--muted)", fontSize: "11px" }}>
+              ── OR LOCAL BASIC AUTH ──
+            </div>
+          </div>
+        )}
+
         <button className="primary-button login-submit" type="submit" disabled={loading}>
           {loading ? "Authenticating..." : activeTab === "staff" ? "Sign in to Staff Workspace" : "Sign in to Customer Portal"}
         </button>
 
         <div className="login-quick-demo">
-          <span className="quick-demo-label">Staff Sign-in:</span>
+          <span className="quick-demo-label">Quick Sign-in:</span>
           <button
             type="button"
             className="quick-demo-pill"
             onClick={() => handleTabChange("staff")}
           >
             Staff (teller)
+          </button>
+          <button
+            type="button"
+            className="quick-demo-pill"
+            onClick={() => {
+              setActiveTab("customer");
+              setUsername("ankit@gmail.com");
+              setPassword("Customer@123");
+            }}
+          >
+            Customer (ankit)
           </button>
         </div>
 
