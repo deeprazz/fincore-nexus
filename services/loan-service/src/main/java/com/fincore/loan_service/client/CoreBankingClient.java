@@ -86,4 +86,30 @@ public class CoreBankingClient {
             return false;
         }
     }
+
+    /**
+     * Validates customer or staff credentials against core banking /api/auth/me.
+     * Returns true if core banking returns HTTP 200 OK.
+     */
+    public boolean validateCredentials(String username, String password) {
+        if (username == null || password == null || username.isBlank()) {
+            return false;
+        }
+        try {
+            String token = Base64.getEncoder().encodeToString(
+                    (username + ":" + password).getBytes(java.nio.charset.StandardCharsets.UTF_8)
+            );
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(baseUrl + "/api/auth/me"))
+                    .header("Authorization", "Basic " + token)
+                    .timeout(java.time.Duration.ofSeconds(5))
+                    .GET()
+                    .build();
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            return response.statusCode() == 200;
+        } catch (Exception e) {
+            log.warn("Credential validation failed for {}: {}", username, e.getMessage());
+            return false;
+        }
+    }
 }

@@ -109,6 +109,9 @@ export function PortalDashboard() {
             <Link to="/portal/transfer" className="primary-button">
               Transfer Money
             </Link>
+            <Link to="/portal/loans" className="primary-button" style={{ background: "linear-gradient(135deg, #2563eb, #1d4ed8)" }}>
+              Apply for Loan
+            </Link>
             <Link to="/portal/statements" className="secondary-button">
               Account Statement
             </Link>

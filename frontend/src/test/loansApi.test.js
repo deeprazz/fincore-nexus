@@ -1,8 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import {
   getLoans,
+  getCustomerLoans,
   getLoan,
   getApplications,
+  getCustomerApplications,
   getApplication,
   submitApplication,
   approveApplication,
@@ -36,6 +38,13 @@ describe("Loans API module", () => {
     expect(res).toEqual([{ id: "loan-1" }]);
   });
 
+  it("calls getCustomerLoans with GET /api/loans/customer/:customerId", async () => {
+    ClientModule.apiRequest.mockResolvedValueOnce([{ id: "cust-loan-1" }]);
+    const res = await getCustomerLoans("cust-123", auth);
+    expect(ClientModule.apiRequest).toHaveBeenCalledWith("/api/loans/customer/cust-123", {}, auth);
+    expect(res).toEqual([{ id: "cust-loan-1" }]);
+  });
+
   it("calls getLoan with GET /api/loans/:id", async () => {
     ClientModule.apiRequest.mockResolvedValueOnce({ id: "loan-1" });
     const res = await getLoan("loan-1", auth);
@@ -52,6 +61,17 @@ describe("Loans API module", () => {
       auth
     );
     expect(res).toEqual([{ id: "app-1" }]);
+  });
+
+  it("calls getCustomerApplications with GET /api/loans/applications/customer/:customerId", async () => {
+    ClientModule.apiRequest.mockResolvedValueOnce([{ id: "cust-app-1" }]);
+    const res = await getCustomerApplications("cust-123", auth);
+    expect(ClientModule.apiRequest).toHaveBeenCalledWith(
+      "/api/loans/applications/customer/cust-123",
+      {},
+      auth
+    );
+    expect(res).toEqual([{ id: "cust-app-1" }]);
   });
 
   it("calls getApplication with GET /api/loans/applications/:id", async () => {

@@ -20,6 +20,7 @@ export function Sidebar({ sidebarOpen, setSidebarOpen, role = "TELLER" }) {
       { label: "Overview", to: "/portal", icon: LayoutDashboard },
       { label: "My accounts", to: "/portal/accounts", icon: Wallet },
       { label: "Transfer money", to: "/portal/transfer", icon: ArrowLeftRight },
+      { label: "Loans & Credit", to: "/portal/loans", icon: Landmark },
       { label: "Transactions", to: "/portal/transactions", icon: Activity },
       { label: "Statements", to: "/portal/statements", icon: FileText },
     ];

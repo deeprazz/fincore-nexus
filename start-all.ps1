@@ -22,6 +22,7 @@ $RootDir = $PSScriptRoot
 $JavaHome = "C:\Program Files\Eclipse Adoptium\jdk-25.0.5.8-hotspot"
 if (Test-Path $JavaHome) {
     $env:JAVA_HOME = $JavaHome
+    $env:PATH = "$JavaHome\bin;" + $env:PATH
 }
 
 Write-Host "==================================================================" -ForegroundColor Cyan
@@ -139,6 +140,9 @@ foreach ($svc in $services) {
     $svcScript = @"
 try { [Console]::Title = 'FinCore [$svcPort] $svcName' } catch {}
 `$env:JAVA_HOME = '$JavaHome'
+if (Test-Path '$JavaHome') {
+    `$env:PATH = '$JavaHome\bin;' + `$env:PATH
+}
 Set-Location '$svcPath'
 Write-Host '==================================================================' -ForegroundColor Cyan
 Write-Host ' [FinCore] Starting $svcName on Port $svcPort... ' -ForegroundColor Cyan

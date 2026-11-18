@@ -40,6 +40,12 @@ public class LoanApplicationController {
                 .map(LoanApplicationResponse::from).collect(Collectors.toList());
     }
 
+    @GetMapping("/customer/{customerId}")
+    public List<LoanApplicationResponse> getByCustomerId(@PathVariable UUID customerId) {
+        return applicationRepository.findByCustomerId(customerId).stream()
+                .map(LoanApplicationResponse::from).collect(Collectors.toList());
+    }
+
     @PatchMapping("/{id}/approve")
     public ResponseEntity<LoanApplicationResponse> approve(
             @PathVariable UUID id, Authentication auth) {

@@ -26,6 +26,7 @@ import { PortalAccounts } from "./features/customer-portal/PortalAccounts";
 import { PortalTransfer } from "./features/customer-portal/PortalTransfer";
 import { PortalTransactions } from "./features/customer-portal/PortalTransactions";
 import { PortalStatements } from "./features/customer-portal/PortalStatements";
+import { PortalLoans } from "./features/customer-portal/PortalLoans";
 import "./App.css";
 
 export function App() {
@@ -76,6 +77,7 @@ export function App() {
                 <Route path="transfer" element={<PortalTransfer />} />
                 <Route path="transactions" element={<PortalTransactions />} />
                 <Route path="statements" element={<PortalStatements />} />
+                <Route path="loans" element={<PortalLoans />} />
               </Route>
 
               <Route path="*" element={<Navigate to="/" replace />} />

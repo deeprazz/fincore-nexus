@@ -32,6 +32,13 @@ public class LoanController {
         return loanRepository.findAll().stream().map(LoanResponse::from).collect(Collectors.toList());
     }
 
+    @GetMapping("/customer/{customerId}")
+    public List<LoanResponse> getLoansByCustomer(@PathVariable UUID customerId) {
+        return loanRepository.findByCustomerId(customerId).stream()
+                .map(LoanResponse::from)
+                .collect(Collectors.toList());
+    }
+
     @GetMapping("/{loanId}")
     public ResponseEntity<LoanResponse> getLoan(@PathVariable UUID loanId) {
         return loanRepository.findById(loanId)

@@ -4,12 +4,20 @@ export function getLoans(auth) {
   return apiRequest("/api/loans", {}, auth);
 }
 
+export function getCustomerLoans(customerId, auth) {
+  return apiRequest(`/api/loans/customer/${encodeURIComponent(customerId)}`, {}, auth);
+}
+
 export function getLoan(id, auth) {
   return apiRequest(`/api/loans/${encodeURIComponent(id)}`, {}, auth);
 }
 
 export function getApplications(auth) {
   return apiRequest("/api/loans/applications", {}, auth);
+}
+
+export function getCustomerApplications(customerId, auth) {
+  return apiRequest(`/api/loans/applications/customer/${encodeURIComponent(customerId)}`, {}, auth);
 }
 
 export function getApplication(id, auth) {
