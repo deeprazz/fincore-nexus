@@ -62,7 +62,7 @@ CREATE TABLE loan_event (
     loan_id UUID,
     application_id UUID,
     event_type VARCHAR(100) NOT NULL,
-    payload JSONB,
+    payload TEXT,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 

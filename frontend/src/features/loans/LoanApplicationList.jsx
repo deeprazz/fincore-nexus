@@ -121,10 +121,10 @@ export function LoanApplicationList({ className = "" }) {
                   return (
                     <tr key={app.id}>
                       <td className="account-number font-mono">
-                        {String(app.id).substring(0, 8)}...
+                        APP-{String(app.id).replace(/-/g, "").slice(0, 8).toUpperCase()}
                       </td>
                       <td className="muted-cell font-mono">
-                        {app.customerId ? `${String(app.customerId).substring(0, 8)}...` : "N/A"}
+                        {app.customerId ? `CUST-${String(app.customerId).replace(/-/g, "").slice(0, 8).toUpperCase()}` : "N/A"}
                       </td>
                       <td className="amount-cell">
                         <strong>{money(app.requestedAmount || 0)}</strong>

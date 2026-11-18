@@ -42,7 +42,7 @@ export async function apiRequestWithResponse(path, options = {}, auth = null) {
       const loansHost =
         import.meta.env.VITE_LOANS_API_URL ||
         (API_BASE_URL && API_BASE_URL.includes(":8081")
-          ? API_BASE_URL.replace(":8081/api", ":8082")
+          ? API_BASE_URL.replace(/\/api\/?$/, "").replace(":8081", ":8082")
           : "");
       url = loansHost ? `${loansHost}${normalizedPath}` : normalizedPath;
     } else if (
@@ -53,7 +53,7 @@ export async function apiRequestWithResponse(path, options = {}, auth = null) {
       const paymentsHost =
         import.meta.env.VITE_PAYMENTS_API_URL ||
         (API_BASE_URL && API_BASE_URL.includes(":8081")
-          ? API_BASE_URL.replace(":8081/api", ":8083")
+          ? API_BASE_URL.replace(/\/api\/?$/, "").replace(":8081", ":8083")
           : "");
       url = paymentsHost ? `${paymentsHost}${normalizedPath}` : normalizedPath;
     } else if (
@@ -63,14 +63,14 @@ export async function apiRequestWithResponse(path, options = {}, auth = null) {
       const kycHost =
         import.meta.env.VITE_KYC_API_URL ||
         (API_BASE_URL && API_BASE_URL.includes(":8081")
-          ? API_BASE_URL.replace(":8081/api", ":8084")
+          ? API_BASE_URL.replace(/\/api\/?$/, "").replace(":8081", ":8084")
           : "");
       url = kycHost ? `${kycHost}${normalizedPath}` : normalizedPath;
     } else if (normalizedPath.startsWith("/api/notifications")) {
       const notificationHost =
         import.meta.env.VITE_NOTIFICATIONS_API_URL ||
         (API_BASE_URL && API_BASE_URL.includes(":8081")
-          ? API_BASE_URL.replace(":8081/api", ":8085")
+          ? API_BASE_URL.replace(/\/api\/?$/, "").replace(":8081", ":8085")
           : "");
       url = notificationHost ? `${notificationHost}${normalizedPath}` : normalizedPath;
     } else {

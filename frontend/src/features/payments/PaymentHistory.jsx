@@ -55,9 +55,10 @@ export default function PaymentHistory({ payments = [], onViewReceipt }) {
         <table className="table w-full text-left text-sm">
           <thead>
             <tr className="border-b bg-surface-alt text-xs font-semibold text-muted uppercase">
-              <th className="p-3">UTR Reference</th>
+              <th className="p-3">Reference No.</th>
               <th className="p-3">Rail</th>
-              <th className="p-3">Destination</th>
+              <th className="p-3">Destination Account</th>
+              <th className="p-3">IFSC Code</th>
               <th className="p-3">Amount</th>
               <th className="p-3">Status</th>
               <th className="p-3">Date</th>
@@ -67,14 +68,23 @@ export default function PaymentHistory({ payments = [], onViewReceipt }) {
           <tbody>
             {filtered.map((p) => (
               <tr key={p.id} className="border-b hover:bg-surface-alt transition-colors">
-                <td className="p-3 font-mono font-medium text-xs">{p.utr}</td>
+                <td className="p-3 font-mono font-medium text-xs">
+                  {p.utr
+                    ? p.utr.length > 20
+                      ? `UTR-${p.utr.replace(/-/g, '').slice(0, 12).toUpperCase()}`
+                      : p.utr
+                    : `REF-${String(p.id || '').replace(/-/g, '').slice(0, 8).toUpperCase()}`}
+                </td>
                 <td className="p-3">
                   <span className="text-2xs bg-surface px-1.5 py-0.5 rounded border font-semibold">
                     {p.paymentRail}
                   </span>
                 </td>
                 <td className="p-3 font-mono text-xs">
-                  {p.targetAccountNumber || p.targetVpa}
+                  {p.targetAccountNumber || p.targetVpa || '—'}
+                </td>
+                <td className="p-3 font-mono text-xs text-muted">
+                  {p.targetIfsc || (p.paymentRail === 'UPI' ? 'UPI Rail' : '—')}
                 </td>
                 <td className="p-3 font-bold font-mono text-sm">
                   ₹{Number(p.amount).toLocaleString("en-IN", { minimumFractionDigits: 2 })}

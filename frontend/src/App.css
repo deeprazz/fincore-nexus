@@ -2058,10 +2058,10 @@ tbody tr:hover {
   flex-direction: column !important;
   gap: 12px !important;
   padding: 24px 26px !important;
-  border: 1px solid #1a2536 !important;
+  border: 1px solid var(--border-color, #1a2536) !important;
   border-radius: 14px !important;
-  background: #0c121e !important;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2) !important;
+  background: var(--card-bg, #0c121e) !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1) !important;
   transition: border-color 0.15s ease !important;
   margin: 0 !important;
 }
@@ -2071,9 +2071,8 @@ tbody tr:hover {
 }
 
 .customer-metric-primary {
-  background: linear-gradient(135deg, #0f1c2e 0%, #0b1422 100%) !important;
-  border-color: #1e3352 !important;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3) !important;
+  background: var(--card-bg, #0c121e) !important;
+  border-color: var(--border-color, #1e3352) !important;
 }
 
 .customer-metric-top {
@@ -2081,7 +2080,7 @@ tbody tr:hover {
   justify-content: space-between !important;
   align-items: center !important;
   gap: 8px !important;
-  color: #94a3b8 !important;
+  color: var(--text-muted, #94a3b8) !important;
   font-size: 13px !important;
   font-weight: 500 !important;
 }
@@ -2091,7 +2090,7 @@ tbody tr:hover {
 }
 
 .customer-metric-card > strong {
-  color: #f8fafc !important;
+  color: var(--text-primary, #f8fafc) !important;
   font-size: 28px !important;
   font-weight: 700 !important;
   letter-spacing: -0.03em !important;
@@ -2099,7 +2098,7 @@ tbody tr:hover {
 }
 
 .customer-metric-card small {
-  color: #64748b !important;
+  color: var(--text-muted, #64748b) !important;
   font-size: 12px !important;
 }
 
@@ -2114,10 +2113,10 @@ tbody tr:hover {
   flex-direction: column !important;
   gap: 20px !important;
   padding: 28px 32px !important;
-  border: 1px solid #1a2536 !important;
+  border: 1px solid var(--border-color, #1a2536) !important;
   border-radius: 14px !important;
-  background: #0c121e !important;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2) !important;
+  background: var(--card-bg, #0c121e) !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1) !important;
   margin: 0 !important;
 }
 
@@ -2131,7 +2130,7 @@ tbody tr:hover {
 
 .customer-section-heading h3 {
   margin: 0 !important;
-  color: #f8fafc !important;
+  color: var(--text-primary, #f8fafc) !important;
   font-size: 18px !important;
   font-weight: 600 !important;
 }
