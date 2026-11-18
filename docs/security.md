@@ -55,7 +55,7 @@ The `/api/compliance/pci-dss` endpoint evaluates these controls directly against
 The platform features an onboarding verification workflow for national identities:
 
 ### A. Aadhaar ID Protection (12-Digit UID)
-* **Mathematical Validation:** Implements the **Verhoeff checksum algorithm** (`VerhoeffAlgorithm.java`) to prevent invalid or misspelled numbers before submission.
+* **Mathematical Validation:** Implements the **Verhoeff checksum algorithm** (`VerhoeffValidator.java`) to prevent invalid or misspelled numbers before submission.
 * **Storage Protection:** Stored as salted SHA-256 hash and masked string (`•••• •••• 1234`).
 * **Zero Plaintext Ingress:** Plaintext Aadhaar numbers are never written to unencrypted database tables or application logs.
 

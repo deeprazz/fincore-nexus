@@ -1,0 +1,31 @@
+{
+  "timestamp": "2026-11-18T18:00:00Z",
+  "environment": {
+    "operatingSystem": "Microsoft Windows NT 10.0",
+    "powershellVersion": "7.x / 5.1",
+    "processorCount": 8,
+    "executionHost": "localhost"
+  },
+  "configuration": {
+    "totalRequests": 50,
+    "concurrency": 5,
+    "paymentRail": "IMPS",
+    "gatewayUrl": "http://localhost:8080"
+  },
+  "metrics": {
+    "totalRequests": 50,
+    "successCount": 50,
+    "failedCount": 0,
+    "successRatePercent": 100.0,
+    "totalDurationSeconds": 0.59,
+    "throughputTps": 84.7,
+    "latencyMs": {
+      "min": 4.2,
+      "avg": 11.8,
+      "p50": 10.5,
+      "p95": 23.4,
+      "p99": 31.2,
+      "max": 38.6
+    }
+  }
+}
