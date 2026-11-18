@@ -41,10 +41,17 @@ public class CoreBankingClient {
      * Debit an account in core banking.
      */
     public boolean debitAccount(UUID accountId, BigDecimal amount, String description) {
+        return debitAccount(accountId, amount, description, null);
+    }
+
+    public boolean debitAccount(UUID accountId, BigDecimal amount, String description, UUID referenceId) {
         try {
             Map<String, Object> bodyMap = new HashMap<>();
             bodyMap.put("amount", amount);
             bodyMap.put("description", description);
+            if (referenceId != null) {
+                bodyMap.put("referenceId", referenceId.toString());
+            }
             String body = objectMapper.writeValueAsString(bodyMap);
 
             HttpRequest request = HttpRequest.newBuilder()
@@ -65,10 +72,17 @@ public class CoreBankingClient {
      * Credit an account in core banking.
      */
     public boolean creditAccount(UUID accountId, BigDecimal amount, String description) {
+        return creditAccount(accountId, amount, description, null);
+    }
+
+    public boolean creditAccount(UUID accountId, BigDecimal amount, String description, UUID referenceId) {
         try {
             Map<String, Object> bodyMap = new HashMap<>();
             bodyMap.put("amount", amount);
             bodyMap.put("description", description);
+            if (referenceId != null) {
+                bodyMap.put("referenceId", referenceId.toString());
+            }
             String body = objectMapper.writeValueAsString(bodyMap);
 
             HttpRequest request = HttpRequest.newBuilder()
@@ -82,6 +96,55 @@ public class CoreBankingClient {
         } catch (Exception e) {
             log.error("Failed to credit account {}: {}", accountId, e.getMessage());
             return false;
+        }
+    }
+
+    /**
+     * Retrieve all core banking transactions for ledger reconciliation.
+     */
+    public java.util.List<CoreTransactionDto> getAllTransactions() {
+        try {
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(baseUrl + "/api/transactions"))
+                    .header("Authorization", "Basic " + credentials)
+                    .GET()
+                    .build();
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            if (response.statusCode() == 200) {
+                return objectMapper.readValue(
+                        response.body(),
+                        objectMapper.getTypeFactory().constructCollectionType(java.util.List.class, CoreTransactionDto.class)
+                );
+            }
+            log.error("Failed to fetch core transactions: status {}", response.statusCode());
+            return java.util.List.of();
+        } catch (Exception e) {
+            log.error("Exception fetching core transactions: {}", e.getMessage());
+            return java.util.List.of();
+        }
+    }
+
+    /**
+     * Retrieve core banking transactions by referenceId.
+     */
+    public java.util.List<CoreTransactionDto> getTransactionsByReference(UUID referenceId) {
+        try {
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(baseUrl + "/api/transactions/reference/" + referenceId))
+                    .header("Authorization", "Basic " + credentials)
+                    .GET()
+                    .build();
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            if (response.statusCode() == 200) {
+                return objectMapper.readValue(
+                        response.body(),
+                        objectMapper.getTypeFactory().constructCollectionType(java.util.List.class, CoreTransactionDto.class)
+                );
+            }
+            return java.util.List.of();
+        } catch (Exception e) {
+            log.error("Exception fetching core transactions by reference: {}", e.getMessage());
+            return java.util.List.of();
         }
     }
 

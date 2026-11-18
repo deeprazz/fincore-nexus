@@ -207,7 +207,8 @@ public class PaymentService {
         boolean debitSuccess = coreBankingClient.debitAccount(
                 savedPayment.getSourceAccountId(),
                 savedPayment.getAmount(),
-                "Payment " + utr + " via " + savedPayment.getPaymentRail()
+                "Payment " + utr + " via " + savedPayment.getPaymentRail(),
+                savedPayment.getId()
         );
 
         if (!debitSuccess) {
@@ -251,7 +252,8 @@ public class PaymentService {
             coreBankingClient.creditAccount(
                     savedPayment.getSourceAccountId(),
                     savedPayment.getAmount(),
-                    "Reversal for failed payment " + utr
+                    "Reversal for failed payment " + utr,
+                    savedPayment.getId()
             );
             savedPayment.setStatus(PaymentStatus.REVERSED);
             savedPayment.setFailureReason("Destination network rejected credit; funds refunded to source account");

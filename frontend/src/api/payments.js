@@ -53,6 +53,10 @@ export async function getSettlementReport() {
   return apiRequest("/settlement/report");
 }
 
+export async function getReconciliationReport(auth) {
+  return apiRequest("/api/payments/reconciliation", {}, auth);
+}
+
 export async function triggerNeftBatch() {
   return apiRequest("/settlement/neft/batch", {
     method: "POST",

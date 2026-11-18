@@ -63,7 +63,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/accounts/*/freeze").hasAnyRole("TELLER", "MANAGER", "ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/accounts").hasAnyRole("TELLER", "MANAGER", "ADMIN")
                         // Read access to staff APIs for Teller, Manager, Admin (and transactions for Customer)
-                        .requestMatchers(HttpMethod.GET, "/api/transactions/**").hasAnyRole("CUSTOMER", "TELLER", "MANAGER", "ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/transactions", "/api/transactions/**").hasAnyRole("CUSTOMER", "TELLER", "MANAGER", "ADMIN")
                         .requestMatchers(HttpMethod.GET, "/api/accounts/**").hasAnyRole("TELLER", "MANAGER", "ADMIN")
                         .requestMatchers(HttpMethod.GET, "/api/customers/**").hasAnyRole("TELLER", "MANAGER", "ADMIN")
                         .requestMatchers("/api/dashboard/**").hasAnyRole("TELLER", "MANAGER", "ADMIN")

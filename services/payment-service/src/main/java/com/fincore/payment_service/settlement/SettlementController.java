@@ -18,6 +18,11 @@ public class SettlementController {
         return ResponseEntity.ok(settlementEngine.generateReconciliationReport());
     }
 
+    @GetMapping("/reconciliation")
+    public ResponseEntity<ReconciliationReportResponse> getReconciliation() {
+        return ResponseEntity.ok(settlementEngine.reconcileWithCoreLedger());
+    }
+
     @PostMapping("/neft/batch")
     public ResponseEntity<SettlementBatch> triggerNeftBatch() {
         SettlementBatch batch = settlementEngine.processNeftBatch();

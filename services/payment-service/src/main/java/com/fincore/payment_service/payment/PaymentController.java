@@ -11,9 +11,17 @@ import java.util.UUID;
 public class PaymentController {
 
     private final PaymentService paymentService;
+    private final com.fincore.payment_service.settlement.SettlementEngine settlementEngine;
 
-    public PaymentController(PaymentService paymentService) {
+    public PaymentController(PaymentService paymentService,
+                             com.fincore.payment_service.settlement.SettlementEngine settlementEngine) {
         this.paymentService = paymentService;
+        this.settlementEngine = settlementEngine;
+    }
+
+    @GetMapping("/reconciliation")
+    public ResponseEntity<com.fincore.payment_service.settlement.ReconciliationReportResponse> getReconciliation() {
+        return ResponseEntity.ok(settlementEngine.reconcileWithCoreLedger());
     }
 
     @PostMapping

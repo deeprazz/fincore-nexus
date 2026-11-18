@@ -21,4 +21,15 @@ public class TransactionController {
 
         return repository.findByAccountIdOrderByCreatedAtDesc(accountId);
     }
+
+    @GetMapping
+    public List<BankingTransaction> getAllTransactions() {
+        return repository.findAll();
+    }
+
+    @GetMapping("/reference/{referenceId}")
+    public List<BankingTransaction> getTransactionsByReference(
+            @PathVariable UUID referenceId) {
+        return repository.findByReferenceIdOrderByCreatedAtAsc(referenceId);
+    }
 }

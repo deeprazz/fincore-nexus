@@ -107,6 +107,11 @@ public class AccountService {
 
     @Transactional
     public AccountResponse withdraw(UUID accountId, BigDecimal amount) {
+        return withdraw(accountId, amount, null);
+    }
+
+    @Transactional
+    public AccountResponse withdraw(UUID accountId, BigDecimal amount, UUID referenceId) {
         Account account = repository.findByIdForUpdate(accountId)
                 .orElseThrow(() ->
                         new IllegalArgumentException("Account does not exist"));
@@ -134,7 +139,7 @@ public class AccountService {
                 "WITHDRAWAL",
                 amount,
                 newBalance,
-                null
+                referenceId
         ));
         publishTransactionCompleted(transaction);
         audit("WITHDRAWAL_COMPLETED", "ACCOUNT", account.getId(),
@@ -159,6 +164,11 @@ public class AccountService {
 
     @Transactional
     public AccountResponse deposit(UUID accountId, BigDecimal amount) {
+        return deposit(accountId, amount, null);
+    }
+
+    @Transactional
+    public AccountResponse deposit(UUID accountId, BigDecimal amount, UUID referenceId) {
         Account account = repository.findByIdForUpdate(accountId)
                 .orElseThrow(() ->
                         new IllegalArgumentException("Account does not exist"));
@@ -182,7 +192,7 @@ public class AccountService {
                 "DEPOSIT",
                 amount,
                 newBalance,
-                null
+                referenceId
         ));
         publishTransactionCompleted(transaction);
         audit("DEPOSIT_COMPLETED", "ACCOUNT", account.getId(),

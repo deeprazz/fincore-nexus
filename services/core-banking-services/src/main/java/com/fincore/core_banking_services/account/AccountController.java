@@ -85,7 +85,7 @@ public class AccountController {
         }
 
         return ResponseEntity.ok(
-                accountService.withdraw(id, request.getAmount()));
+                accountService.withdraw(id, request.getAmount(), request.getReferenceId()));
     }
 
     @PostMapping("/{id}/deposit")
@@ -94,7 +94,7 @@ public class AccountController {
             @RequestBody DepositRequest request) {
 
         return ResponseEntity.ok(
-                accountService.deposit(id, request.getAmount()));
+                accountService.deposit(id, request.getAmount(), request.getReferenceId()));
     }
 
     @PostMapping("/transfer")

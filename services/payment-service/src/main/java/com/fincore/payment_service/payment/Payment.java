@@ -78,6 +78,7 @@ public class Payment {
     public void onUpdate() { this.updatedAt = OffsetDateTime.now(); }
 
     public UUID getId() { return id; }
+    public void setId(UUID id) { this.id = id; }
     public UUID getCustomerId() { return customerId; }
     public void setCustomerId(UUID customerId) { this.customerId = customerId; }
     public UUID getSourceAccountId() { return sourceAccountId; }
