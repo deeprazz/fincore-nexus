@@ -1,5 +1,6 @@
 package com.fincore.payment_service.payment;
 
+import com.fincore.payment_service.audit.PaymentAuditService;
 import com.fincore.payment_service.beneficiary.Beneficiary;
 import com.fincore.payment_service.beneficiary.BeneficiaryRepository;
 import com.fincore.payment_service.beneficiary.BeneficiaryStatus;
@@ -43,6 +44,7 @@ public class PaymentService {
     private final SettlementEngine settlementEngine;
     private final CoreBankingClient coreBankingClient;
     private final KafkaTemplate<String, Object> kafkaTemplate;
+    private final PaymentAuditService auditService;
 
     @Value("${fincore.payment.imps-max-limit:500000.00}")
     private BigDecimal impsMaxLimit;
@@ -66,7 +68,8 @@ public class PaymentService {
                           UtrGenerator utrGenerator,
                           SettlementEngine settlementEngine,
                           CoreBankingClient coreBankingClient,
-                          KafkaTemplate<String, Object> kafkaTemplate) {
+                          KafkaTemplate<String, Object> kafkaTemplate,
+                          PaymentAuditService auditService) {
         this.paymentRepository = paymentRepository;
         this.beneficiaryRepository = beneficiaryRepository;
         this.sagaRepository = sagaRepository;
@@ -75,6 +78,7 @@ public class PaymentService {
         this.settlementEngine = settlementEngine;
         this.coreBankingClient = coreBankingClient;
         this.kafkaTemplate = kafkaTemplate;
+        this.auditService = auditService;
     }
 
     public PaymentResponse initiatePayment(PaymentRequest req) {
@@ -147,6 +151,10 @@ public class PaymentService {
         payment.setStatus(PaymentStatus.INITIATED);
 
         Payment savedPayment = paymentRepository.save(payment);
+        auditService.record("PAYMENT_INITIATED", "Payment", savedPayment.getId(), "user",
+                "Payment initiated: rail=" + savedPayment.getPaymentRail() + ", amount=" + savedPayment.getAmount() + ", utr=" + utr);
+        auditService.record("FRAUD_DECISION", "Payment", savedPayment.getId(), "fraud-engine",
+                "Fraud decision: " + fraudResult.getDecision() + " score=" + fraudResult.getScore() + " rules=" + fraudResult.getTriggeredRulesAsString());
 
         // Start Saga
         UUID correlationId = UUID.randomUUID();
@@ -165,6 +173,8 @@ public class PaymentService {
             saga.setErrorMessage(savedPayment.getFailureReason());
             sagaRepository.save(saga);
             Payment finalPayment = paymentRepository.save(savedPayment);
+            auditService.record("PAYMENT_FAILED", "Payment", finalPayment.getId(), "fraud-engine",
+                    "Payment blocked by fraud detection rules: " + fraudResult.getTriggeredRulesAsString());
 
             kafkaTemplate.send("payment.failed", utr, new PaymentFailedEvent(
                     correlationId, finalPayment.getId(), finalPayment.getCustomerId(),
@@ -199,6 +209,8 @@ public class PaymentService {
             saga.setErrorMessage(savedPayment.getFailureReason());
             sagaRepository.save(saga);
             Payment finalPayment = paymentRepository.save(savedPayment);
+            auditService.record("PAYMENT_FAILED", "Payment", finalPayment.getId(), "core-banking",
+                    "Source account debit rejected or insufficient funds: " + savedPayment.getFailureReason());
 
             kafkaTemplate.send("payment.failed", utr, new PaymentFailedEvent(
                     correlationId, finalPayment.getId(), finalPayment.getCustomerId(),
@@ -210,6 +222,8 @@ public class PaymentService {
         savedPayment.setStatus(PaymentStatus.DEBITED);
         saga.setCurrentStep("DEBITED");
         sagaRepository.save(saga);
+        auditService.record("PAYMENT_DEBITED", "Payment", savedPayment.getId(), "core-banking",
+                "Source account debited: amount=" + savedPayment.getAmount() + ", utr=" + utr);
 
         // 6. Execute SAGA: Step 2: Credit Target Account (or Simulated Clearing Network)
         saga.setCurrentStep("CREDIT_REQUESTED");
@@ -237,6 +251,8 @@ public class PaymentService {
             saga.setErrorMessage(savedPayment.getFailureReason());
             sagaRepository.save(saga);
             Payment finalPayment = paymentRepository.save(savedPayment);
+            auditService.record("PAYMENT_REVERSED", "Payment", finalPayment.getId(), "saga",
+                    "Destination credit failed; funds reversed to source account: " + finalPayment.getFailureReason());
 
             kafkaTemplate.send("payment.failed", utr, new PaymentFailedEvent(
                     correlationId, finalPayment.getId(), finalPayment.getCustomerId(),
@@ -248,6 +264,8 @@ public class PaymentService {
         savedPayment.setStatus(PaymentStatus.CREDITED);
         saga.setCurrentStep("CREDITED");
         sagaRepository.save(saga);
+        auditService.record("PAYMENT_CREDITED", "Payment", savedPayment.getId(), "clearing-network",
+                "Target account credited: amount=" + savedPayment.getAmount() + ", utr=" + utr);
 
         // 7. Settlement: T+0 for IMPS/UPI, Batch for NEFT
         if (savedPayment.getPaymentRail() == PaymentRail.IMPS || savedPayment.getPaymentRail() == PaymentRail.UPI) {
@@ -261,6 +279,8 @@ public class PaymentService {
         saga.setStatus("COMPLETED");
         sagaRepository.save(saga);
         Payment finalPayment = paymentRepository.save(savedPayment);
+        auditService.record("PAYMENT_SETTLED", "Payment", finalPayment.getId(), "settlement-engine",
+                "Payment settled: rail=" + finalPayment.getPaymentRail() + ", utr=" + utr);
 
         // Publish payment.completed event (Notification Service consumes this!)
         kafkaTemplate.send("payment.completed", utr, new PaymentCompletedEvent(

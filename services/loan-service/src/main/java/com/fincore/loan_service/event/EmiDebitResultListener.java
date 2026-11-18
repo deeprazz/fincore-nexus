@@ -1,5 +1,6 @@
 package com.fincore.loan_service.event;
 
+import com.fincore.loan_service.audit.LoanAuditService;
 import com.fincore.loan_service.emi.EmiSchedule;
 import com.fincore.loan_service.emi.EmiScheduleRepository;
 import com.fincore.loan_service.emi.EmiStatus;
@@ -23,15 +24,18 @@ public class EmiDebitResultListener {
     private final LoanRepository loanRepository;
     private final ProcessedEventRepository processedEventRepository;
     private final LoanEventRepository loanEventRepository;
+    private final LoanAuditService loanAuditService;
 
     public EmiDebitResultListener(EmiScheduleRepository emiScheduleRepository,
                                    LoanRepository loanRepository,
                                    ProcessedEventRepository processedEventRepository,
-                                   LoanEventRepository loanEventRepository) {
+                                   LoanEventRepository loanEventRepository,
+                                   LoanAuditService loanAuditService) {
         this.emiScheduleRepository = emiScheduleRepository;
         this.loanRepository = loanRepository;
         this.processedEventRepository = processedEventRepository;
         this.loanEventRepository = loanEventRepository;
+        this.loanAuditService = loanAuditService;
     }
 
     @KafkaListener(topics = "emi.debit.result", groupId = "loan-service")
@@ -62,6 +66,8 @@ public class EmiDebitResultListener {
                 loan.setOutstandingAmount(newOutstanding);
                 loanRepository.save(loan);
             });
+            loanAuditService.record("EMI_DEBIT_SUCCESS", "EmiSchedule", emi.getId(), "kafka",
+                    "EMI installment " + emi.getInstallmentNumber() + " paid: ₹" + emi.getEmiAmount() + " for loan " + emi.getLoanId());
         } else {
             long daysOverdue = ChronoUnit.DAYS.between(emi.getDueDate(), LocalDate.now());
             emi.setStatus(EmiStatus.OVERDUE);
@@ -70,6 +76,8 @@ public class EmiDebitResultListener {
             emi.setPenaltyAmount(penalty);
             // NPA classification
             updateNpaCategory(emi.getLoanId(), (int) Math.max(0, daysOverdue));
+            loanAuditService.record("EMI_DEBIT_OVERDUE", "EmiSchedule", emi.getId(), "kafka",
+                    "EMI installment " + emi.getInstallmentNumber() + " overdue: ₹" + emi.getEmiAmount() + " penalty ₹" + penalty);
         }
 
         emiScheduleRepository.save(emi);

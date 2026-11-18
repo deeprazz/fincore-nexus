@@ -1,5 +1,6 @@
 package com.fincore.loan_service.loan;
 
+import com.fincore.loan_service.audit.LoanAuditService;
 import com.fincore.loan_service.client.CoreBankingClient;
 import com.fincore.loan_service.credit.CreditAssessmentEngine;
 import com.fincore.loan_service.credit.CreditAssessmentResult;
@@ -39,6 +40,7 @@ public class LoanApplicationService {
     private final EmiCalculator emiCalculator;
     private final CoreBankingClient coreBankingClient;
     private final KafkaTemplate<String, Object> kafkaTemplate;
+    private final LoanAuditService loanAuditService;
 
     public LoanApplicationService(
             LoanApplicationRepository applicationRepository,
@@ -50,7 +52,8 @@ public class LoanApplicationService {
             CreditAssessmentEngine creditEngine,
             EmiCalculator emiCalculator,
             CoreBankingClient coreBankingClient,
-            KafkaTemplate<String, Object> kafkaTemplate) {
+            KafkaTemplate<String, Object> kafkaTemplate,
+            LoanAuditService loanAuditService) {
         this.applicationRepository = applicationRepository;
         this.loanRepository = loanRepository;
         this.emiScheduleRepository = emiScheduleRepository;
@@ -61,6 +64,7 @@ public class LoanApplicationService {
         this.emiCalculator = emiCalculator;
         this.coreBankingClient = coreBankingClient;
         this.kafkaTemplate = kafkaTemplate;
+        this.loanAuditService = loanAuditService;
     }
 
     public LoanApplication submitApplication(LoanApplicationRequest req) {
@@ -113,6 +117,8 @@ public class LoanApplicationService {
         }
 
         LoanApplication saved = applicationRepository.save(app);
+        loanAuditService.record("APPLICATION_SUBMITTED", "LoanApplication", saved.getId(), app.getCreatedBy(),
+                "Loan application submitted: customer=" + app.getCustomerId() + ", amount=" + app.getRequestedAmount() + ", score=" + result.getScore());
         recordEvent(null, saved.getId(), "APPLICATION_SUBMITTED",
                 "{\"score\":" + result.getScore() + ",\"decision\":\"" + result.getDecision() + "\",\"createdBy\":\"" + app.getCreatedBy() + "\"}");
         return saved;
@@ -179,6 +185,8 @@ public class LoanApplicationService {
         );
         kafkaTemplate.send("loan.approved", correlationId.toString(), event);
         recordEvent(savedLoan.getId(), app.getId(), "LOAN_APPROVED", "{\"correlationId\":\"" + correlationId + "\"}");
+        loanAuditService.record("APPLICATION_APPROVED", "LoanApplication", app.getId(), reviewerId,
+                "Loan application approved, contract=" + savedLoan.getId() + ", amount=" + savedLoan.getPrincipalAmount());
         return app;
     }
 
@@ -193,6 +201,8 @@ public class LoanApplicationService {
         app.setReviewedAt(OffsetDateTime.now());
         app.setRejectionReason(reason);
         applicationRepository.save(app);
+        loanAuditService.record("APPLICATION_REJECTED", "LoanApplication", app.getId(), reviewerId,
+                "Loan application rejected: " + reason);
         recordEvent(null, app.getId(), "APPLICATION_REJECTED", "{\"reason\":\"" + reason + "\"}");
         return app;
     }
@@ -234,6 +244,8 @@ public class LoanApplicationService {
 
             recordEvent(loan.getId(), loan.getApplicationId(), "LOAN_DISBURSED",
                     "{\"accountId\":\"" + event.accountId() + "\",\"amount\":\"" + event.disbursedAmount() + "\"}");
+            loanAuditService.record("LOAN_DISBURSED", "Loan", loan.getId(), "saga",
+                    "Loan disbursed: amount=" + event.disbursedAmount() + ", account=" + event.accountId());
         } else {
             saga.setStatus("FAILED");
             saga.setCurrentStep("DISBURSEMENT_FAILED");
@@ -243,6 +255,8 @@ public class LoanApplicationService {
             loanRepository.save(loan);
             recordEvent(loan.getId(), loan.getApplicationId(), "DISBURSEMENT_FAILED",
                     "{\"reason\":\"" + event.failureReason() + "\"}");
+            loanAuditService.record("DISBURSEMENT_FAILED", "Loan", loan.getId(), "saga",
+                    "Disbursement failed: " + event.failureReason());
         }
 
         ProcessedEvent pe = new ProcessedEvent();

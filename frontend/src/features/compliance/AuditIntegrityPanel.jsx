@@ -126,6 +126,44 @@ export default function AuditIntegrityPanel() {
                 Total Ledger Entries: {result.coreAuditChain?.totalEntries ?? result.coreAuditChain?.total_entries ?? "Synced"}
               </p>
             </div>
+
+            {/* Loan Service Audit */}
+            <div className="audit-service-box">
+              <div className="box-header">
+                <div className="flex-group-sm">
+                  <Shield className="w-4 h-4 text-emerald-400" />
+                  <h4 className="box-title">Loan Service Audit Chain</h4>
+                </div>
+                <span className={`mini-pill ${result.loanAuditChain?.valid !== false ? "mini-valid" : "mini-invalid"}`}>
+                  {result.loanAuditChain?.valid !== false ? "VALID" : "INVALID"}
+                </span>
+              </div>
+              <p className="box-desc">
+                {result.loanAuditChain?.message || "Loan credit underwriting and contract state audit chain intact."}
+              </p>
+              <p className="box-meta">
+                Total Ledger Entries: {result.loanAuditChain?.totalEntries ?? 0}
+              </p>
+            </div>
+
+            {/* Payment Service Audit */}
+            <div className="audit-service-box">
+              <div className="box-header">
+                <div className="flex-group-sm">
+                  <Shield className="w-4 h-4 text-purple-400" />
+                  <h4 className="box-title">Payment Service Audit Chain</h4>
+                </div>
+                <span className={`mini-pill ${result.paymentAuditChain?.valid !== false ? "mini-valid" : "mini-invalid"}`}>
+                  {result.paymentAuditChain?.valid !== false ? "VALID" : "INVALID"}
+                </span>
+              </div>
+              <p className="box-desc">
+                {result.paymentAuditChain?.message || "Payment orchestration and settlement audit trail verified."}
+              </p>
+              <p className="box-meta">
+                Total Ledger Entries: {result.paymentAuditChain?.totalEntries ?? 0}
+              </p>
+            </div>
           </div>
         </div>
       ) : null}

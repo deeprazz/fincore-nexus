@@ -104,6 +104,7 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .requestMatchers("/actuator/**").permitAll()
+                .requestMatchers("/api/loans/audit/**").hasAnyRole("MANAGER", "ADMIN")
                 .requestMatchers(HttpMethod.GET, "/api/loans/portfolio").hasAnyRole("MANAGER", "ADMIN")
                 .requestMatchers(HttpMethod.GET, "/api/loans/collections/**").hasAnyRole("MANAGER", "ADMIN")
                 .requestMatchers(HttpMethod.POST, "/api/loans/collections/**").hasAnyRole("MANAGER", "ADMIN")

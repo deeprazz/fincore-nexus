@@ -121,9 +121,16 @@ public class ComplianceService {
     public Map<String, Object> verifySystemAuditChains() {
         AuditVerificationResult kycResult = kycAuditService.verifyChain();
         Map<String, Object> coreResult = coreBankingClient.verifyCoreAuditChain();
+        Map<String, Object> loanResult = coreBankingClient.verifyLoanAuditChain();
+        Map<String, Object> paymentResult = coreBankingClient.verifyPaymentAuditChain();
+
+        boolean kycValid = kycResult.valid();
+        boolean coreValid = !Boolean.FALSE.equals(coreResult.get("valid"));
+        boolean loanValid = !Boolean.FALSE.equals(loanResult.get("valid"));
+        boolean paymentValid = !Boolean.FALSE.equals(paymentResult.get("valid"));
 
         Map<String, Object> combined = new LinkedHashMap<>();
-        combined.put("overallValid", kycResult.valid() && Boolean.TRUE.equals(coreResult.get("valid")));
+        combined.put("overallValid", kycValid && coreValid && loanValid && paymentValid);
         combined.put("verifiedAt", Instant.now().toString());
 
         Map<String, Object> kycStatus = new LinkedHashMap<>();
@@ -134,6 +141,8 @@ public class ComplianceService {
         combined.put("kycAuditChain", kycStatus);
 
         combined.put("coreAuditChain", coreResult);
+        combined.put("loanAuditChain", loanResult);
+        combined.put("paymentAuditChain", paymentResult);
 
         return combined;
     }

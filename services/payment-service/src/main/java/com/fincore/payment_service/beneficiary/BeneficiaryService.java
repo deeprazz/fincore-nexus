@@ -1,5 +1,6 @@
 package com.fincore.payment_service.beneficiary;
 
+import com.fincore.payment_service.audit.PaymentAuditService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -15,9 +16,11 @@ public class BeneficiaryService {
 
     private static final Logger log = LoggerFactory.getLogger(BeneficiaryService.class);
     private final BeneficiaryRepository repository;
+    private final PaymentAuditService auditService;
 
-    public BeneficiaryService(BeneficiaryRepository repository) {
+    public BeneficiaryService(BeneficiaryRepository repository, PaymentAuditService auditService) {
         this.repository = repository;
+        this.auditService = auditService;
     }
 
     public BeneficiaryResponse addBeneficiary(BeneficiaryRequest req) {
@@ -33,6 +36,8 @@ public class BeneficiaryService {
         b.setStatus(BeneficiaryStatus.PENDING);
         Beneficiary saved = repository.save(b);
         log.info("Added beneficiary {} for customer {}", saved.getId(), saved.getCustomerId());
+        auditService.record("BENEFICIARY_ADDED", "Beneficiary", saved.getId(), "user",
+                "Beneficiary added: name=" + saved.getName() + ", acc=" + saved.getAccountNumber() + ", ifsc=" + saved.getIfscCode());
         return BeneficiaryResponse.from(saved);
     }
 
@@ -60,6 +65,8 @@ public class BeneficiaryService {
         }
         Beneficiary saved = repository.save(b);
         log.info("Simulated penny-drop verification for beneficiary {}: status={}", id, saved.getStatus());
+        auditService.record("BENEFICIARY_VERIFIED", "Beneficiary", saved.getId(), "penny-drop",
+                "Penny drop verification result: status=" + saved.getStatus());
         return BeneficiaryResponse.from(saved);
     }
 
@@ -69,5 +76,7 @@ public class BeneficiaryService {
         }
         repository.deleteById(id);
         log.info("Deleted beneficiary {}", id);
+        auditService.record("BENEFICIARY_DELETED", "Beneficiary", id, "user",
+                "Beneficiary deleted: " + id);
     }
 }
