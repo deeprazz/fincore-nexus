@@ -143,7 +143,11 @@ Set-Location '$svcPath'
 Write-Host '==================================================================' -ForegroundColor Cyan
 Write-Host ' [FinCore] Starting $svcName on Port $svcPort... ' -ForegroundColor Cyan
 Write-Host '==================================================================' -ForegroundColor Cyan
-mvn spring-boot:run
+if (Test-Path '.\mvnw.cmd') {
+    .\mvnw.cmd spring-boot:run
+} else {
+    mvn spring-boot:run
+}
 "@
     $bytes = [System.Text.Encoding]::Unicode.GetBytes($svcScript)
     $encoded = [System.Convert]::ToBase64String($bytes)

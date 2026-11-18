@@ -122,10 +122,22 @@ public class GatewayProxyController {
                 out.flush();
             }
         } catch (Exception e) {
-            log.error("Proxy error forwarding to {}: {}", targetUrlString, e.getMessage());
+            String targetService = path.startsWith("/api/loans")
+                    ? "Loan Management Service (Port 8082)"
+                    : path.startsWith("/api/payments") || path.startsWith("/api/beneficiaries") || path.startsWith("/api/settlement")
+                    ? "Payment Orchestration Service (Port 8083)"
+                    : path.startsWith("/api/kyc") || path.startsWith("/api/compliance")
+                    ? "KYC & Compliance Service (Port 8084)"
+                    : path.startsWith("/api/notifications")
+                    ? "Notification Service (Port 8085)"
+                    : "Core Banking Service (Port 8081)";
+
+            String detail = e.getMessage() != null && !e.getMessage().isBlank() ? e.getMessage() : e.getClass().getSimpleName();
+            String errorMsg = targetService + " is currently offline or unreachable (" + detail + "). Please make sure the service is running on " + targetHost + ".";
+            log.error("Proxy error forwarding {} {} -> {}: {}", request.getMethod(), path, targetUrlString, detail);
             response.setStatus(HttpStatus.SERVICE_UNAVAILABLE.value());
             response.setContentType("application/json");
-            response.getWriter().write("{\"error\": \"Service unavailable: " + e.getMessage() + "\"}");
+            response.getWriter().write("{\"error\": \"" + errorMsg.replace("\"", "\\\"") + "\"}");
         }
     }
 
