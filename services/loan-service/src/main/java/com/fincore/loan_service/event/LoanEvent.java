@@ -20,7 +20,7 @@ public class LoanEvent {
     @Column(name = "event_type", nullable = false)
     private String eventType;
 
-    @Column(columnDefinition = "jsonb")
+    @Column(name = "payload", columnDefinition = "text")
     private String payload;
 
     @Column(name = "created_at", nullable = false, updatable = false)
