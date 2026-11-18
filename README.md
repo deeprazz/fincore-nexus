@@ -358,25 +358,53 @@ Compatible with the **VS Code REST Client extension**, **IntelliJ HTTP Client**,
 
 ## 10. Fresh Customer Onboarding & Banking Workflow
 
-When starting with a clean database (customers reset), follow this standard 4-step banking workflow:
+When starting with a clean database (via `.\reset-all-data.ps1`), follow this standard banking workflow:
 
-1. **Step 1: Sign in as Teller**
-   - Log in at [http://localhost:5173](http://localhost:5173) with username `teller` and password `Teller@123`.
-2. **Step 2: Create a Customer**
-   - Navigate to the **Customers** tab $\to$ click **+ Create Customer** (e.g., Name: `Priya Sharma`, Email: `priya@example.com`).
-   - The newly created customer will initially have `KYC: PENDING`.
-3. **Step 3: Dual Maker-Checker KYC Verification (Manager)**
-   - Sign out and sign in as **Manager** (`manager` / `Manager@123`).
-   - Under **Customers** or the **KYC Hub**, review and approve the customer's KYC status to `VERIFIED`.
-   - *Regulatory Compliance Rule*: The core banking ledger strictly blocks account opening until KYC is `VERIFIED`.
-4. **Step 4: Open Account & Move Funds (Teller)**
-   - Sign back in as **Teller** (`teller` / `Teller@123`).
-   - Under **Accounts** $\to$ click **+ Open Account**, select the verified customer, and enter an initial deposit (e.g., `₹25,000.00`).
-   - The account is immediately active, recorded in the SHA-256 tamper-proof ledger, cached in Redis, and ready for operations!
+1. **Step 1: Customer Registration (Self-Service or Staff Onboarding)**
+   * **Self-Service:** Navigate to [http://localhost:5173/register](http://localhost:5173/register) and register an account:
+     * Full Name (e.g. `Aman Sharma`)
+     * Email (e.g. `aman@example.com`)
+     * Mobile Number (10 digits, e.g. `9876543210`)
+     * Aadhaar ID (12 digits, validated via Verhoeff checksum algorithm)
+     * PAN Card Number (10 characters, validated via statutory regex `[A-Z]{5}[0-9]{4}[A-Z]{1}`)
+     * Initial Password (minimum 8 characters)
+   * **Staff Onboarding:** Alternatively, sign in as Teller (`teller` / `Teller@123`) $\to$ navigate to **Customers** and submit the customer profile with the same verified details.
+   * *Status:* The newly created customer is initialized with `KYC: PENDING`.
+
+2. **Step 2: Dual Maker-Checker KYC Verification**
+   * Sign in to the staff workspace (`teller` or `manager`).
+   * Under the **Customers** directory or the **KYC Hub** (`/kyc`), locate the pending customer record.
+   * Review the submitted Aadhaar ID, Phone, and PAN details.
+   * Click **Confirm KYC** to approve the customer record. The status updates to `VERIFIED` and immediately unlocks core banking account operations.
+
+3. **Step 3: Account Opening & Initial Deposit**
+   * In the staff portal, navigate to **Accounts** $\to$ **Create Bank Account**.
+   * Select the verified customer from the dropdown and set the opening balance (e.g. `₹25,000.00`).
+   * The account is instantly provisioned with a formatted account number (e.g. `1000-0000-0012`), recorded in the PostgreSQL double-entry ledger, hashed in the immutable SHA-256 audit chain, and cached in Redis.
+
+4. **Step 4: Customer Self-Service Banking**
+   * Sign in at [http://localhost:5173/login](http://localhost:5173/login) under the **Customer Banking** tab with the registered customer credentials.
+   * Access the polished customer workspace:
+     * **Overview (`/portal`):** View real-time balance across accounts and active KYC status.
+     * **Transfer Money (`/portal/transfer`):** Set a secure 4-digit transaction PIN and send funds instantly to other FinCore accounts.
+     * **Statements (`/portal/statements`):** Filter by date and export digitally signed PDF or CSV account statements.
 
 ---
 
-## 11. Troubleshooting & FAQ
+## 11. Security Architecture & Regulatory Compliance
+
+FinCore Nexus enforces defense-in-depth security standards conforming to RBI Cyber Security guidelines and PCI-DSS v4.0:
+
+* **Security Policy & Reporting:** See [.github/SECURITY.md](.github/SECURITY.md) for vulnerability disclosure protocols and SLA guidelines.
+* **Detailed Security Matrix:** See [docs/security.md](docs/security.md) for the complete PCI-DSS v4.0 technical controls evaluation.
+* **Sensitive Identity Data:** Aadhaar 12-digit numbers are validated via the Verhoeff checksum algorithm, salted, hashed via SHA-256, and masked (`•••• •••• 1234`). PAN numbers are regex-validated and masked (`ABCXXXX34F`).
+* **Encryption at Rest:** Customer verification documents and webcam captures are encrypted before disk write using **AES-256-GCM** with unique 12-byte initialization vectors per artifact.
+* **CORS Single-Source Architecture:** Cross-Origin Resource Sharing is centrally governed by Spring Security's `CorsConfigurationSource` and API Gateway reverse proxy, preventing duplicate origin headers.
+* **Immutable Audit Trail:** State-mutating banking operations generate an append-only cryptographic SHA-256 hash chain (`hash = SHA256(prev_hash + data)`). A PostgreSQL database trigger (`trg_audit_log_immutable`) blocks any direct `UPDATE` or `DELETE` tampering.
+
+---
+
+## 12. Troubleshooting & FAQ
 
 ### Q: `error: release version 25 not supported` during `mvn` or `mvnw.cmd`?
 - **Cause**: Windows or IntelliJ terminal has `JAVA_HOME` pointing to an older JDK (e.g. Java 17).
@@ -387,9 +415,17 @@ When starting with a clean database (customers reset), follow this standard 4-st
   ```
   In IntelliJ: Go to **Project Structure** (`Ctrl+Alt+Shift+S`) $\to$ **Project** $\to$ set SDK to `25`. In **Settings** (`Ctrl+Alt+S`) $\to$ **Build Tools** $\to$ **Maven** $\to$ **Runner** $\to$ set JRE to `Project SDK (25)`.
 
+### Q: `The 'Access-Control-Allow-Origin' header contains multiple values` in browser?
+- **Cause**: Duplicate CORS headers produced when both controller `@CrossOrigin` annotations and global Spring Security CORS filters are active simultaneously.
+- **Fix**: Controller-level `@CrossOrigin` annotations have been removed across all microservices; CORS is now governed exclusively by Spring Security's `CorsConfigurationSource` and API Gateway's `CorsFilter`.
+
+### Q: `column "payload" is of type jsonb but expression is of type character varying` in Loan Service?
+- **Cause**: PostgreSQL `loan_event` table had `payload` typed as `JSONB` while Spring Boot JDBC bound a string parameter.
+- **Fix**: Flyway migration `V2__alter_loan_event_payload_to_text.sql` altered the column to `TEXT USING payload::text`, ensuring seamless parameter binding across all PostgreSQL drivers.
+
 ### Q: `Cannot connect to the backend` in Frontend?
 - **Cause**: Frontend default `API_BASE_URL` targets port 8080 (API Gateway), but only Core Banking (port 8081) is running.
-- **Fix**: Check `frontend/.env` has `VITE_API_URL=http://localhost:8081/api` if developing against Core Banking directly. Alternatively, start the API Gateway on port 8080.
+- **Fix**: Check `frontend/.env` has `VITE_API_URL=http://localhost:8080/api` when running the full platform via `.\start-all.ps1`. If testing Core Banking standalone, point to `http://localhost:8081/api`.
 
 ### Q: What are the `sasl.oauthbearer.expected.issuer = null` logs on startup?
 - **Explanation**: These are completely normal Apache Kafka client configuration dumps printed at `INFO` level when Spring Kafka initializes its consumers. Once connected, Kafka outputs: `partitions assigned: [loan.approved-0, ...]`. No action is required.
