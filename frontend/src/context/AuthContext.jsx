@@ -55,7 +55,7 @@ export function AuthProvider({ children }) {
       isMounted = false;
       clearInterval(intervalId);
     };
-  }, [auth?.username, auth?.password, auth?.role]);
+  }, [auth]);
 
   async function login(username, password) {
     const candidate = {

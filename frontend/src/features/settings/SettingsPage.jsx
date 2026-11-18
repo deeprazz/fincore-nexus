@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   Settings,
   Moon,
@@ -19,24 +19,26 @@ import { useToast } from "../../context/ToastContext";
 import Card from "../../components/ui/Card";
 import Button from "../../components/ui/Button";
 
+const INITIAL_SERVICES = {
+  core: { name: "Core Banking Service", port: 8081, url: "http://localhost:8081/actuator/health", status: "checking" },
+  loans: { name: "Loan Management", port: 8082, url: "http://localhost:8082/actuator/health", status: "checking" },
+  payments: { name: "Payment Service", port: 8083, url: "http://localhost:8083/actuator/health", status: "checking" },
+  kyc: { name: "KYC & Identity", port: 8084, url: "http://localhost:8084/actuator/health", status: "checking" },
+  notifications: { name: "Notification Service", port: 8085, url: "http://localhost:8085/actuator/health", status: "checking" },
+  gateway: { name: "API Gateway", port: 8080, url: "http://localhost:8080/actuator/health", status: "checking" },
+};
+
 export function SettingsPage() {
   const { auth, logout } = useAuth();
   const { theme, setTheme, isDark } = useTheme();
   const { setSuccess, setError } = useToast();
 
-  const [serviceStatus, setServiceStatus] = useState({
-    core: { name: "Core Banking Service", port: 8081, url: "http://localhost:8081/actuator/health", status: "checking" },
-    loans: { name: "Loan Management", port: 8082, url: "http://localhost:8082/actuator/health", status: "checking" },
-    payments: { name: "Payment Service", port: 8083, url: "http://localhost:8083/actuator/health", status: "checking" },
-    kyc: { name: "KYC & Identity", port: 8084, url: "http://localhost:8084/actuator/health", status: "checking" },
-    notifications: { name: "Notification Service", port: 8085, url: "http://localhost:8085/actuator/health", status: "checking" },
-    gateway: { name: "API Gateway", port: 8080, url: "http://localhost:8080/actuator/health", status: "checking" },
-  });
+  const [serviceStatus, setServiceStatus] = useState(INITIAL_SERVICES);
   const [checking, setChecking] = useState(false);
 
-  const checkAllServices = async () => {
+  const checkAllServices = useCallback(async () => {
     setChecking(true);
-    const updated = { ...serviceStatus };
+    const updated = { ...INITIAL_SERVICES };
 
     for (const key of Object.keys(updated)) {
       try {
@@ -55,11 +57,11 @@ export function SettingsPage() {
 
     setServiceStatus(updated);
     setChecking(false);
-  };
+  }, []);
 
   useEffect(() => {
     checkAllServices();
-  }, []);
+  }, [checkAllServices]);
 
   const handleClearCache = () => {
     try {

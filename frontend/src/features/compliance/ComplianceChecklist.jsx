@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from "react";
+import React, { useState, useEffect, useContext, useCallback } from "react";
 import { ShieldCheck, CheckCircle2, XCircle, RefreshCw, AlertTriangle, Lock } from "lucide-react";
 import { getPciDssReport } from "../../api/kyc";
 import AuthContext from "../../context/AuthContext";
@@ -12,7 +12,7 @@ export default function ComplianceChecklist() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const fetchReport = async () => {
+  const fetchReport = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -23,11 +23,11 @@ export default function ComplianceChecklist() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [auth]);
 
   useEffect(() => {
     fetchReport();
-  }, [auth]);
+  }, [fetchReport]);
 
   if (loading) {
     return (

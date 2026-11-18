@@ -20,7 +20,7 @@ export function PortalDashboard() {
     if (!canBank) return;
     const id = setInterval(() => refreshPortalData(), 10000);
     return () => clearInterval(id);
-  }, [canBank]);
+  }, [canBank, refreshPortalData]);
 
   return (
     <>

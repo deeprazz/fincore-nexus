@@ -15,28 +15,29 @@ export function PortalTransactions() {
 
   const customerAccounts = customerPortal?.accounts || [];
   const primaryAccount = customerAccounts[0];
+  const primaryAccountId = primaryAccount?.id;
   const canBank = customerPortal?.kycStatus === "VERIFIED";
 
   const loadTransactions = useCallback(async () => {
-    if (!primaryAccount?.id) return;
+    if (!primaryAccountId) return;
     try {
-      const data = await getPortalTransactions(primaryAccount.id, auth);
+      const data = await getPortalTransactions(primaryAccountId, auth);
       setTransactions(Array.isArray(data) ? data : []);
     } catch (err) {
       setError(err.message || "Failed to load transactions");
     } finally {
       setLoading(false);
     }
-  }, [primaryAccount?.id, auth, setError]);
+  }, [primaryAccountId, auth, setError]);
 
   useEffect(() => {
-    if (canBank && primaryAccount?.id) {
+    if (canBank && primaryAccountId) {
       setLoading(true);
       loadTransactions();
       const interval = setInterval(loadTransactions, 5000);
       return () => clearInterval(interval);
     }
-  }, [canBank, primaryAccount?.id, loadTransactions]);
+  }, [canBank, primaryAccountId, loadTransactions]);
 
   return (
     <>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from "react";
+import React, { useState, useEffect, useContext, useCallback } from "react";
 import { Shield, CheckCircle, AlertTriangle, RefreshCw, KeyRound, Database } from "lucide-react";
 import { verifyAuditIntegrity } from "../../api/kyc";
 import AuthContext from "../../context/AuthContext";
@@ -12,7 +12,7 @@ export default function AuditIntegrityPanel() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const runVerification = async () => {
+  const runVerification = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -23,11 +23,11 @@ export default function AuditIntegrityPanel() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [auth]);
 
   useEffect(() => {
     runVerification();
-  }, [auth]);
+  }, [runVerification]);
 
   return (
     <Card className="audit-integrity-panel">

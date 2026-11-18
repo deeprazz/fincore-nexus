@@ -21,7 +21,6 @@ import {
   getCustomerLoans,
   getCustomerApplications,
   submitApplication,
-  calculateEmi,
   getEmiSchedule,
   prepayLoan,
 } from "../../api/loans";
@@ -129,7 +128,7 @@ export function PortalLoans() {
       ]);
       setLoans(Array.isArray(loansRes) ? loansRes : []);
       setApplications(Array.isArray(appsRes) ? appsRes : []);
-    } catch (err) {
+    } catch {
       // Graceful fallback
     } finally {
       setLoading(false);
@@ -217,7 +216,7 @@ export function PortalLoans() {
     }
     setPrepaying(true);
     try {
-      const res = await prepayLoan(loanId, amount, auth);
+      await prepayLoan(loanId, amount, auth);
       setSuccess(`Prepayment of ${money(amount)} processed successfully.`);
       setPrepayLoanId(null);
       setPrepayAmount("");

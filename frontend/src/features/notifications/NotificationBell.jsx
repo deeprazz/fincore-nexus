@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Bell } from "lucide-react";
 import { getNotifications } from "../../api/notifications";
 import { useAuth } from "../../context/AuthContext";
@@ -10,7 +10,7 @@ export default function NotificationBell() {
   const dropdownRef = useRef(null);
   const { auth } = useAuth();
 
-  const fetchNotes = async () => {
+  const fetchNotes = useCallback(async () => {
     if (!auth) return;
     try {
       const data = await getNotifications(null, auth);
@@ -21,13 +21,13 @@ export default function NotificationBell() {
     } catch {
       // Graceful fallback if notification microservice is not reachable
     }
-  };
+  }, [auth]);
 
   useEffect(() => {
     fetchNotes();
     const interval = setInterval(fetchNotes, 15000);
     return () => clearInterval(interval);
-  }, [auth]);
+  }, [fetchNotes]);
 
   useEffect(() => {
     const handleClickOutside = (e) => {
