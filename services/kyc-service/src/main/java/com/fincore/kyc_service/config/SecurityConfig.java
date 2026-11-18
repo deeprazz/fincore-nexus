@@ -72,19 +72,19 @@ public class SecurityConfig {
         UserDetails teller = User.builder()
                 .username("teller")
                 .password(encoder.encode("Teller@123"))
-                .roles("TELLER", "MANAGER", "ADMIN")
+                .roles("TELLER")
                 .build();
 
         UserDetails manager = User.builder()
                 .username("manager")
                 .password(encoder.encode("Manager@123"))
-                .roles("MANAGER")
+                .roles("TELLER", "MANAGER")
                 .build();
 
         UserDetails admin = User.builder()
                 .username("admin")
                 .password(encoder.encode("Admin@123"))
-                .roles("ADMIN")
+                .roles("ADMIN", "MANAGER", "TELLER")
                 .build();
 
         return new InMemoryUserDetailsManager(teller, manager, admin);

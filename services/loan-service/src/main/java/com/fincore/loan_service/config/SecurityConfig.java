@@ -57,21 +57,22 @@ public class SecurityConfig {
                 if ("teller".equalsIgnoreCase(username) && (tellerPassword.equals(password) || passwordEncoder.matches(password, tellerPassword))) {
                     return new UsernamePasswordAuthenticationToken(
                             username, password,
-                            List.of(new SimpleGrantedAuthority("ROLE_TELLER"),
-                                    new SimpleGrantedAuthority("ROLE_MANAGER"),
-                                    new SimpleGrantedAuthority("ROLE_ADMIN"))
+                            List.of(new SimpleGrantedAuthority("ROLE_TELLER"))
                     );
                 }
                 if ("manager".equalsIgnoreCase(username) && (managerPassword.equals(password) || passwordEncoder.matches(password, managerPassword))) {
                     return new UsernamePasswordAuthenticationToken(
                             username, password,
-                            List.of(new SimpleGrantedAuthority("ROLE_MANAGER"))
+                            List.of(new SimpleGrantedAuthority("ROLE_TELLER"),
+                                    new SimpleGrantedAuthority("ROLE_MANAGER"))
                     );
                 }
                 if ("admin".equalsIgnoreCase(username) && (adminPassword.equals(password) || passwordEncoder.matches(password, adminPassword))) {
                     return new UsernamePasswordAuthenticationToken(
                             username, password,
-                            List.of(new SimpleGrantedAuthority("ROLE_ADMIN"))
+                            List.of(new SimpleGrantedAuthority("ROLE_ADMIN"),
+                                    new SimpleGrantedAuthority("ROLE_MANAGER"),
+                                    new SimpleGrantedAuthority("ROLE_TELLER"))
                     );
                 }
 
@@ -103,17 +104,17 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .requestMatchers("/actuator/**").permitAll()
-                .requestMatchers(HttpMethod.POST, "/api/loans/applications").hasAnyRole("CUSTOMER", "TELLER", "MANAGER", "ADMIN")
-                .requestMatchers(HttpMethod.GET, "/api/loans/applications/**").hasAnyRole("CUSTOMER", "TELLER", "MANAGER", "ADMIN")
-                .requestMatchers(HttpMethod.PATCH, "/api/loans/applications/*/approve").hasAnyRole("MANAGER", "ADMIN")
-                .requestMatchers(HttpMethod.PATCH, "/api/loans/applications/*/reject").hasAnyRole("MANAGER", "ADMIN")
-                .requestMatchers(HttpMethod.POST, "/api/loans/emi/calculate").hasAnyRole("CUSTOMER", "TELLER", "MANAGER", "ADMIN")
-                .requestMatchers(HttpMethod.GET, "/api/loans/**").hasAnyRole("CUSTOMER", "TELLER", "MANAGER", "ADMIN")
-                .requestMatchers(HttpMethod.POST, "/api/loans/*/prepay").hasAnyRole("CUSTOMER", "TELLER", "MANAGER", "ADMIN")
-                .requestMatchers(HttpMethod.POST, "/api/loans/**").hasAnyRole("TELLER", "MANAGER", "ADMIN")
                 .requestMatchers(HttpMethod.GET, "/api/loans/portfolio").hasAnyRole("MANAGER", "ADMIN")
                 .requestMatchers(HttpMethod.GET, "/api/loans/collections/**").hasAnyRole("MANAGER", "ADMIN")
                 .requestMatchers(HttpMethod.POST, "/api/loans/collections/**").hasAnyRole("MANAGER", "ADMIN")
+                .requestMatchers(HttpMethod.PATCH, "/api/loans/applications/*/approve").hasAnyRole("MANAGER", "ADMIN")
+                .requestMatchers(HttpMethod.PATCH, "/api/loans/applications/*/reject").hasAnyRole("MANAGER", "ADMIN")
+                .requestMatchers(HttpMethod.POST, "/api/loans/applications").hasAnyRole("CUSTOMER", "TELLER", "MANAGER", "ADMIN")
+                .requestMatchers(HttpMethod.GET, "/api/loans/applications/**").hasAnyRole("CUSTOMER", "TELLER", "MANAGER", "ADMIN")
+                .requestMatchers(HttpMethod.POST, "/api/loans/emi/calculate").hasAnyRole("CUSTOMER", "TELLER", "MANAGER", "ADMIN")
+                .requestMatchers(HttpMethod.POST, "/api/loans/*/prepay").hasAnyRole("CUSTOMER", "TELLER", "MANAGER", "ADMIN")
+                .requestMatchers(HttpMethod.GET, "/api/loans/**").hasAnyRole("CUSTOMER", "TELLER", "MANAGER", "ADMIN")
+                .requestMatchers(HttpMethod.POST, "/api/loans/**").hasAnyRole("TELLER", "MANAGER", "ADMIN")
                 .anyRequest().authenticated()
             )
             .httpBasic(withDefaults());

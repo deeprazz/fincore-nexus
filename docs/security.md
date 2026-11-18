@@ -4,7 +4,38 @@ FinCore Nexus implements enterprise-grade technical safeguards designed to excee
 
 ---
 
-## 1. PCI-DSS Technical Controls Matrix
+## 1. Role-Based Access Control (RBAC) & Permission Matrix
+
+FinCore Nexus strictly separates duties across four distinct principal roles: `CUSTOMER`, `TELLER`, `MANAGER`, and `ADMIN`. Principals receive least-privilege entitlements:
+- `TELLER` receives operational rights only. Tellers cannot approve loans, confirm/reject KYC, unfreeze/close accounts, or inspect audit logs.
+- `MANAGER` receives dual-control approval authorities, collections, portfolio analytics, and audit log inspection. Managers cannot perform admin-exclusive cryptographic chain verification or system reconfiguration.
+- `ADMIN` receives cryptographic audit verification, compliance oversight, and system management.
+- `CUSTOMER` receives self-service portal entitlements and cannot invoke internal staff endpoints.
+
+### Endpoint Permission Matrix
+
+| Functional Area | HTTP Method & URI Path | Customer | Teller | Manager | Admin | Notes |
+|---|---|:---:|:---:|:---:|:---:|---|
+| **Customer Portal** | `GET/POST /api/customer-portal/**` | **ALLOW** | DENY (403) | DENY (403) | DENY (403) | Personal banking self-service |
+| **Loan Application** | `POST /api/loans/applications` | **ALLOW** | **ALLOW** | **ALLOW** | **ALLOW** | Origination (subject to maker-checker) |
+| **EMI Calculator** | `POST /api/loans/emi/calculate` | **ALLOW** | **ALLOW** | **ALLOW** | **ALLOW** | Public interest schedule simulator |
+| **Loan Prepayment** | `POST /api/loans/*/prepay` | **ALLOW** | **ALLOW** | **ALLOW** | **ALLOW** | Borrower or staff prepayment |
+| **View Loans** | `GET /api/loans/**` | **ALLOW** | **ALLOW** | **ALLOW** | **ALLOW** | Filtered by customer identity or staff |
+| **Standard Banking Ops** | `POST /api/accounts/*/deposit, withdraw, transfer` | DENY (403) | **ALLOW** | **ALLOW** | **ALLOW** | Routine cash desk operations |
+| **Customer Onboarding** | `POST/PATCH /api/customers/**` | DENY (403) | **ALLOW** | **ALLOW** | **ALLOW** | Account registration & updates |
+| **Account Freeze** | `POST /api/accounts/*/freeze` | DENY (403) | **ALLOW** | **ALLOW** | **ALLOW** | Immediate risk mitigation |
+| **Account Unfreeze** | `POST /api/accounts/*/unfreeze` | DENY (403) | DENY (403) | **ALLOW** | **ALLOW** | Dual-control manager approval |
+| **Account Close** | `POST /api/accounts/*/close` | DENY (403) | DENY (403) | **ALLOW** | **ALLOW** | Dual-control manager approval |
+| **KYC Verification** | `POST /api/customers/*/kyc`, `/api/kyc/verify` | DENY (403) | DENY (403) | **ALLOW** | **ALLOW** | Maker != Checker dual control |
+| **Loan Approval / Reject** | `PATCH /api/loans/applications/*/approve, reject` | DENY (403) | DENY (403) | **ALLOW** | **ALLOW** | Maker != Checker dual control |
+| **Portfolio Analytics** | `GET /api/loans/portfolio` | DENY (403) | DENY (403) | **ALLOW** | **ALLOW** | Delinquency & NPA analytics |
+| **Collections Hub** | `GET/POST /api/loans/collections/**` | DENY (403) | DENY (403) | **ALLOW** | **ALLOW** | Delinquency outreach & recovery |
+| **Audit Log Viewing** | `GET /api/audit/**` | DENY (403) | DENY (403) | **ALLOW** | **ALLOW** | Immutable record inspection |
+| **Audit Chain Verify** | `GET /api/audit/verify`, `/api/compliance/audit/verify` | DENY (403) | DENY (403) | DENY (403) | **ALLOW** | Cryptographic SHA-256 verification |
+
+---
+
+## 2. PCI-DSS Technical Controls Matrix
 
 The `/api/compliance/pci-dss` endpoint evaluates these controls directly against active code configurations and live infrastructure settings:
 

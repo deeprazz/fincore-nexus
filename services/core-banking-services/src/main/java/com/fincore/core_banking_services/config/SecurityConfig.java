@@ -44,15 +44,18 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/me").authenticated()
                         .requestMatchers("/actuator/**").permitAll()
                         .requestMatchers("/api/customer-portal/**").hasRole("CUSTOMER")
-                        // Teller, Manager, or Admin: verify KYC, create customer/account, operations
-                        .requestMatchers("/api/customers/*/kyc").hasAnyRole("TELLER", "MANAGER", "ADMIN")
+                        // Approvals: KYC verify, account unfreeze, account close strictly require MANAGER or ADMIN
+                        .requestMatchers("/api/customers/*/kyc").hasAnyRole("MANAGER", "ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/accounts/*/unfreeze").hasAnyRole("MANAGER", "ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/accounts/*/close").hasAnyRole("MANAGER", "ADMIN")
+                        // Admin-only verification
+                        .requestMatchers("/api/audit/verify").hasRole("ADMIN")
+                        // Audit view: MANAGER and ADMIN only (Teller cannot view audit)
+                        .requestMatchers("/api/audit/**").hasAnyRole("MANAGER", "ADMIN")
+                        // Operations: deposit, withdraw, transfer, freeze, create account/customer for TELLER, MANAGER, ADMIN
+                        .requestMatchers(HttpMethod.POST, "/api/customers/**").hasAnyRole("TELLER", "MANAGER", "ADMIN")
                         .requestMatchers(HttpMethod.PATCH, "/api/customers/**").hasAnyRole("TELLER", "MANAGER", "ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/api/customers/**").hasAnyRole("TELLER", "MANAGER", "ADMIN")
-                        .requestMatchers(HttpMethod.POST, "/api/customers/**").hasAnyRole("TELLER", "MANAGER", "ADMIN")
-                        .requestMatchers(HttpMethod.POST, "/api/accounts/*/unfreeze").hasAnyRole("TELLER", "MANAGER", "ADMIN")
-                        .requestMatchers(HttpMethod.POST, "/api/accounts/*/close").hasAnyRole("TELLER", "MANAGER", "ADMIN")
-                        .requestMatchers("/api/audit/**").hasAnyRole("TELLER", "MANAGER", "ADMIN")
-                        // Teller operations: deposit, withdraw, transfer, freeze, create account/customer
                         .requestMatchers(HttpMethod.POST, "/api/accounts/*/deposit").hasAnyRole("TELLER", "MANAGER", "ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/accounts/*/withdraw").hasAnyRole("TELLER", "MANAGER", "ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/accounts/transfer").hasAnyRole("TELLER", "MANAGER", "ADMIN")
@@ -101,19 +104,19 @@ public class SecurityConfig {
             if ("teller".equalsIgnoreCase(username)) {
                 return User.withUsername("teller")
                         .password(tellerPasswordHash)
-                        .roles("TELLER", "MANAGER", "ADMIN")
+                        .roles("TELLER")
                         .build();
             }
             if ("manager".equalsIgnoreCase(username)) {
                 return User.withUsername("manager")
                         .password(managerPasswordHash)
-                        .roles("TELLER", "MANAGER", "ADMIN")
+                        .roles("TELLER", "MANAGER")
                         .build();
             }
             if ("admin".equalsIgnoreCase(username)) {
                 return User.withUsername("admin")
                         .password(adminPasswordHash)
-                        .roles("TELLER", "MANAGER", "ADMIN")
+                        .roles("ADMIN", "MANAGER", "TELLER")
                         .build();
             }
 

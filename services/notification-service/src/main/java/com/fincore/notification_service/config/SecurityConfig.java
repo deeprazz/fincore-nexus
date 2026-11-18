@@ -41,9 +41,9 @@ public class SecurityConfig {
     @Bean
     public UserDetailsService userDetailsService(PasswordEncoder encoder) {
         var manager = new InMemoryUserDetailsManager();
-        manager.createUser(User.withUsername("teller").password(encoder.encode(tellerPassword)).roles("TELLER", "MANAGER", "ADMIN").build());
-        manager.createUser(User.withUsername("manager").password(encoder.encode(managerPassword)).roles("MANAGER").build());
-        manager.createUser(User.withUsername("admin").password(encoder.encode(adminPassword)).roles("ADMIN").build());
+        manager.createUser(User.withUsername("teller").password(encoder.encode(tellerPassword)).roles("TELLER").build());
+        manager.createUser(User.withUsername("manager").password(encoder.encode(managerPassword)).roles("TELLER", "MANAGER").build());
+        manager.createUser(User.withUsername("admin").password(encoder.encode(adminPassword)).roles("ADMIN", "MANAGER", "TELLER").build());
         return manager;
     }
 
