@@ -1,7 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
 import {
-  Activity,
   Wallet,
   Landmark,
   Send,
@@ -25,7 +24,13 @@ export default function MasterDashboard() {
   const [kycData, setKycData] = useState(null);
   const [pciData, setPciData] = useState(null);
 
-  const fetchAllMetrics = async () => {
+  // Per-module service availability tracking
+  const [coreStatus, setCoreStatus] = useState("ok");
+  const [loanStatus, setLoanStatus] = useState("ok");
+  const [paymentStatus, setPaymentStatus] = useState("ok");
+  const [complianceStatus, setComplianceStatus] = useState("ok");
+
+  const fetchAllMetrics = useCallback(async () => {
     setLoading(true);
     try {
       // 1. Core banking metrics
@@ -33,54 +38,85 @@ export default function MasterDashboard() {
         apiRequest("/dashboard/summary"),
         apiRequest("/audit/verify"),
       ]);
-      setCoreSummary({
-        ...(coreRes.status === "fulfilled" ? coreRes.value : {}),
-        auditValid: auditRes.status === "fulfilled" ? auditRes.value.valid : true,
-      });
+      const isCoreOk = coreRes.status === "fulfilled" && coreRes.value && !coreRes.value.error;
+      setCoreStatus(isCoreOk ? "ok" : "unavailable");
+      setCoreSummary(
+        isCoreOk
+          ? {
+              ...coreRes.value,
+              auditValid: auditRes.status === "fulfilled" && auditRes.value ? auditRes.value.valid : false,
+            }
+          : null
+      );
 
       // 2. Loan metrics
-      const loanRes = await apiRequest("/loans/portfolio").catch(() => null);
-      setLoanPortfolio(loanRes);
+      let isLoanOk = false;
+      try {
+        const loanRes = await apiRequest("/loans/portfolio");
+        if (loanRes && !loanRes.error) {
+          setLoanPortfolio(loanRes);
+          isLoanOk = true;
+        } else {
+          setLoanPortfolio(null);
+        }
+      } catch {
+        setLoanPortfolio(null);
+      }
+      setLoanStatus(isLoanOk ? "ok" : "unavailable");
 
       // 3. Payment metrics
       const [paymentsRes, settlementRes] = await Promise.allSettled([
         apiRequest("/payments"),
         apiRequest("/settlement/report"),
       ]);
-      const payments = paymentsRes.status === "fulfilled" ? paymentsRes.value || [] : [];
-      const totalPayments = payments.length;
-      const successfulPayments = payments.filter((p) => p.status === "SETTLED" || p.status === "CREDITED").length;
-      const successRate = totalPayments > 0 ? Math.round((successfulPayments / totalPayments) * 100) : 100;
-      setPaymentReport({
-        totalPayments,
-        successRate,
-        payments,
-        settlement: settlementRes.status === "fulfilled" ? settlementRes.value : null,
-      });
+      const isPaymentOk = paymentsRes.status === "fulfilled" && Array.isArray(paymentsRes.value);
+      setPaymentStatus(isPaymentOk ? "ok" : "unavailable");
+      if (isPaymentOk) {
+        const payments = paymentsRes.value;
+        const totalPayments = payments.length;
+        const successfulPayments = payments.filter((p) => p.status === "SETTLED" || p.status === "CREDITED").length;
+        const successRate = totalPayments > 0 ? Math.round((successfulPayments / totalPayments) * 100) : null;
+        setPaymentReport({
+          totalPayments,
+          successRate,
+          payments,
+          settlement: settlementRes.status === "fulfilled" ? settlementRes.value : null,
+        });
+      } else {
+        setPaymentReport(null);
+      }
 
       // 4. KYC & Compliance metrics
       const [kycRes, complianceRes] = await Promise.allSettled([
         apiRequest("/kyc"),
         apiRequest("/compliance/pci-dss"),
       ]);
-      const kycList = kycRes.status === "fulfilled" ? kycRes.value || [] : [];
-      const verifiedKyc = kycList.filter((k) => k.status === "APPROVED").length;
-      setKycData({
-        total: kycList.length,
-        verified: verifiedKyc,
-        pending: kycList.filter((k) => k.status === "PENDING_REVIEW").length,
-      });
-      setPciData(complianceRes.status === "fulfilled" ? complianceRes.value : null);
-    } catch (err) {
-      console.error("Failed to load master dashboard metrics:", err);
+      const isKycOk = kycRes.status === "fulfilled" && Array.isArray(kycRes.value);
+      const isPciOk = complianceRes.status === "fulfilled" && complianceRes.value && !complianceRes.value.error;
+      setComplianceStatus(isKycOk || isPciOk ? "ok" : "unavailable");
+
+      if (isKycOk) {
+        const kycList = kycRes.value;
+        const verifiedKyc = kycList.filter((k) => k.status === "APPROVED").length;
+        setKycData({
+          total: kycList.length,
+          verified: verifiedKyc,
+          pending: kycList.filter((k) => k.status === "PENDING_REVIEW").length,
+        });
+      } else {
+        setKycData(null);
+      }
+      setPciData(isPciOk ? complianceRes.value : null);
+    } catch {
+      // Handled via individual is*Ok flags
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchAllMetrics();
-  }, []);
+  }, [fetchAllMetrics]);
 
   return (
     <div className="telemetry-page">
@@ -121,25 +157,41 @@ export default function MasterDashboard() {
       <div className="telemetry-latency-row">
         <div className="latency-stat-card">
           <span className="stat-label">Latency p50</span>
-          <span className="stat-value">{coreSummary?.latencyP50Ms ?? "3.4"} ms</span>
-          <span className="stat-sub">Normal SLA (&lt;25ms)</span>
+          <span className="stat-value">
+            {coreSummary?.latencyP50Ms != null ? `${coreSummary.latencyP50Ms} ms` : "—"}
+          </span>
+          <span className="stat-sub">
+            {coreSummary?.latencyP50Ms != null ? "Normal SLA (<25ms)" : "Core latency metric"}
+          </span>
         </div>
+
         <div className="latency-stat-card">
           <span className="stat-label">Latency p95</span>
-          <span className="stat-value">{coreSummary?.latencyP95Ms ?? "8.1"} ms</span>
-          <span className="stat-sub">Burst threshold (&lt;50ms)</span>
+          <span className="stat-value">
+            {coreSummary?.latencyP95Ms != null ? `${coreSummary.latencyP95Ms} ms` : "—"}
+          </span>
+          <span className="stat-sub">
+            {coreSummary?.latencyP95Ms != null ? "Burst threshold (<50ms)" : "Core latency metric"}
+          </span>
         </div>
+
         <div className="latency-stat-card">
           <span className="stat-label">Today's Transactions</span>
-          <span className="stat-value">{coreSummary?.transactionsToday ?? "48"}</span>
+          <span className="stat-value">
+            {coreSummary?.transactionsToday != null ? coreSummary.transactionsToday : "—"}
+          </span>
           <span className="stat-sub">Double-entry ledger</span>
         </div>
+
         <div className="latency-stat-card">
           <span className="stat-label">Measured TPS</span>
           <span className="stat-value flex-val">
-            <Zap size={16} className="text-amber-500" /> 84.5 req/s
+            <Zap size={16} className={coreSummary?.tps != null ? "text-amber-500" : "text-muted"} />
+            {coreSummary?.tps != null ? `${coreSummary.tps} req/s` : "—"}
           </span>
-          <span className="stat-sub">100% Success Rate</span>
+          <span className="stat-sub">
+            {paymentReport?.successRate != null ? `${paymentReport.successRate}% Success Rate` : "—"}
+          </span>
         </div>
       </div>
 
@@ -148,20 +200,25 @@ export default function MasterDashboard() {
         {/* Core Banking */}
         <Card className="telemetry-domain-card domain-blue">
           <div className="domain-card-top">
-            <span className="domain-label">Core Banking Ledger</span>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+              <span className="domain-label">Core Banking Ledger</span>
+              {coreStatus === "unavailable" && (
+                <span className="service-unavailable-badge">service unavailable</span>
+              )}
+            </div>
             <div className="domain-icon-circle blue">
               <Wallet size={18} />
             </div>
           </div>
           <div className="domain-card-main">
             <div className="domain-main-number">
-              {coreSummary?.activeAccounts ?? "12"}
+              {coreSummary?.activeAccounts != null ? coreSummary.activeAccounts : "—"}
             </div>
             <p className="domain-sub-label">Active Account Ledgers</p>
           </div>
           <div className="domain-card-bottom">
             <span>Total Deposits:</span>
-            <strong>{money(coreSummary?.totalBalance ?? 1845000)}</strong>
+            <strong>{coreSummary?.totalBalance != null ? money(coreSummary.totalBalance) : "—"}</strong>
           </div>
           <Link to="/accounts" className="domain-card-link">
             Open Accounts Ledger <ArrowRight size={13} />
@@ -171,21 +228,26 @@ export default function MasterDashboard() {
         {/* Loans */}
         <Card className="telemetry-domain-card domain-indigo">
           <div className="domain-card-top">
-            <span className="domain-label">Loans & Credit Portfolio</span>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+              <span className="domain-label">Loans & Credit Portfolio</span>
+              {loanStatus === "unavailable" && (
+                <span className="service-unavailable-badge">service unavailable</span>
+              )}
+            </div>
             <div className="domain-icon-circle indigo">
               <Landmark size={18} />
             </div>
           </div>
           <div className="domain-card-main">
             <div className="domain-main-number">
-              {loanPortfolio?.activeLoansCount ?? "8"}
+              {loanPortfolio?.activeLoansCount != null ? loanPortfolio.activeLoansCount : "—"}
             </div>
             <p className="domain-sub-label">Active Loan Portfolios</p>
           </div>
           <div className="domain-card-bottom">
             <span>NPA Ratio:</span>
-            <strong className="text-emerald-500">
-              {loanPortfolio?.npaRatio != null ? `${loanPortfolio.npaRatio}%` : "0.00%"}
+            <strong className={loanPortfolio?.npaRatio != null ? "text-emerald-500" : ""}>
+              {loanPortfolio?.npaRatio != null ? `${loanPortfolio.npaRatio}%` : "—"}
             </strong>
           </div>
           <Link to="/loans" className="domain-card-link">
@@ -196,14 +258,19 @@ export default function MasterDashboard() {
         {/* Payments */}
         <Card className="telemetry-domain-card domain-emerald">
           <div className="domain-card-top">
-            <span className="domain-label">Payment Clearing Rails</span>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+              <span className="domain-label">Payment Clearing Rails</span>
+              {paymentStatus === "unavailable" && (
+                <span className="service-unavailable-badge">service unavailable</span>
+              )}
+            </div>
             <div className="domain-icon-circle emerald">
               <Send size={18} />
             </div>
           </div>
           <div className="domain-card-main">
             <div className="domain-main-number">
-              {paymentReport?.successRate ?? "100"}%
+              {paymentReport?.successRate != null ? `${paymentReport.successRate}%` : "—"}
             </div>
             <p className="domain-sub-label">Clearing Success Rate</p>
           </div>
@@ -219,21 +286,26 @@ export default function MasterDashboard() {
         {/* KYC & Compliance */}
         <Card className="telemetry-domain-card domain-purple">
           <div className="domain-card-top">
-            <span className="domain-label">Identity & Regulatory Compliance</span>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+              <span className="domain-label">Identity & Regulatory Compliance</span>
+              {complianceStatus === "unavailable" && (
+                <span className="service-unavailable-badge">service unavailable</span>
+              )}
+            </div>
             <div className="domain-icon-circle purple">
               <ShieldCheck size={18} />
             </div>
           </div>
           <div className="domain-card-main">
             <div className="domain-main-number">
-              {kycData?.verified ?? "5"}
+              {kycData?.verified != null ? kycData.verified : "—"}
             </div>
             <p className="domain-sub-label">Verified Customer Identities</p>
           </div>
           <div className="domain-card-bottom">
             <span>PCI-DSS Controls:</span>
-            <strong className="text-emerald-500">
-              {pciData?.complianceScore != null ? `${pciData.complianceScore}%` : "100%"} Passed
+            <strong className={pciData?.complianceScore != null ? "text-emerald-500" : ""}>
+              {pciData?.complianceScore != null ? `${pciData.complianceScore}% Passed` : "—"}
             </strong>
           </div>
           <Link to="/compliance" className="domain-card-link">
