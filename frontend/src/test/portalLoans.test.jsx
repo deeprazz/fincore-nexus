@@ -101,4 +101,23 @@ describe("PortalLoans Component", () => {
       );
     });
   });
+
+  it("resolves customerId when returned as customerId in portal response and enables submit button", async () => {
+    vi.spyOn(AuthContextModule, "useAuth").mockReturnValue({
+      auth: { username: "kriti@example.com", role: "CUSTOMER" },
+      customerPortal: {
+        customerId: "b2c3d4e5-f6a7-8901-bcde-fa1234567890",
+        name: "Kriti Sen",
+        kycStatus: "VERIFIED",
+        accounts: [],
+      },
+      refreshPortalData: vi.fn(),
+    });
+
+    render(<PortalLoans />);
+
+    expect(screen.getByText(/CUST-B2C3D4E5/i)).toBeInTheDocument();
+    const submitBtn = screen.getByRole("button", { name: /Submit Application & Check Eligibility/i });
+    expect(submitBtn).not.toBeDisabled();
+  });
 });

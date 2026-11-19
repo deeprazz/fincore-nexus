@@ -2047,7 +2047,7 @@ tbody tr:hover {
 /* Metric Summary Cards Grid */
 .customer-metric-grid {
   display: grid !important;
-  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)) !important;
   gap: 20px !important; /* Proper 20px space between cards */
   margin: 0 !important;
 }
@@ -2293,6 +2293,243 @@ tbody tr:hover {
 
 .customer-transfer-submit:hover {
   background: #1d4ed8 !important;
+}
+
+/* Customer Loans Layout & Components */
+.customer-loans-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(320px, 1fr);
+  gap: 24px;
+}
+
+@media (max-width: 900px) {
+  .customer-loans-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+.customer-loan-form {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 16px !important;
+}
+
+.customer-loan-form label {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 6px !important;
+  color: #94a3b8 !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+}
+
+.customer-loan-form input,
+.customer-loan-form select {
+  height: 42px !important;
+  background: #090e17 !important;
+  border: 1px solid #1f2b3e !important;
+  border-radius: 8px !important;
+  padding: 0 14px !important;
+  color: #f8fafc !important;
+  font-size: 14px !important;
+}
+
+.customer-loan-form input:focus,
+.customer-loan-form select:focus {
+  outline: 2px solid #2563eb !important;
+  border-color: #3b82f6 !important;
+}
+
+.customer-applicant-badge {
+  padding: 12px 16px !important;
+  border-radius: 10px !important;
+  background: #0d1522 !important;
+  border: 1px solid #1f2d42 !important;
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+.customer-badge-sub {
+  color: #94a3b8 !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.05em !important;
+  display: block !important;
+}
+
+.customer-badge-title {
+  font-weight: 600 !important;
+  color: #f8fafc !important;
+  font-size: 14px !important;
+  margin-top: 2px !important;
+}
+
+.customer-badge-id {
+  font-family: var(--font-mono, monospace) !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  color: #38bdf8 !important;
+  margin-top: 2px !important;
+}
+
+.loan-quick-chips {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  flex-wrap: wrap !important;
+  margin-top: -4px !important;
+  margin-bottom: 2px !important;
+}
+
+.loan-chip-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  height: 32px !important;
+  padding: 0 16px !important;
+  border-radius: 9999px !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  border: 1px solid #1f2d42 !important;
+  background: #0f1724 !important;
+  color: #94a3b8 !important;
+  transition: all 0.15s ease-in-out !important;
+}
+
+.loan-chip-btn:hover {
+  border-color: #3b82f6 !important;
+  color: #f1f5f9 !important;
+}
+
+.loan-chip-btn.active {
+  background: #2563eb !important;
+  border-color: #3b82f6 !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.35) !important;
+}
+
+.customer-loan-submit-btn {
+  width: 100% !important;
+  height: 44px !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+}
+
+.live-estimate-card {
+  background: #0e1624 !important;
+  border: 1px solid #1c293d !important;
+}
+
+.live-estimate-icon {
+  color: #38bdf8 !important;
+}
+
+.live-estimate-sub {
+  color: #94a3b8 !important;
+  font-size: 12px !important;
+}
+
+.live-estimate-amount {
+  font-size: 32px !important;
+  font-weight: 800 !important;
+  color: #38bdf8 !important;
+  margin: 4px 0 !important;
+}
+
+.live-estimate-unit {
+  font-size: 14px !important;
+  font-weight: 400 !important;
+  color: #94a3b8 !important;
+  margin-left: 2px !important;
+}
+
+.live-estimate-breakdown {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 10px !important;
+  padding: 14px !important;
+  border-radius: 8px !important;
+  background: #111a28 !important;
+  border: 1px solid #1c283a !important;
+  font-size: 12px !important;
+}
+
+.live-estimate-val {
+  font-weight: 600 !important;
+  color: #f8fafc !important;
+  margin-top: 2px !important;
+  font-size: 13px !important;
+}
+
+.portal-loan-item {
+  border: 1px solid #1c293d !important;
+  border-radius: 10px !important;
+  background: #0e1624 !important;
+  overflow: hidden !important;
+}
+
+.portal-calc-card {
+  border-radius: 12px !important;
+  border: 1px solid #1c293d !important;
+  background: #0e1624 !important;
+  padding: 24px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  text-align: center !important;
+}
+
+.portal-calc-sub {
+  color: #94a3b8 !important;
+  font-size: 12px !important;
+}
+
+.portal-calc-amount {
+  font-size: 36px !important;
+  font-weight: 800 !important;
+  color: #38bdf8 !important;
+  margin: 8px 0 !important;
+}
+
+.portal-calc-metric {
+  text-align: left !important;
+  padding: 10px !important;
+  background: #111a28 !important;
+  border: 1px solid #1c283a !important;
+  border-radius: 8px !important;
+}
+
+.portal-calc-metric-val {
+  color: #f8fafc !important;
+  margin-top: 4px !important;
+  display: block !important;
+}
+
+.portal-calc-total {
+  margin-top: 16px !important;
+  padding: 12px !important;
+  border-radius: 8px !important;
+  background: #111a28 !important;
+  border: 1px solid #1c283a !important;
+  display: flex !important;
+  justify-content: space-between !important;
+  font-size: 12px !important;
+}
+
+.portal-calc-total-label {
+  color: #94a3b8 !important;
+}
+
+.portal-calc-total-val {
+  color: #f8fafc !important;
 }
 
 /* Tables in Customer Portal */
@@ -2812,6 +3049,20 @@ table tr:hover {
 /* --- 3. Light Mode Theme Overrides ([data-theme="light"]) --- */
 [data-theme="light"] {
   color-scheme: light;
+  --bg: #f8fafc;
+  --panel: #ffffff;
+  --card-bg: #ffffff;
+  --surface-color: #f1f5f9;
+  --bg-secondary: #f8fafc;
+  --bg-tertiary: #f1f5f9;
+  --border: #e2e8f0;
+  --border-color: #e2e8f0;
+  --border-subtle: #cbd5e1;
+  --muted: #64748b;
+  --text-muted: #64748b;
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --topbar-bg: #ffffff;
 }
 
 [data-theme="light"] .app-shell,
@@ -2966,8 +3217,19 @@ table tr:hover {
 [data-theme="light"] .tab-button.active,
 [data-theme="light"] .tab-btn.active {
   background: #ffffff !important;
-  color: #0f172a !important;
+  color: #2563eb !important;
+  font-weight: 600 !important;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08) !important;
+}
+
+[data-theme="light"] .tab-count {
+  background: #e2e8f0 !important;
+  color: #475569 !important;
+}
+
+[data-theme="light"] .tab-btn.active .tab-count {
+  background: #eff6ff !important;
+  color: #2563eb !important;
 }
 
 /* --- 4. Settings Page Styles --- */
@@ -4255,6 +4517,185 @@ table tr:hover {
 
 [data-theme="light"] .customer-footer span {
   color: #64748b !important;
+}
+
+/* Customer Accounts, Cards & Loan UI in Light Mode */
+[data-theme="light"] .customer-account-card {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+}
+
+[data-theme="light"] .customer-account-card > strong {
+  color: #0f172a !important;
+}
+
+[data-theme="light"] .customer-account-card .customer-balance {
+  color: #2563eb !important;
+}
+
+[data-theme="light"] .customer-account-icon {
+  background: #eff6ff !important;
+  color: #2563eb !important;
+  border: 1px solid #bfdbfe !important;
+}
+
+[data-theme="light"] .customer-applicant-badge {
+  background: #f8fafc !important;
+  border: 1px solid #e2e8f0 !important;
+}
+
+[data-theme="light"] .customer-badge-sub {
+  color: #64748b !important;
+}
+
+[data-theme="light"] .customer-badge-title {
+  color: #0f172a !important;
+}
+
+[data-theme="light"] .customer-badge-id {
+  color: #2563eb !important;
+}
+
+[data-theme="light"] .customer-loan-form label {
+  color: #334155 !important;
+}
+
+[data-theme="light"] .customer-loan-form input,
+[data-theme="light"] .customer-loan-form select {
+  background: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #0f172a !important;
+}
+
+[data-theme="light"] .customer-loan-form input:focus,
+[data-theme="light"] .customer-loan-form select:focus {
+  border-color: #2563eb !important;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15) !important;
+}
+
+[data-theme="light"] .loan-chip-btn {
+  background: #f1f5f9 !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #475569 !important;
+}
+
+[data-theme="light"] .loan-chip-btn:hover {
+  background: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+
+[data-theme="light"] .loan-chip-btn.active {
+  background: #2563eb !important;
+  border-color: #2563eb !important;
+  color: #ffffff !important;
+}
+
+[data-theme="light"] .live-estimate-card {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+}
+
+[data-theme="light"] .live-estimate-icon {
+  color: #2563eb !important;
+}
+
+[data-theme="light"] .live-estimate-sub {
+  color: #64748b !important;
+}
+
+[data-theme="light"] .live-estimate-amount {
+  color: #2563eb !important;
+}
+
+[data-theme="light"] .live-estimate-unit {
+  color: #64748b !important;
+}
+
+[data-theme="light"] .live-estimate-breakdown {
+  background: #f8fafc !important;
+  border: 1px solid #e2e8f0 !important;
+}
+
+[data-theme="light"] .live-estimate-val {
+  color: #0f172a !important;
+}
+
+[data-theme="light"] .portal-loan-item {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+}
+
+[data-theme="light"] .portal-loan-item strong {
+  color: #0f172a !important;
+}
+
+[data-theme="light"] .portal-calc-card {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+}
+
+[data-theme="light"] .portal-calc-sub {
+  color: #64748b !important;
+}
+
+[data-theme="light"] .portal-calc-amount {
+  color: #2563eb !important;
+}
+
+[data-theme="light"] .portal-calc-metric {
+  background: #f8fafc !important;
+  border: 1px solid #e2e8f0 !important;
+}
+
+[data-theme="light"] .portal-calc-metric-val {
+  color: #0f172a !important;
+}
+
+[data-theme="light"] .portal-calc-total {
+  background: #f1f5f9 !important;
+  border: 1px solid #e2e8f0 !important;
+}
+
+[data-theme="light"] .portal-calc-total-label {
+  color: #475569 !important;
+}
+
+[data-theme="light"] .portal-calc-total-val {
+  color: #0f172a !important;
+}
+
+[data-theme="light"] .credit-assessment-card {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+}
+
+[data-theme="light"] .cac-title-wrap h4 {
+  color: #0f172a !important;
+}
+
+[data-theme="light"] .cac-subtitle,
+[data-theme="light"] .cac-score-range,
+[data-theme="light"] .cac-meter-labels,
+[data-theme="light"] .cac-detail-label {
+  color: #64748b !important;
+}
+
+[data-theme="light"] .cac-meter-bar {
+  background: #e2e8f0 !important;
+}
+
+[data-theme="light"] .cac-detail-item {
+  background: #f8fafc !important;
+  border: 1px solid #e2e8f0 !important;
+}
+
+[data-theme="light"] .cac-detail-value {
+  color: #0f172a !important;
 }
 
 /* --- Customer Transfer Form in Dark Mode (no stark white inputs) --- */

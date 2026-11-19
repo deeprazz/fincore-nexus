@@ -29,13 +29,14 @@ import { useToast } from "../../context/ToastContext";
 import { useMoney } from "../../hooks/useMoney";
 import { CreditAssessmentCard } from "../loans/CreditAssessmentCard";
 import { EmiScheduleTable } from "../loans/EmiScheduleTable";
+import "../loans/loans.css";
 
 export function PortalLoans() {
   const { auth, customerPortal, refreshPortalData } = useAuth();
   const { setError, setSuccess } = useToast();
   const money = useMoney();
 
-  const customerId = customerPortal?.id;
+  const customerId = customerPortal?.customerId || customerPortal?.id || auth?.customerId || auth?.id;
   const isKycVerified = customerPortal?.kycStatus === "VERIFIED";
 
   const [activeTab, setActiveTab] = useState("apply"); // 'apply' | 'loans' | 'applications' | 'calculator'
@@ -162,8 +163,19 @@ export function PortalLoans() {
   // Submit Application
   const handleSubmitApplication = async (e) => {
     e.preventDefault();
-    if (!customerId) {
-      setError("Customer profile not loaded. Please re-login.");
+    let effectiveCustomerId = customerId || customerPortal?.customerId || customerPortal?.id || auth?.customerId || auth?.id;
+
+    if (!effectiveCustomerId && refreshPortalData) {
+      try {
+        const refreshed = await refreshPortalData();
+        effectiveCustomerId = refreshed?.customerId || refreshed?.id;
+      } catch {
+        // continue
+      }
+    }
+
+    if (!effectiveCustomerId) {
+      setError("Customer profile not loaded. Please ensure you are logged in as a registered customer.");
       return;
     }
     setSubmitting(true);
@@ -172,7 +184,7 @@ export function PortalLoans() {
 
     try {
       const payload = {
-        customerId,
+        customerId: effectiveCustomerId,
         requestedAmount: Number(formData.requestedAmount),
         tenureMonths: parseInt(formData.tenureMonths, 10),
         annualIncome: Number(formData.annualIncome),
@@ -334,37 +346,39 @@ export function PortalLoans() {
       </section>
 
       {/* Navigation Tabs */}
-      <div className="nav-tabs" style={{ marginBottom: "16px" }}>
+      <div className="tabs-container loans-nav-tabs">
         <button
           type="button"
-          className={`nav-tab ${activeTab === "apply" ? "active" : ""}`}
+          className={`tab-btn ${activeTab === "apply" ? "active" : ""}`}
           onClick={() => setActiveTab("apply")}
         >
-          <PlusCircle size={16} />
+          <PlusCircle size={15} />
           <span>Apply for Loan</span>
         </button>
         <button
           type="button"
-          className={`nav-tab ${activeTab === "loans" ? "active" : ""}`}
+          className={`tab-btn ${activeTab === "loans" ? "active" : ""}`}
           onClick={() => setActiveTab("loans")}
         >
-          <Landmark size={16} />
-          <span>My Loans & Schedules ({loans.length})</span>
+          <Landmark size={15} />
+          <span>My Loans & Schedules</span>
+          <span className="tab-count">{loans.length}</span>
         </button>
         <button
           type="button"
-          className={`nav-tab ${activeTab === "applications" ? "active" : ""}`}
+          className={`tab-btn ${activeTab === "applications" ? "active" : ""}`}
           onClick={() => setActiveTab("applications")}
         >
-          <Clock size={16} />
-          <span>My Applications ({applications.length})</span>
+          <Clock size={15} />
+          <span>My Applications</span>
+          <span className="tab-count">{applications.length}</span>
         </button>
         <button
           type="button"
-          className={`nav-tab ${activeTab === "calculator" ? "active" : ""}`}
+          className={`tab-btn ${activeTab === "calculator" ? "active" : ""}`}
           onClick={() => setActiveTab("calculator")}
         >
-          <Calculator size={16} />
+          <Calculator size={15} />
           <span>EMI Calculator</span>
         </button>
       </div>
@@ -373,7 +387,7 @@ export function PortalLoans() {
       {/* TAB 1: APPLY FOR A LOAN */}
       {/* ========================================================================= */}
       {activeTab === "apply" && (
-        <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1.4fr) minmax(320px, 1fr)", gap: "24px" }}>
+        <div className="customer-loans-layout">
           {/* Left: Application Form */}
           <section className="customer-section">
             <div className="customer-section-heading">
@@ -384,33 +398,23 @@ export function PortalLoans() {
               <span className="customer-status-pill verified">INSTANT EVALUATION</span>
             </div>
 
-            <form onSubmit={handleSubmitApplication} className="customer-transfer-form">
+            <form onSubmit={handleSubmitApplication} className="customer-loan-form">
               {/* Customer Profile Readonly Banner */}
-              <div
-                style={{
-                  padding: "12px 14px",
-                  borderRadius: "8px",
-                  background: "var(--card-bg, #151f2c)",
-                  border: "1px solid var(--border-color, #283446)",
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                }}
-              >
+              <div className="customer-applicant-badge">
                 <div>
-                  <small style={{ color: "var(--text-secondary, #8fa3bd)", fontSize: "11px" }}>
+                  <small className="customer-badge-sub">
                     APPLICANT NAME & PROFILE
                   </small>
-                  <div style={{ fontWeight: 600, color: "var(--text-primary, #edf3fb)" }}>
+                  <div className="customer-badge-title">
                     {customerPortal?.name || auth?.username || "Authenticated Customer"}
                   </div>
                 </div>
                 <div style={{ textAlign: "right" }}>
-                  <small style={{ color: "var(--text-secondary, #8fa3bd)", fontSize: "11px" }}>
+                  <small className="customer-badge-sub">
                     CUSTOMER ID
                   </small>
-                  <div style={{ fontFamily: "monospace", fontSize: "12px", color: "#82b6ff" }}>
-                    {customerId ? `CUST-${String(customerId).slice(0, 8).toUpperCase()}` : "N/A"}
+                  <div className="customer-badge-id">
+                    {customerId ? `CUST-${String(customerId).slice(0, 8).toUpperCase()}` : (auth?.username ? `CUST-${auth.username.toUpperCase()}` : "N/A")}
                   </div>
                 </div>
               </div>
@@ -432,24 +436,20 @@ export function PortalLoans() {
               </label>
 
               {/* Quick Amount Chips */}
-              <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginTop: "-4px" }}>
-                {quickAmounts.map((amt) => (
-                  <button
-                    key={amt}
-                    type="button"
-                    className="secondary-btn"
-                    style={{
-                      fontSize: "11px",
-                      padding: "4px 8px",
-                      minHeight: "26px",
-                      background: formData.requestedAmount === String(amt) ? "var(--primary-color, #2563eb)" : undefined,
-                      color: formData.requestedAmount === String(amt) ? "#fff" : undefined,
-                    }}
-                    onClick={() => setFormData({ ...formData, requestedAmount: String(amt) })}
-                  >
-                    ₹{(amt / 1000).toLocaleString()}k
-                  </button>
-                ))}
+              <div className="loan-quick-chips">
+                {quickAmounts.map((amt) => {
+                  const isSelected = formData.requestedAmount === String(amt);
+                  return (
+                    <button
+                      key={amt}
+                      type="button"
+                      className={`loan-chip-btn ${isSelected ? "active" : ""}`}
+                      onClick={() => setFormData({ ...formData, requestedAmount: String(amt) })}
+                    >
+                      ₹{(amt / 1000).toLocaleString()}k
+                    </button>
+                  );
+                })}
               </div>
 
               {/* Tenure & Employment */}
@@ -536,8 +536,8 @@ export function PortalLoans() {
               {/* Submit CTA */}
               <button
                 type="submit"
-                className="primary-btn"
-                disabled={submitting || !customerId}
+                className="primary-btn customer-loan-submit-btn"
+                disabled={submitting || !formData.requestedAmount || Number(formData.requestedAmount) <= 0 || !formData.annualIncome || Number(formData.annualIncome) <= 0}
                 style={{ marginTop: "12px", minHeight: "44px" }}
               >
                 {submitting ? (
@@ -555,48 +555,38 @@ export function PortalLoans() {
           {/* Right: Real-time Live Estimate & Assessment Result */}
           <div style={{ display: "grid", gap: "20px", alignContent: "start" }}>
             {/* Live EMI Preview Card */}
-            <section className="customer-section" style={{ background: "var(--card-bg, #101720)" }}>
+            <section className="customer-section live-estimate-card">
               <div className="customer-section-heading">
                 <div>
                   <span className="customer-eyebrow">LIVE ESTIMATE</span>
                   <h3>Estimated Monthly Installment</h3>
                 </div>
-                <Percent size={18} style={{ color: "#82b6ff" }} />
+                <Percent size={18} className="live-estimate-icon" />
               </div>
 
               <div style={{ margin: "14px 0", textAlign: "center" }}>
-                <small style={{ color: "var(--text-secondary, #8fa3bd)" }}>Estimated EMI</small>
-                <div style={{ fontSize: "32px", fontWeight: 800, color: "#82b6ff", margin: "4px 0" }}>
+                <small className="live-estimate-sub">Estimated EMI</small>
+                <div className="live-estimate-amount">
                   {money(liveEstimate.emi)}
-                  <span style={{ fontSize: "14px", fontWeight: 400, color: "var(--text-secondary, #8fa3bd)" }}>
+                  <span className="live-estimate-unit">
                     /mo
                   </span>
                 </div>
-                <small style={{ color: "var(--text-secondary, #8fa3bd)" }}>
+                <small className="live-estimate-sub">
                   Benchmark Rate: 8.5% p.a. · {formData.tenureMonths} Months
                 </small>
               </div>
 
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "1fr 1fr",
-                  gap: "10px",
-                  padding: "12px",
-                  borderRadius: "8px",
-                  background: "var(--bg-tertiary, #151f2c)",
-                  fontSize: "12px",
-                }}
-              >
+              <div className="live-estimate-breakdown">
                 <div>
-                  <span style={{ color: "var(--text-secondary, #8fa3bd)" }}>Total Interest</span>
-                  <div style={{ fontWeight: 600, color: "var(--text-primary, #edf3fb)", marginTop: "2px" }}>
+                  <span className="live-estimate-sub">Total Interest</span>
+                  <div className="live-estimate-val">
                     {money(liveEstimate.totalInterest)}
                   </div>
                 </div>
                 <div>
-                  <span style={{ color: "var(--text-secondary, #8fa3bd)" }}>Total Repayment</span>
-                  <div style={{ fontWeight: 600, color: "var(--text-primary, #edf3fb)", marginTop: "2px" }}>
+                  <span className="live-estimate-sub">Total Repayment</span>
+                  <div className="live-estimate-val">
                     {money(liveEstimate.totalPayable)}
                   </div>
                 </div>
@@ -689,15 +679,7 @@ export function PortalLoans() {
                 const schedule = loanSchedules[loan.id] || [];
 
                 return (
-                  <div
-                    key={loan.id}
-                    style={{
-                      border: "1px solid var(--border-color, #283446)",
-                      borderRadius: "10px",
-                      background: "var(--card-bg, #101720)",
-                      overflow: "hidden",
-                    }}
-                  >
+                  <div key={loan.id} className="portal-loan-item">
                     {/* Loan Summary Bar */}
                     <div
                       style={{
@@ -1102,25 +1084,14 @@ export function PortalLoans() {
             </div>
 
             {/* Visual Calculation Result */}
-            <div
-              style={{
-                borderRadius: "12px",
-                border: "1px solid var(--border-color, #283446)",
-                background: "var(--card-bg, #151f2c)",
-                padding: "24px",
-                display: "flex",
-                flexDirection: "column",
-                justifyContent: "center",
-                textAlign: "center",
-              }}
-            >
-              <small style={{ color: "var(--text-secondary, #8fa3bd)", fontSize: "12px" }}>
+            <div className="portal-calc-card">
+              <small className="portal-calc-sub">
                 YOUR ESTIMATED MONTHLY EMI
               </small>
-              <div style={{ fontSize: "36px", fontWeight: 800, color: "#82b6ff", margin: "8px 0" }}>
+              <div className="portal-calc-amount">
                 {money(calcResult.emi)}
               </div>
-              <small style={{ color: "var(--text-secondary, #8fa3bd)", marginBottom: "20px" }}>
+              <small className="portal-calc-sub" style={{ marginBottom: "20px" }}>
                 Payable monthly for {calcTenure} installments
               </small>
 
@@ -1153,40 +1124,30 @@ export function PortalLoans() {
               </div>
 
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", fontSize: "12px" }}>
-                <div style={{ textAlign: "left", padding: "10px", background: "var(--bg-secondary, #0d141e)", borderRadius: "8px" }}>
+                <div className="portal-calc-metric">
                   <div style={{ color: "#10b981", fontWeight: 700, display: "flex", alignItems: "center", gap: "4px" }}>
                     <span style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#10b981" }} />
                     Principal
                   </div>
-                  <strong style={{ color: "var(--text-primary, #edf3fb)", marginTop: "4px", display: "block" }}>
+                  <strong className="portal-calc-metric-val">
                     {money(calcAmount)}
                   </strong>
                 </div>
 
-                <div style={{ textAlign: "left", padding: "10px", background: "var(--bg-secondary, #0d141e)", borderRadius: "8px" }}>
+                <div className="portal-calc-metric">
                   <div style={{ color: "#f59e0b", fontWeight: 700, display: "flex", alignItems: "center", gap: "4px" }}>
                     <span style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#f59e0b" }} />
                     Interest
                   </div>
-                  <strong style={{ color: "var(--text-primary, #edf3fb)", marginTop: "4px", display: "block" }}>
+                  <strong className="portal-calc-metric-val">
                     {money(calcResult.interest)}
                   </strong>
                 </div>
               </div>
 
-              <div
-                style={{
-                  marginTop: "16px",
-                  padding: "12px",
-                  borderRadius: "8px",
-                  background: "var(--bg-tertiary, #1c2738)",
-                  display: "flex",
-                  justifyContent: "space-between",
-                  fontSize: "12px",
-                }}
-              >
-                <span style={{ color: "var(--text-secondary, #8fa3bd)" }}>Total Amount Payable:</span>
-                <strong style={{ color: "var(--text-primary, #edf3fb)" }}>{money(calcResult.total)}</strong>
+              <div className="portal-calc-total">
+                <span className="portal-calc-total-label">Total Amount Payable:</span>
+                <strong className="portal-calc-total-val">{money(calcResult.total)}</strong>
               </div>
             </div>
           </div>

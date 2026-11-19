@@ -112,7 +112,14 @@ export function AuthProvider({ children }) {
         const res = await fetch(`${API_BASE_URL}/customer-portal/me`, { headers });
         if (res.ok && isMounted) {
           const data = await res.json();
-          setCustomerPortal(data);
+          const normalized = data
+            ? {
+                ...data,
+                id: data.id || data.customerId,
+                customerId: data.customerId || data.id,
+              }
+            : null;
+          setCustomerPortal(normalized);
         }
       } catch {
         // Ignore background polling errors
@@ -147,13 +154,25 @@ export function AuthProvider({ children }) {
           try {
             const portalRes = await fetch(`${API_BASE_URL}/customer-portal/me`, { headers });
             if (portalRes.ok) {
-              portalData = await portalRes.json();
+              const pData = await portalRes.json();
+              portalData = pData
+                ? {
+                    ...pData,
+                    id: pData.id || pData.customerId,
+                    customerId: pData.customerId || pData.id,
+                  }
+                : null;
             }
           } catch {
             // ignore
           }
         }
-        const authData = { ...candidate, role, roles: meData.roles };
+        const authData = {
+          ...candidate,
+          role,
+          roles: meData.roles,
+          customerId: portalData?.customerId || portalData?.id,
+        };
         setCustomerPortal(portalData);
         setAuth(authData);
         return { role, portalData };
@@ -171,8 +190,19 @@ export function AuthProvider({ children }) {
     try {
       const portalResponse = await fetch(`${API_BASE_URL}/customer-portal/me`, { headers });
       if (portalResponse.ok) {
-        const portalData = await portalResponse.json();
-        const authData = { ...candidate, role: "CUSTOMER" };
+        const pData = await portalResponse.json();
+        const portalData = pData
+          ? {
+              ...pData,
+              id: pData.id || pData.customerId,
+              customerId: pData.customerId || pData.id,
+            }
+          : null;
+        const authData = {
+          ...candidate,
+          role: "CUSTOMER",
+          customerId: portalData?.customerId || portalData?.id,
+        };
         setCustomerPortal(portalData);
         setAuth(authData);
         return { role: "CUSTOMER", portalData };
@@ -240,8 +270,15 @@ export function AuthProvider({ children }) {
       const res = await fetch(`${API_BASE_URL}/customer-portal/me`, { headers });
       if (res.ok) {
         const data = await res.json();
-        setCustomerPortal(data);
-        return data;
+        const normalized = data
+          ? {
+              ...data,
+              id: data.id || data.customerId,
+              customerId: data.customerId || data.id,
+            }
+          : null;
+        setCustomerPortal(normalized);
+        return normalized;
       }
     } catch {
       // Ignore background refresh errors
