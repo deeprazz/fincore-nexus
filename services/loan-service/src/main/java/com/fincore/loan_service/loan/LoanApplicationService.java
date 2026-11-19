@@ -168,7 +168,15 @@ public class LoanApplicationService {
         loan.setTenureMonths(app.getTenureMonths());
         loan.setEmiAmount(emi);
         loan.setStatus(LoanStatus.PENDING_DISBURSEMENT);
+
+        LocalDate startDate = LocalDate.now().plusMonths(1);
+        loan.setStartDate(startDate);
+        loan.setEndDate(startDate.plusMonths(app.getTenureMonths() - 1));
+
         Loan savedLoan = loanRepository.save(loan);
+
+        // Pre-generate EMI repayment schedule immediately upon approval
+        generateEmiSchedule(savedLoan, startDate);
 
         // Start SAGA
         UUID correlationId = UUID.randomUUID();
@@ -282,6 +290,10 @@ public class LoanApplicationService {
     }
 
     public void generateEmiSchedule(Loan loan, LocalDate firstDueDate) {
+        List<EmiSchedule> existing = emiScheduleRepository.findByLoanIdOrderByInstallmentNumberAsc(loan.getId());
+        if (!existing.isEmpty()) {
+            return;
+        }
         List<EmiCalculator.EmiScheduleEntry> schedule = emiCalculator.generateSchedule(
                 loan.getPrincipalAmount(),
                 loan.getInterestRate().doubleValue(),

@@ -27,6 +27,7 @@ import {
 import { useAuth } from "../../context/AuthContext";
 import { useToast } from "../../context/ToastContext";
 import { useMoney } from "../../hooks/useMoney";
+import { formatDate } from "../../utils/date";
 import { CreditAssessmentCard } from "../loans/CreditAssessmentCard";
 import { EmiScheduleTable } from "../loans/EmiScheduleTable";
 import "../loans/loans.css";
@@ -692,7 +693,7 @@ export function PortalLoans() {
                       }}
                     >
                       <div>
-                        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
                           <span style={{ fontFamily: "monospace", fontWeight: 700, color: "#82b6ff", fontSize: "14px" }}>
                             LN-{String(loan.id).slice(0, 8).toUpperCase()}
                           </span>
@@ -705,16 +706,36 @@ export function PortalLoans() {
                                 : "pending"
                             }`}
                           >
-                            {loan.status}
+                            {loan.status === "PENDING_DISBURSEMENT" ? "PENDING DISBURSEMENT" : loan.status}
                           </span>
                         </div>
                         <small style={{ color: "var(--text-secondary, #8fa3bd)", fontSize: "11px", marginTop: "4px", display: "block" }}>
                           Tenure: {loan.tenureMonths} Months · Rate: {(Number(loan.interestRate || 0.1) * 100).toFixed(1)}% p.a.
                         </small>
+                        <div style={{ display: "flex", gap: "10px", marginTop: "6px", fontSize: "11px", color: "var(--text-secondary, #8fa3bd)", flexWrap: "wrap", alignItems: "center" }}>
+                          <span style={{ display: "inline-flex", alignItems: "center", gap: "4px" }}>
+                            <Calendar size={12} color="#60a5fa" />
+                            <span>Start: <strong style={{ color: "var(--text-primary, #edf3fb)" }}>{formatDate(loan.startDate || loan.disbursedAt)}</strong></span>
+                          </span>
+                          <span>·</span>
+                          <span style={{ display: "inline-flex", alignItems: "center", gap: "4px" }}>
+                            <Calendar size={12} color="#a78bfa" />
+                            <span>Maturity: <strong style={{ color: "var(--text-primary, #edf3fb)" }}>{formatDate(loan.endDate)}</strong></span>
+                          </span>
+                          {loan.startDate && (
+                            <>
+                              <span>·</span>
+                              <span style={{ display: "inline-flex", alignItems: "center", gap: "4px", color: "#10b981" }}>
+                                <Clock size={12} />
+                                <span>1st Due: <strong>{formatDate(loan.startDate)}</strong></span>
+                              </span>
+                            </>
+                          )}
+                        </div>
                       </div>
 
                       {/* Financials */}
-                      <div style={{ display: "flex", gap: "24px", alignItems: "center" }}>
+                      <div style={{ display: "flex", gap: "20px", alignItems: "center", flexWrap: "wrap" }}>
                         <div>
                           <small style={{ color: "var(--text-secondary, #8fa3bd)", fontSize: "10px", display: "block" }}>
                             PRINCIPAL
@@ -737,6 +758,14 @@ export function PortalLoans() {
                           </small>
                           <strong style={{ color: "#10b981", fontSize: "14px" }}>
                             {money(loan.emiAmount)}
+                          </strong>
+                        </div>
+                        <div>
+                          <small style={{ color: "var(--text-secondary, #8fa3bd)", fontSize: "10px", display: "block" }}>
+                            FIRST DUE DATE
+                          </small>
+                          <strong style={{ color: "#60a5fa", fontSize: "13px" }}>
+                            {formatDate(loan.startDate || loan.disbursedAt)}
                           </strong>
                         </div>
 
@@ -926,7 +955,7 @@ export function PortalLoans() {
                           APP-{String(app.id).slice(0, 8).toUpperCase()}
                         </td>
                         <td>
-                          {app.createdAt ? new Date(app.createdAt).toLocaleDateString() : "Recent"}
+                          {formatDate(app.createdAt)}
                         </td>
                         <td>
                           <strong>{money(app.requestedAmount)}</strong>

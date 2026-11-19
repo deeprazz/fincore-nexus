@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { getLoans } from "../../api/loans";
+import { getLoans, disburseLoan } from "../../api/loans";
 import { useAuth } from "../../context/AuthContext";
 import { useToast } from "../../context/ToastContext";
 import { money } from "../../utils/money";
-import { Search, Eye, Calendar, RefreshCw, Layers } from "lucide-react";
+import { formatDate } from "../../utils/date";
+import { Search, Eye, Calendar, RefreshCw, Layers, CheckCircle } from "lucide-react";
 
 export function LoanList({
   onSelectLoan,
@@ -14,7 +15,7 @@ export function LoanList({
   className = "",
 }) {
   const { auth } = useAuth();
-  const { setError } = useToast();
+  const { setError, setSuccess } = useToast();
 
   const [loans, setLoans] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -36,6 +37,16 @@ export function LoanList({
   useEffect(() => {
     loadLoans();
   }, [loadLoans]);
+
+  const handleDisburse = async (loanId) => {
+    try {
+      await disburseLoan(loanId, auth);
+      if (setSuccess) setSuccess("Loan successfully disbursed and activated.");
+      loadLoans();
+    } catch (err) {
+      setError(err.message || "Failed to disburse loan");
+    }
+  };
 
   const filteredLoans = loans.filter((loan) => {
     const q = searchQuery.toLowerCase().trim();
@@ -182,7 +193,14 @@ export function LoanList({
                       <td className="amount-cell">
                         <strong>{money(loan.outstandingAmount || loan.outstandingBalance || 0)}</strong>
                       </td>
-                      <td>{loan.tenureMonths}m</td>
+                      <td>
+                        <div>{loan.tenureMonths}m</div>
+                        {loan.startDate && (
+                          <small style={{ color: "var(--text-muted, #8fa3bd)", fontSize: "10px", display: "block" }}>
+                            Due: {formatDate(loan.startDate)}
+                          </small>
+                        )}
+                      </td>
                       <td className="text-primary font-medium">
                         {money(loan.emiAmount || 0)}
                       </td>
@@ -198,6 +216,17 @@ export function LoanList({
                       </td>
                       <td>
                         <div className="action-button-group">
+                          {status === "PENDING_DISBURSEMENT" && (
+                            <button
+                              type="button"
+                              className="btn btn-sm btn-primary"
+                              onClick={() => handleDisburse(loan.id)}
+                              title="Disburse Loan to Customer Account"
+                              style={{ display: "inline-flex", alignItems: "center", gap: "4px" }}
+                            >
+                              <CheckCircle size={13} /> Disburse
+                            </button>
+                          )}
                           {onSelectLoan && (
                             <button
                               type="button"

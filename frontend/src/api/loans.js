@@ -71,6 +71,16 @@ export function getEmiSchedule(loanId, auth) {
   return apiRequest(`/api/loans/${encodeURIComponent(loanId)}/schedule`, {}, auth);
 }
 
+export function disburseLoan(loanId, auth) {
+  return apiRequest(
+    `/api/loans/${encodeURIComponent(loanId)}/disburse`,
+    {
+      method: "POST",
+    },
+    auth
+  );
+}
+
 export function prepayLoan(loanId, amount, auth) {
   return apiRequest(
     `/api/loans/${encodeURIComponent(loanId)}/prepay`,
