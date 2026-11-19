@@ -2991,48 +2991,104 @@ table tr:hover {
 }
 
 .btn-primary,
-.primary-button {
+.primary-button,
+.primary-btn {
   background: #2563eb !important;
   color: #ffffff !important;
   border: 1px solid #3b82f6 !important;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 8px;
+  padding: 8px 16px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+  text-decoration: none;
 }
 
 .btn-primary:hover,
-.primary-button:hover {
+.primary-button:hover,
+.primary-btn:hover {
   background: #1d4ed8 !important;
   border-color: #60a5fa !important;
 }
 
 .btn-primary:active,
-.primary-button:active {
+.primary-button:active,
+.primary-btn:active {
   background: #1e40af !important;
   transform: translateY(1px);
 }
 
+.btn-primary:disabled,
+.primary-button:disabled,
+.primary-btn:disabled {
+  opacity: 0.55 !important;
+  cursor: not-allowed !important;
+  background: #1e3a8a !important;
+  border-color: #1e3a8a !important;
+  color: #94a3b8 !important;
+}
+
 .btn-secondary,
-.secondary-button {
+.secondary-button,
+.secondary-btn {
   background: var(--surface-color, #131c2a) !important;
   color: var(--text-primary, #cbd5e1) !important;
   border: 1px solid var(--border-color, #28374d) !important;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 8px;
+  padding: 8px 16px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+  text-decoration: none;
 }
 
 .btn-secondary:hover,
-.secondary-button:hover {
+.secondary-button:hover,
+.secondary-btn:hover {
   background: var(--panel, #1c2738) !important;
   color: #ffffff !important;
   border-color: #3b82f6 !important;
 }
 
 .btn-danger,
-.danger-button {
+.danger-button,
+.danger-btn {
   background: #dc2626 !important;
   color: #ffffff !important;
   border: 1px solid #ef4444 !important;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 8px;
+  padding: 8px 16px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+  text-decoration: none;
 }
 
 .btn-danger:hover,
-.danger-button:hover {
+.danger-button:hover,
+.danger-btn:hover {
   background: #b91c1c !important;
 }
 
@@ -3966,8 +4022,45 @@ table tr:hover {
   flex-wrap: wrap;
 }
 
+/* --- Global Buttons & Modals in Light Mode --- */
+[data-theme="light"] .btn-secondary,
+[data-theme="light"] .secondary-button,
+[data-theme="light"] .secondary-btn {
+  background: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #334155 !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+}
+
+[data-theme="light"] .btn-secondary:hover,
+[data-theme="light"] .secondary-button:hover,
+[data-theme="light"] .secondary-btn:hover {
+  background: #f8fafc !important;
+  border-color: #94a3b8 !important;
+  color: #0f172a !important;
+}
+
+[data-theme="light"] .btn-primary:disabled,
+[data-theme="light"] .primary-button:disabled,
+[data-theme="light"] .primary-btn:disabled {
+  opacity: 0.55 !important;
+  cursor: not-allowed !important;
+  background: #93c5fd !important;
+  border-color: #93c5fd !important;
+  color: #ffffff !important;
+}
+
+[data-theme="light"] .modal-content,
+[data-theme="light"] .modal-card {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  color: #0f172a !important;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12) !important;
+}
+
 /* --- Topbar buttons in Light Mode --- */
-[data-theme="light"] .topbar-right .secondary-button {
+[data-theme="light"] .topbar-right .secondary-button,
+[data-theme="light"] .topbar-right .secondary-btn {
   background: #f1f5f9 !important;
   border: 1px solid #cbd5e1 !important;
   color: #334155 !important;

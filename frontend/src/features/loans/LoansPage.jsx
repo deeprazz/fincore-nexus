@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { Tabs } from "../../components/ui/Tabs";
 import { LoanList } from "./LoanList";
@@ -9,10 +9,13 @@ import { LoanApplicationList } from "./LoanApplicationList";
 import { EmiCalculator } from "./EmiCalculator";
 import { NpaPanel } from "./NpaPanel";
 import { CollectionsPage } from "./CollectionsPage";
+import { getApplications } from "../../api/loans";
+import { useAuth } from "../../context/AuthContext";
 import "./loans.css";
 
 export function LoansPage() {
   const { id: routeLoanId } = useParams();
+  const { auth } = useAuth();
 
   const [activeTab, setActiveTab] = useState("loans");
   const [selectedLoan, setSelectedLoan] = useState(
@@ -20,10 +23,23 @@ export function LoansPage() {
   );
   const [viewingScheduleLoan, setViewingScheduleLoan] = useState(null);
   const [showApplicationForm, setShowApplicationForm] = useState(false);
+  const [appsCount, setAppsCount] = useState(0);
+
+  useEffect(() => {
+    getApplications(auth)
+      .then((apps) => {
+        if (Array.isArray(apps)) setAppsCount(apps.length);
+      })
+      .catch(() => {});
+  }, [auth, activeTab]);
 
   const tabs = [
     { id: "loans", label: "Loan Accounts" },
-    { id: "applications", label: "Applications" },
+    {
+      id: "applications",
+      label: "Applications",
+      count: appsCount > 0 ? appsCount : null,
+    },
     { id: "calculator", label: "EMI Calculator" },
     { id: "portfolio", label: "Portfolio & NPA" },
     { id: "collections", label: "Collections" },
@@ -93,11 +109,16 @@ export function LoansPage() {
               />
             ) : (
               <LoanList
+                appsCount={appsCount}
                 onSelectLoan={handleSelectLoan}
                 onViewSchedule={handleViewSchedule}
                 onNewApplication={() => {
                   setActiveTab("applications");
                   setShowApplicationForm(true);
+                }}
+                onViewApplications={() => {
+                  setActiveTab("applications");
+                  setShowApplicationForm(false);
                 }}
               />
             )}

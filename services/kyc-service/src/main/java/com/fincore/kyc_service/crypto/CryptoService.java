@@ -1,5 +1,6 @@
 package com.fincore.kyc_service.crypto;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
@@ -25,6 +26,15 @@ public class CryptoService {
     private final SecretKey secretKey;
     private final SecureRandom secureRandom = new SecureRandom();
 
+    public CryptoService() {
+        this(DEFAULT_DEV_KEY, null);
+    }
+
+    public CryptoService(String rawKey) {
+        this(rawKey, null);
+    }
+
+    @Autowired
     public CryptoService(
             @Value("${kyc.encryption.secret-key:" + DEFAULT_DEV_KEY + "}") String rawKey,
             Environment env) {
@@ -45,10 +55,6 @@ public class CryptoService {
         byte[] key256 = new byte[32];
         System.arraycopy(keyBytes, 0, key256, 0, Math.min(keyBytes.length, 32));
         this.secretKey = new SecretKeySpec(key256, "AES");
-    }
-
-    public CryptoService(String rawKey) {
-        this(rawKey, null);
     }
 
     public record EncryptedResult(byte[] cipherBytes, String ivBase64) {}

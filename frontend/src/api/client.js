@@ -124,6 +124,18 @@ export async function apiRequestWithResponse(path, options = {}, auth = null) {
     } else if (typeof data === "string" && data.trim()) {
       message = data;
     }
+    if (!message || message === "null" || message === "Service unavailable: null" || String(message).endsWith(": null")) {
+      const serviceName = path.startsWith("/api/loans")
+        ? "Loan Management Service (Port 8082)"
+        : path.startsWith("/api/payments") || path.startsWith("/api/beneficiaries") || path.startsWith("/api/settlement")
+        ? "Payment Orchestration Service (Port 8083)"
+        : path.startsWith("/api/kyc") || path.startsWith("/api/compliance")
+        ? "KYC & Compliance Service (Port 8084)"
+        : path.startsWith("/api/notifications")
+        ? "Notification Service (Port 8085)"
+        : "Core Banking Service (Port 8081)";
+      message = `${serviceName} is currently unavailable (HTTP ${response.status}). Please verify the service is running.`;
+    }
     const error = new Error(message);
     error.status = response.status;
     error.data = data;

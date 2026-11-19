@@ -109,7 +109,8 @@
 .status-badge.status-pending,
 .status-badge.status-pending_disbursement,
 .status-badge.status-submitted,
-.status-badge.status-in_review {
+.status-badge.status-in_review,
+.status-badge.status-under_review {
   background: rgba(59, 130, 246, 0.15);
   color: #3b82f6;
   border: 1px solid rgba(59, 130, 246, 0.3);
@@ -949,4 +950,241 @@
     grid-template-columns: 1fr;
     gap: 20px;
   }
+}
+
+/* ==============================================================================
+   Loan Management Light Mode Theme Overrides ([data-theme="light"])
+   ============================================================================== */
+
+[data-theme="light"] .loans-page-container {
+  color: #0f172a;
+}
+
+[data-theme="light"] .search-box {
+  background: #ffffff !important;
+  border-color: #cbd5e1 !important;
+}
+
+[data-theme="light"] .search-box input {
+  color: #0f172a !important;
+}
+
+[data-theme="light"] .search-icon {
+  color: #64748b !important;
+}
+
+[data-theme="light"] .filter-group label {
+  color: #334155 !important;
+}
+
+[data-theme="light"] .filter-group select {
+  background: #ffffff !important;
+  border-color: #cbd5e1 !important;
+  color: #0f172a !important;
+}
+
+/* EMI Calculator */
+[data-theme="light"] .calc-group {
+  background: #ffffff !important;
+  border-color: #e2e8f0 !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04) !important;
+}
+
+[data-theme="light"] .calc-header label {
+  color: #0f172a !important;
+}
+
+[data-theme="light"] .calc-value-display {
+  color: #2563eb !important;
+}
+
+[data-theme="light"] .calc-slider {
+  background: #e2e8f0 !important;
+}
+
+[data-theme="light"] .slider-ticks {
+  color: #64748b !important;
+}
+
+[data-theme="light"] .calculator-results-card {
+  background: #ffffff !important;
+  border-color: #e2e8f0 !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+}
+
+[data-theme="light"] .calc-metric-highlight {
+  border-bottom-color: #e2e8f0 !important;
+}
+
+[data-theme="light"] .calc-metric-label,
+[data-theme="light"] .calc-metric-sub {
+  color: #64748b !important;
+}
+
+[data-theme="light"] .calc-metric-amount {
+  color: #059669 !important;
+}
+
+[data-theme="light"] .breakdown-item span {
+  color: #475569 !important;
+}
+
+[data-theme="light"] .breakdown-item span.muted-label {
+  color: #64748b !important;
+}
+
+[data-theme="light"] .breakdown-value {
+  color: #0f172a !important;
+}
+
+[data-theme="light"] .breakdown-value.text-amber {
+  color: #d97706 !important;
+}
+
+[data-theme="light"] .breakdown-value.text-primary {
+  color: #2563eb !important;
+}
+
+[data-theme="light"] .breakdown-item strong {
+  color: #0f172a !important;
+}
+
+[data-theme="light"] .breakdown-item.highlight {
+  border-top-color: #e2e8f0 !important;
+}
+
+[data-theme="light"] .calc-ratio-bar {
+  background: #e2e8f0 !important;
+}
+
+[data-theme="light"] .calc-ratio-header {
+  color: #64748b !important;
+}
+
+/* Credit Assessment Card */
+[data-theme="light"] .credit-assessment-card {
+  background: #ffffff !important;
+  border-color: #e2e8f0 !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+}
+
+[data-theme="light"] .cac-title-wrap h4 {
+  color: #0f172a !important;
+}
+
+[data-theme="light"] .cac-subtitle {
+  color: #64748b !important;
+}
+
+[data-theme="light"] .cac-score-section {
+  background: #f8fafc !important;
+  border: 1px solid #e2e8f0 !important;
+}
+
+[data-theme="light"] .cac-score-range {
+  color: #64748b !important;
+}
+
+[data-theme="light"] .cac-meter-bar {
+  background: #e2e8f0 !important;
+}
+
+[data-theme="light"] .cac-meter-labels {
+  color: #64748b !important;
+}
+
+[data-theme="light"] .cac-detail-item {
+  background: #f8fafc !important;
+  border: 1px solid #e2e8f0 !important;
+}
+
+[data-theme="light"] .cac-detail-label {
+  color: #64748b !important;
+}
+
+[data-theme="light"] .cac-detail-value {
+  color: #0f172a !important;
+}
+
+[data-theme="light"] .cac-reason {
+  background: #f1f5f9 !important;
+  color: #334155 !important;
+  border-left-color: #2563eb !important;
+}
+
+/* Portfolio & NPA */
+[data-theme="light"] .kpi-card {
+  background: #ffffff !important;
+  border-color: #e2e8f0 !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+}
+
+[data-theme="light"] .kpi-label,
+[data-theme="light"] .kpi-subtext {
+  color: #64748b !important;
+}
+
+[data-theme="light"] .kpi-value {
+  color: #0f172a !important;
+}
+
+[data-theme="light"] .bucket-card {
+  background: #ffffff !important;
+  border-color: #e2e8f0 !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+}
+
+[data-theme="light"] .bucket-amount {
+  color: #0f172a !important;
+}
+
+[data-theme="light"] .bucket-meta {
+  color: #64748b !important;
+}
+
+/* Collections */
+[data-theme="light"] .collection-details-panel {
+  background: #ffffff !important;
+  border-color: #e2e8f0 !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+}
+
+[data-theme="light"] .collection-details-panel .empty-state p {
+  color: #64748b !important;
+}
+
+[data-theme="light"] .details-header h3 {
+  color: #0f172a !important;
+}
+
+[data-theme="light"] .details-header {
+  border-bottom-color: #e2e8f0 !important;
+}
+
+[data-theme="light"] .details-meta {
+  color: #64748b !important;
+}
+
+[data-theme="light"] .add-note-form {
+  background: #f8fafc !important;
+  border-color: #e2e8f0 !important;
+}
+
+[data-theme="light"] .add-note-form textarea {
+  background: #ffffff !important;
+  border-color: #cbd5e1 !important;
+  color: #0f172a !important;
+}
+
+[data-theme="light"] .note-card {
+  background: #f8fafc !important;
+  border-color: #e2e8f0 !important;
+}
+
+[data-theme="light"] .note-text {
+  color: #0f172a !important;
+}
+
+[data-theme="light"] .note-author {
+  color: #64748b !important;
 }

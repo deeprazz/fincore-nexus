@@ -492,8 +492,8 @@ export function PortalLoans() {
                   <input
                     type="number"
                     name="annualIncome"
-                    min="1"
-                    step="5000"
+                    min="0"
+                    step="1000"
                     required
                     value={formData.annualIncome}
                     onChange={(e) => setFormData({ ...formData, annualIncome: e.target.value })}

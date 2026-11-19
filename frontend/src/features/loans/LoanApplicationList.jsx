@@ -115,8 +115,10 @@ export function LoanApplicationList({ className = "" }) {
                   const score = app.creditScore || null;
                   const isPending =
                     status === "SUBMITTED" ||
+                    status === "UNDER_REVIEW" ||
                     status === "IN_REVIEW" ||
-                    status === "MANUAL_REVIEW";
+                    status === "MANUAL_REVIEW" ||
+                    status === "DRAFT";
 
                   return (
                     <tr key={app.id}>

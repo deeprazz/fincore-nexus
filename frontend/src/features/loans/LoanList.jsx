@@ -9,6 +9,8 @@ export function LoanList({
   onSelectLoan,
   onViewSchedule,
   onNewApplication,
+  onViewApplications,
+  appsCount = 0,
   className = "",
 }) {
   const { auth } = useAuth();
@@ -59,6 +61,16 @@ export function LoanList({
             <p>Active, pending disbursement, and closed loan contracts</p>
           </div>
           <div className="panel-actions">
+            {appsCount > 0 && onViewApplications && (
+              <button
+                type="button"
+                className="secondary-button"
+                onClick={onViewApplications}
+                title="View Underwriting Applications"
+              >
+                Applications Queue ({appsCount})
+              </button>
+            )}
             {onNewApplication && (
               <button
                 type="button"
@@ -128,11 +140,27 @@ export function LoanList({
               {filteredLoans.length === 0 ? (
                 <tr>
                   <td colSpan={9} className="empty-state">
-                    {loading
-                      ? "Loading loan accounts..."
-                      : searchQuery || statusFilter !== "ALL"
-                      ? "No loans match the current filters."
-                      : "No loans originated yet. Submit an application to get started."}
+                    {loading ? (
+                      "Loading loan accounts..."
+                    ) : searchQuery || statusFilter !== "ALL" ? (
+                      "No loans match the current filters."
+                    ) : appsCount > 0 ? (
+                      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "8px", padding: "16px" }}>
+                        <div>No active loan contracts yet. You have <strong>{appsCount}</strong> credit application(s) awaiting review in the Underwriting Queue.</div>
+                        {onViewApplications && (
+                          <button
+                            type="button"
+                            className="primary-button"
+                            style={{ fontSize: "12px", padding: "6px 14px", marginTop: "4px" }}
+                            onClick={onViewApplications}
+                          >
+                            View Underwriting Queue ({appsCount})
+                          </button>
+                        )}
+                      </div>
+                    ) : (
+                      "No loans originated yet. Submit an application to get started."
+                    )}
                   </td>
                 </tr>
               ) : (
