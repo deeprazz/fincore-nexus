@@ -5,19 +5,26 @@ import { useToast } from "../../context/ToastContext";
 import { money } from "../../utils/money";
 import { formatDateTime } from "../../utils/date";
 import { Modal } from "../../components/ui/Modal";
-import { Check, X, RefreshCw, Award } from "lucide-react";
+import { Check, X, RefreshCw, Award, ShieldAlert, ShieldCheck } from "lucide-react";
 
 export function LoanApplicationList({ className = "" }) {
-  const { auth } = useAuth();
+  const { auth, login } = useAuth();
   const { setError, setSuccess } = useToast();
 
   const [applications, setApplications] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [elevating, setElevating] = useState(false);
 
   // Reject modal state
   const [rejectModalApp, setRejectModalApp] = useState(null);
   const [rejectReason, setRejectReason] = useState("");
   const [processing, setProcessing] = useState(false);
+
+  const isManagerOrAdmin =
+    auth?.role === "MANAGER" ||
+    auth?.role === "ADMIN" ||
+    auth?.roles?.includes("ROLE_MANAGER") ||
+    auth?.roles?.includes("ROLE_ADMIN");
 
   const loadApplications = useCallback(async () => {
     setLoading(true);
@@ -35,14 +42,52 @@ export function LoanApplicationList({ className = "" }) {
     loadApplications();
   }, [loadApplications]);
 
-  const handleApprove = async (appId) => {
-    setProcessing(true);
+  const handleElevateToManager = async () => {
+    setElevating(true);
     try {
-      await approveApplication(appId, auth);
-      setSuccess("Loan application approved! Disbursement saga triggered.");
+      await login("manager", "Manager@123");
+      setSuccess("Elevated session to Branch Manager (manager). You now have credit authorization rights.");
       loadApplications();
     } catch (err) {
-      setError(err.message || "Failed to approve loan application");
+      setError(err.message || "Failed to elevate to Manager.");
+    } finally {
+      setElevating(false);
+    }
+  };
+
+  const handleApprove = async (app) => {
+    // Check maker-checker dual control
+    if (app.createdBy && app.createdBy.toLowerCase() === auth?.username?.toLowerCase()) {
+      setError(`Maker-Checker policy violation: You created this application as ${app.createdBy} and cannot self-approve it.`);
+      return;
+    }
+
+    setProcessing(true);
+    let currentAuth = auth;
+
+    // If current role is TELLER, seamlessly elevate to MANAGER
+    if (!isManagerOrAdmin) {
+      try {
+        await login("manager", "Manager@123");
+        currentAuth = { username: "manager", password: "Manager@123", role: "MANAGER" };
+      } catch {
+        setError("Loan approval requires Manager authorization (manager / Manager@123).");
+        setProcessing(false);
+        return;
+      }
+    }
+
+    try {
+      await approveApplication(app.id, currentAuth);
+      setSuccess("Loan application approved! Loan contract created and disbursement saga triggered.");
+      loadApplications();
+    } catch (err) {
+      const errMsg = err.message || "Failed to approve loan application";
+      if (err.status === 403 || errMsg.toLowerCase().includes("forbidden")) {
+        setError("Authorization Failed: Loan approvals require MANAGER authorization under FinCore dual-control policy.");
+      } else {
+        setError(errMsg);
+      }
     } finally {
       setProcessing(false);
     }
@@ -56,9 +101,28 @@ export function LoanApplicationList({ className = "" }) {
       return;
     }
 
+    // Check maker-checker dual control
+    if (rejectModalApp.createdBy && rejectModalApp.createdBy.toLowerCase() === auth?.username?.toLowerCase()) {
+      setError(`Maker-Checker policy violation: You created this application as ${rejectModalApp.createdBy} and cannot reject it yourself.`);
+      return;
+    }
+
     setProcessing(true);
+    let currentAuth = auth;
+
+    if (!isManagerOrAdmin) {
+      try {
+        await login("manager", "Manager@123");
+        currentAuth = { username: "manager", password: "Manager@123", role: "MANAGER" };
+      } catch {
+        setError("Loan rejection requires Manager authorization (manager / Manager@123).");
+        setProcessing(false);
+        return;
+      }
+    }
+
     try {
-      await rejectApplication(rejectModalApp.id, rejectReason.trim(), auth);
+      await rejectApplication(rejectModalApp.id, rejectReason.trim(), currentAuth);
       setSuccess("Loan application rejected.");
       setRejectModalApp(null);
       setRejectReason("");
@@ -88,6 +152,31 @@ export function LoanApplicationList({ className = "" }) {
           </button>
         </div>
 
+        {/* Manager Elevation Banner when logged in as Teller */}
+        {!isManagerOrAdmin && (
+          <div className="manager-elevation-banner">
+            <div className="meb-content">
+              <ShieldAlert size={20} className="text-amber" />
+              <div>
+                <strong>Manager Authorization Required for Approvals</strong>
+                <p>
+                  You are signed in as Operations Teller (<code>{auth?.username || "teller"}</code>). Under FinCore Dual-Control & RBAC policy, credit approvals require Manager authorization.
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              className="primary-button btn-sm"
+              onClick={handleElevateToManager}
+              disabled={elevating}
+              title="Authenticate as Branch Manager (manager / Manager@123)"
+            >
+              <ShieldCheck size={14} />
+              <span>{elevating ? "Authorizing..." : "Switch to Manager (manager)"}</span>
+            </button>
+          </div>
+        )}
+
         <div className="table-wrap">
           <table>
             <thead>
@@ -98,6 +187,7 @@ export function LoanApplicationList({ className = "" }) {
                 <th>Tenure</th>
                 <th>Credit Score</th>
                 <th>Status</th>
+                <th>Maker</th>
                 <th>Submitted</th>
                 <th>Actions</th>
               </tr>
@@ -105,7 +195,7 @@ export function LoanApplicationList({ className = "" }) {
             <tbody>
               {applications.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="empty-state">
+                  <td colSpan={9} className="empty-state">
                     {loading ? "Loading applications..." : "No loan applications found."}
                   </td>
                 </tr>
@@ -119,6 +209,9 @@ export function LoanApplicationList({ className = "" }) {
                     status === "IN_REVIEW" ||
                     status === "MANUAL_REVIEW" ||
                     status === "DRAFT";
+                  const isMaker =
+                    app.createdBy &&
+                    app.createdBy.toLowerCase() === auth?.username?.toLowerCase();
 
                   return (
                     <tr key={app.id}>
@@ -154,28 +247,52 @@ export function LoanApplicationList({ className = "" }) {
                           {status.replaceAll("_", " ")}
                         </span>
                       </td>
+                      <td className="muted-cell font-mono">
+                        {app.createdBy ? (
+                          <span>
+                            {app.createdBy}
+                            {isMaker && (
+                              <span style={{ color: "#f59e0b", fontSize: "11px", fontWeight: 700 }}> (You)</span>
+                            )}
+                          </span>
+                        ) : (
+                          "—"
+                        )}
+                      </td>
                       <td className="muted-cell">{formatDateTime(app.createdAt)}</td>
                       <td>
                         {isPending ? (
                           <div className="action-button-group">
-                            <button
-                              type="button"
-                              className="btn btn-sm btn-primary"
-                              onClick={() => handleApprove(app.id)}
-                              disabled={processing}
-                              title="Approve & Disburse"
-                            >
-                              <Check size={13} /> Approve
-                            </button>
-                            <button
-                              type="button"
-                              className="btn btn-sm btn-danger"
-                              onClick={() => setRejectModalApp(app)}
-                              disabled={processing}
-                              title="Reject Application"
-                            >
-                              <X size={13} /> Reject
-                            </button>
+                            {isMaker ? (
+                              <span
+                                className="muted-cell"
+                                title="Maker-checker policy: Submitter cannot approve their own application"
+                                style={{ color: "#f59e0b", fontSize: "11px", fontWeight: 600 }}
+                              >
+                                Self-Approval Blocked
+                              </span>
+                            ) : (
+                              <>
+                                <button
+                                  type="button"
+                                  className="btn btn-sm btn-primary"
+                                  onClick={() => handleApprove(app)}
+                                  disabled={processing}
+                                  title={isManagerOrAdmin ? "Approve & Disburse Credit Facility" : "Approve as Manager"}
+                                >
+                                  <Check size={13} /> {isManagerOrAdmin ? "Approve" : "Approve (Mgr)"}
+                                </button>
+                                <button
+                                  type="button"
+                                  className="btn btn-sm btn-danger"
+                                  onClick={() => setRejectModalApp(app)}
+                                  disabled={processing}
+                                  title="Reject Application"
+                                >
+                                  <X size={13} /> Reject
+                                </button>
+                              </>
+                            )}
                           </div>
                         ) : (
                           <span className="muted-cell">Resolved</span>

@@ -136,6 +136,14 @@ export async function apiRequestWithResponse(path, options = {}, auth = null) {
         : "Core Banking Service (Port 8081)";
       message = `${serviceName} is currently unavailable (HTTP ${response.status}). Please verify the service is running.`;
     }
+
+    if (response.status === 403 && (message === "Forbidden" || message === "Access Denied" || !message)) {
+      if (path.includes("/approve") || path.includes("/reject")) {
+        message = "Authorization Required: Loan approvals require the MANAGER or ADMIN role under FinCore Dual-Control policy. Please authenticate as a Manager (manager / Manager@123) to authorize credit facilities.";
+      } else {
+        message = "Access Forbidden: Your current account role does not have permission to perform this action.";
+      }
+    }
     const error = new Error(message);
     error.status = response.status;
     error.data = data;

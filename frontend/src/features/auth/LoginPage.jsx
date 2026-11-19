@@ -177,6 +177,28 @@ export function LoginPage() {
             type="button"
             className="quick-demo-pill"
             onClick={() => {
+              setActiveTab("staff");
+              setUsername("manager");
+              setPassword("Manager@123");
+            }}
+          >
+            Manager (manager)
+          </button>
+          <button
+            type="button"
+            className="quick-demo-pill"
+            onClick={() => {
+              setActiveTab("customer");
+              setUsername("kriti@gmail.com");
+              setPassword("Customer@123");
+            }}
+          >
+            Customer (kriti)
+          </button>
+          <button
+            type="button"
+            className="quick-demo-pill"
+            onClick={() => {
               setActiveTab("customer");
               setUsername("ankit@gmail.com");
               setPassword("Customer@123");
