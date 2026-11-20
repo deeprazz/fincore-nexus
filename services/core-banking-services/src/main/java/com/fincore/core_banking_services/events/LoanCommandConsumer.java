@@ -14,9 +14,12 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 
 @Component
 public class LoanCommandConsumer {
@@ -46,7 +49,12 @@ public class LoanCommandConsumer {
 
     @KafkaListener(topics = TOPIC_LOAN_APPROVED, groupId = "${spring.kafka.consumer.group-id:core-banking-loan-group}")
     @Transactional
-    public void handleLoanApproved(LoanApprovedCommand command) {
+    public void handleLoanApproved(Object payload) {
+        LoanApprovedCommand command = toLoanApprovedCommand(payload);
+        if (command == null) {
+            log.warn("Discarding unparseable loan approved payload: {}", payload);
+            return;
+        }
         String key = "loan-approved:" + command.correlationId();
         if (processedEventRepository.existsByIdempotencyKey(key)) {
             log.info("Skipping already processed loan approved command with key: {}", key);
@@ -117,7 +125,12 @@ public class LoanCommandConsumer {
 
     @KafkaListener(topics = TOPIC_EMI_DEBIT_REQUESTED, groupId = "${spring.kafka.consumer.group-id:core-banking-loan-group}")
     @Transactional
-    public void handleEmiDebitRequested(EmiDebitCommand command) {
+    public void handleEmiDebitRequested(Object payload) {
+        EmiDebitCommand command = toEmiDebitCommand(payload);
+        if (command == null) {
+            log.warn("Discarding unparseable EMI debit payload: {}", payload);
+            return;
+        }
         String key = "emi-debit:" + command.idempotencyKey();
         if (processedEventRepository.existsByIdempotencyKey(key)) {
             log.info("Skipping already processed EMI debit command with key: {}", key);
@@ -193,5 +206,65 @@ public class LoanCommandConsumer {
             kafkaTemplate.send(TOPIC_EMI_DEBIT_RESULT, command.loanId().toString(), response);
             processedEventRepository.save(new ProcessedEvent(key));
         }
+    }
+
+    private LoanApprovedCommand toLoanApprovedCommand(Object payload) {
+        if (payload instanceof LoanApprovedCommand cmd) {
+            return cmd;
+        }
+        if (payload instanceof com.fincore.loan_service.event.LoanApprovedEvent evt) {
+            return new LoanApprovedCommand(
+                    evt.correlationId(),
+                    evt.loanId(),
+                    evt.customerId(),
+                    evt.targetAccountId(),
+                    evt.amount(),
+                    evt.currency()
+            );
+        }
+        if (payload instanceof Map<?, ?> map) {
+            try {
+                UUID correlationId = map.get("correlationId") != null ? UUID.fromString(map.get("correlationId").toString()) : null;
+                UUID loanId = map.get("loanId") != null ? UUID.fromString(map.get("loanId").toString()) : null;
+                UUID customerId = map.get("customerId") != null ? UUID.fromString(map.get("customerId").toString()) : null;
+                UUID targetAccountId = map.get("targetAccountId") != null ? UUID.fromString(map.get("targetAccountId").toString()) : null;
+                BigDecimal amount = map.get("amount") != null ? new BigDecimal(map.get("amount").toString()) : BigDecimal.ZERO;
+                String currency = map.get("currency") != null ? map.get("currency").toString() : "INR";
+                return new LoanApprovedCommand(correlationId, loanId, customerId, targetAccountId, amount, currency);
+            } catch (Exception e) {
+                log.error("Failed to parse LoanApprovedCommand from Map: {}", e.getMessage());
+            }
+        }
+        return null;
+    }
+
+    private EmiDebitCommand toEmiDebitCommand(Object payload) {
+        if (payload instanceof EmiDebitCommand cmd) {
+            return cmd;
+        }
+        if (payload instanceof com.fincore.loan_service.event.EmiDebitRequestedEvent evt) {
+            return new EmiDebitCommand(
+                    evt.idempotencyKey(),
+                    evt.loanId(),
+                    evt.emiId(),
+                    evt.accountId(),
+                    evt.amount(),
+                    evt.dueDate()
+            );
+        }
+        if (payload instanceof Map<?, ?> map) {
+            try {
+                UUID idempotencyKey = map.get("idempotencyKey") != null ? UUID.fromString(map.get("idempotencyKey").toString()) : null;
+                UUID loanId = map.get("loanId") != null ? UUID.fromString(map.get("loanId").toString()) : null;
+                UUID emiId = map.get("emiId") != null ? UUID.fromString(map.get("emiId").toString()) : null;
+                UUID accountId = map.get("accountId") != null ? UUID.fromString(map.get("accountId").toString()) : null;
+                BigDecimal amount = map.get("amount") != null ? new BigDecimal(map.get("amount").toString()) : BigDecimal.ZERO;
+                LocalDate dueDate = map.get("dueDate") != null ? LocalDate.parse(map.get("dueDate").toString()) : LocalDate.now();
+                return new EmiDebitCommand(idempotencyKey, loanId, emiId, accountId, amount, dueDate);
+            } catch (Exception e) {
+                log.error("Failed to parse EmiDebitCommand from Map: {}", e.getMessage());
+            }
+        }
+        return null;
     }
 }

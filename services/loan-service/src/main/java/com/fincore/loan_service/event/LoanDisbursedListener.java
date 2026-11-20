@@ -17,7 +17,25 @@ public class LoanDisbursedListener {
     }
 
     @KafkaListener(topics = "loan.disbursed", groupId = "loan-service")
-    public void onLoanDisbursed(LoanDisbursedEvent event) {
+    public void onLoanDisbursed(Object payload) {
+        LoanDisbursedEvent event = null;
+        if (payload instanceof LoanDisbursedEvent e) {
+            event = e;
+        } else if (payload instanceof com.fincore.core_banking_services.events.LoanDisbursedResponse r) {
+            event = new LoanDisbursedEvent(
+                    r.correlationId(),
+                    r.loanId(),
+                    r.accountId(),
+                    r.disbursedAmount(),
+                    r.disbursedAt(),
+                    r.success(),
+                    r.failureReason()
+            );
+        }
+        if (event == null) {
+            log.warn("Unknown loan.disbursed payload: {}", payload);
+            return;
+        }
         log.info("Received loan.disbursed event: correlationId={}", event.correlationId());
         try {
             loanApplicationService.handleDisbursed(event);

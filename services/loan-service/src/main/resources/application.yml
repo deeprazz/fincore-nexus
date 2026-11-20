@@ -24,6 +24,8 @@ spring:
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
       acks: all
       retries: 3
+      properties:
+        spring.json.add.type.headers: false
     consumer:
       group-id: loan-service
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
@@ -31,6 +33,7 @@ spring:
       auto-offset-reset: earliest
       properties:
         spring.json.trusted.packages: "com.fincore.*"
+        spring.json.type.mapping: "com.fincore.core_banking_services.events.LoanDisbursedResponse:com.fincore.loan_service.event.LoanDisbursedEvent,com.fincore.core_banking_services.events.EmiDebitResultResponse:com.fincore.loan_service.event.EmiDebitResultEvent"
 fincore:
   security:
     teller-password: ${FINCORE_TELLER_PASSWORD:Teller@123}

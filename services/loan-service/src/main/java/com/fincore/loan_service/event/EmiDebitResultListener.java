@@ -40,7 +40,23 @@ public class EmiDebitResultListener {
 
     @KafkaListener(topics = "emi.debit.result", groupId = "loan-service")
     @Transactional
-    public void onEmiDebitResult(EmiDebitResultEvent event) {
+    public void onEmiDebitResult(Object payload) {
+        EmiDebitResultEvent event = null;
+        if (payload instanceof EmiDebitResultEvent e) {
+            event = e;
+        } else if (payload instanceof com.fincore.core_banking_services.events.EmiDebitResultResponse r) {
+            event = new EmiDebitResultEvent(
+                    r.idempotencyKey(),
+                    r.loanId(),
+                    r.emiId(),
+                    r.success(),
+                    r.failureReason()
+            );
+        }
+        if (event == null) {
+            log.warn("Unknown emi.debit.result payload: {}", payload);
+            return;
+        }
         String key = "emi-result:" + event.idempotencyKey();
         if (processedEventRepository.existsByIdempotencyKey(key)) {
             log.info("Already processed EMI debit result: {}", key);
