@@ -35,6 +35,10 @@ export async function getPayment(id, auth) {
   return callApi(`/payments/${encodeURIComponent(id)}`, null, auth);
 }
 
+export async function getPaymentSaga(id, auth) {
+  return callApi(`/payments/${encodeURIComponent(id)}/saga`, null, auth);
+}
+
 export async function getPaymentByUtr(utr, auth) {
   return callApi(`/payments/utr/${encodeURIComponent(utr)}`, null, auth);
 }

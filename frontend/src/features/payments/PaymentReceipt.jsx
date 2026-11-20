@@ -5,7 +5,7 @@ import FraudCheckBadge from "./FraudCheckBadge";
 import SagaStatusTimeline from "./SagaStatusTimeline";
 import jsPDF from "jspdf";
 
-export default function PaymentReceipt({ payment, onReset }) {
+export default function PaymentReceipt({ payment, onReset, onViewSaga }) {
   if (!payment) return null;
 
   const sourceRef = payment.sourceAccountId
@@ -100,12 +100,19 @@ export default function PaymentReceipt({ payment, onReset }) {
         </div>
       </div>
 
-      <div className="flex justify-between items-center pt-2">
-        {onReset && (
-          <Button variant="outline" onClick={onReset}>
-            ← New Payment
-          </Button>
-        )}
+      <div className="flex flex-wrap justify-between items-center gap-2 pt-2">
+        <div className="flex items-center gap-2">
+          {onReset && (
+            <Button variant="outline" onClick={onReset}>
+              ← New Payment
+            </Button>
+          )}
+          {onViewSaga && (
+            <Button variant="outline" onClick={onViewSaga} className="border-primary/40 text-primary hover:bg-primary/10">
+              ⚡ View Saga Timeline
+            </Button>
+          )}
+        </div>
         <Button variant="primary" onClick={downloadPdf}>
           Download PDF Receipt
         </Button>

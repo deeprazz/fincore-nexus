@@ -24,21 +24,52 @@ export function PendingApprovalsPage() {
   const [showAll, setShowAll] = useState(false);
   const [processingId, setProcessingId] = useState(null);
 
+  const isTeller = auth?.role === "TELLER";
+
   const fetchApprovalsList = useCallback(async () => {
+    if (isTeller) return;
     setLoading(true);
     try {
       const data = await getApprovals(auth, showAll);
       setApprovals(Array.isArray(data) ? data : []);
     } catch (err) {
-      setError(err.message || "Failed to load pending approvals");
+      if (err.status !== 403) {
+        setError(err.message || "Failed to load pending approvals");
+      }
     } finally {
       setLoading(false);
     }
-  }, [auth, showAll, setError]);
+  }, [auth, isTeller, showAll, setError]);
 
   useEffect(() => {
-    fetchApprovalsList();
-  }, [fetchApprovalsList]);
+    if (!isTeller) {
+      fetchApprovalsList();
+    }
+  }, [isTeller, fetchApprovalsList]);
+
+  if (isTeller) {
+    return (
+      <div className="space-y-6">
+        <div className="p-6 rounded-lg border border-amber-500/30 bg-amber-500/10 text-center max-w-xl mx-auto space-y-4">
+          <div className="w-12 h-12 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center mx-auto">
+            <ShieldAlert size={26} />
+          </div>
+          <div>
+            <h3 className="text-lg font-bold text-amber-200">Manager Authorization Required</h3>
+            <p className="text-sm text-muted mt-1">
+              Under FinCore Dual-Control policy, reviewing and approving pending operations (withdrawals, transfers, limit adjustments) requires <strong>MANAGER</strong> or <strong>ADMIN</strong> authorization.
+            </p>
+          </div>
+          <div className="text-xs text-muted font-mono bg-surface p-2.5 rounded border border-border">
+            Current Session: {auth?.username || "teller"} (Role: {auth?.role})
+          </div>
+          <p className="text-xs text-muted">
+            Please authenticate using an authorized Manager (<code>manager / Manager@123</code>) account to authorize or reject operations.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   const handleApprove = async (approval) => {
     if (approval.maker?.toLowerCase() === auth?.username?.toLowerCase()) {

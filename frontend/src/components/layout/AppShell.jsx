@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import { Topbar } from "./Topbar";
 import { Sidebar } from "./Sidebar";
@@ -8,8 +8,13 @@ import { useToast } from "../../context/ToastContext";
 export function AppShell() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { auth, apiLatency } = useAuth();
-  const { error, success } = useToast();
+  const { error, success, clearMessages, setError, setSuccess } = useToast();
   const location = useLocation();
+
+  // Clear transient error/success alerts when navigating to a new route
+  useEffect(() => {
+    clearMessages();
+  }, [location.pathname, clearMessages]);
 
   const isCustomer = auth?.role === "CUSTOMER";
 
@@ -28,9 +33,31 @@ export function AppShell() {
             role="CUSTOMER"
           />
           <main className="customer-main customer-main-content">
-            {error && <div className="alert-error customer-alert">{error}</div>}
+            {error && (
+              <div className="alert-error customer-alert flex items-center justify-between">
+                <span>{error}</span>
+                <button
+                  type="button"
+                  onClick={() => setError("")}
+                  className="text-xs opacity-75 hover:opacity-100 ml-3 font-bold"
+                  aria-label="Dismiss message"
+                >
+                  ✕
+                </button>
+              </div>
+            )}
             {success && (
-              <div className="alert-success customer-alert">{success}</div>
+              <div className="alert-success customer-alert flex items-center justify-between">
+                <span>{success}</span>
+                <button
+                  type="button"
+                  onClick={() => setSuccess("")}
+                  className="text-xs opacity-75 hover:opacity-100 ml-3 font-bold"
+                  aria-label="Dismiss message"
+                >
+                  ✕
+                </button>
+              </div>
             )}
             <Outlet />
           </main>
@@ -90,8 +117,32 @@ export function AppShell() {
             </div>
           )}
 
-          {error && <div className="alert-error">{error}</div>}
-          {success && <div className="alert-success">{success}</div>}
+          {error && (
+            <div className="alert-error flex items-center justify-between">
+              <span>{error}</span>
+              <button
+                type="button"
+                onClick={() => setError("")}
+                className="text-xs opacity-75 hover:opacity-100 ml-3 font-bold"
+                aria-label="Dismiss message"
+              >
+                ✕
+              </button>
+            </div>
+          )}
+          {success && (
+            <div className="alert-success flex items-center justify-between">
+              <span>{success}</span>
+              <button
+                type="button"
+                onClick={() => setSuccess("")}
+                className="text-xs opacity-75 hover:opacity-100 ml-3 font-bold"
+                aria-label="Dismiss message"
+              >
+                ✕
+              </button>
+            </div>
+          )}
 
           <Outlet />
         </main>

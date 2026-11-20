@@ -31,6 +31,10 @@ public class PaymentRequest {
 
     private String createdBy;
 
+    private String transactionPassword;
+
+    private String transactionPin;
+
     public UUID getCustomerId() { return customerId; }
     public void setCustomerId(UUID customerId) { this.customerId = customerId; }
     public UUID getSourceAccountId() { return sourceAccountId; }
@@ -53,4 +57,8 @@ public class PaymentRequest {
     public void setPurpose(String purpose) { this.purpose = purpose; }
     public String getCreatedBy() { return createdBy; }
     public void setCreatedBy(String createdBy) { this.createdBy = createdBy; }
+    public String getTransactionPassword() { return transactionPassword; }
+    public void setTransactionPassword(String transactionPassword) { this.transactionPassword = transactionPassword; }
+    public String getTransactionPin() { return transactionPin; }
+    public void setTransactionPin(String transactionPin) { this.transactionPin = transactionPin; }
 }

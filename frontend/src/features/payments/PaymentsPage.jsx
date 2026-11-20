@@ -3,6 +3,7 @@ import Tabs from "../../components/ui/Tabs";
 import Spinner from "../../components/ui/Spinner";
 import PaymentForm from "./PaymentForm";
 import PaymentReceipt from "./PaymentReceipt";
+import PaymentSagaTracker from "./PaymentSagaTracker";
 import BeneficiaryList from "./BeneficiaryList";
 import BeneficiaryForm from "./BeneficiaryForm";
 import PaymentHistory from "./PaymentHistory";
@@ -35,6 +36,7 @@ export default function PaymentsPage() {
   const [beneficiaries, setBeneficiaries] = useState([]);
   const [payments, setPayments] = useState([]);
   const [selectedReceipt, setSelectedReceipt] = useState(null);
+  const [activeTrackingPayment, setActiveTrackingPayment] = useState(null);
   const [prefilledBeneficiary, setPrefilledBeneficiary] = useState(null);
   const [showAddBenModal, setShowAddBenModal] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -63,7 +65,7 @@ export default function PaymentsPage() {
   const handlePaymentSubmit = async (payload, idempotencyKey) => {
     setFeedbackMessage(null);
     const res = await initiatePayment(payload, idempotencyKey, auth);
-    setSelectedReceipt(res);
+    setActiveTrackingPayment(res);
     await loadData();
   };
 
@@ -132,6 +134,7 @@ export default function PaymentsPage() {
   const handlePayBeneficiary = (ben) => {
     setPrefilledBeneficiary(ben);
     setSelectedReceipt(null);
+    setActiveTrackingPayment(null);
     setActiveTab("transfer");
   };
 
@@ -167,16 +170,46 @@ export default function PaymentsPage() {
         </div>
       )}
 
-      <Tabs tabs={TABS} activeTab={activeTab} onChange={(tab) => { setActiveTab(tab); setSelectedReceipt(null); }} />
+      <Tabs
+        tabs={TABS}
+        activeTab={activeTab}
+        onChange={(tab) => {
+          setActiveTab(tab);
+          setSelectedReceipt(null);
+          setActiveTrackingPayment(null);
+        }}
+      />
 
       {activeTab === "transfer" && (
         <div>
-          {selectedReceipt ? (
+          {activeTrackingPayment ? (
+            <PaymentSagaTracker
+              initialPayment={activeTrackingPayment}
+              onViewReceipt={(p) => {
+                setSelectedReceipt(p);
+                setActiveTrackingPayment(null);
+              }}
+              onNewPayment={() => {
+                setActiveTrackingPayment(null);
+                setSelectedReceipt(null);
+                setPrefilledBeneficiary(null);
+              }}
+              onViewHistory={() => {
+                setActiveTrackingPayment(null);
+                setSelectedReceipt(null);
+                setActiveTab("history");
+              }}
+            />
+          ) : selectedReceipt ? (
             <PaymentReceipt
               payment={selectedReceipt}
               onReset={() => {
                 setSelectedReceipt(null);
                 setPrefilledBeneficiary(null);
+              }}
+              onViewSaga={() => {
+                setActiveTrackingPayment(selectedReceipt);
+                setSelectedReceipt(null);
               }}
             />
           ) : (
@@ -225,16 +258,41 @@ export default function PaymentsPage() {
 
       {activeTab === "history" && (
         <div className="card p-5 border">
-          {selectedReceipt ? (
+          {activeTrackingPayment ? (
+            <PaymentSagaTracker
+              initialPayment={activeTrackingPayment}
+              onViewReceipt={(p) => {
+                setSelectedReceipt(p);
+                setActiveTrackingPayment(null);
+              }}
+              onNewPayment={() => {
+                setActiveTrackingPayment(null);
+                setSelectedReceipt(null);
+                setActiveTab("transfer");
+              }}
+              onViewHistory={() => {
+                setActiveTrackingPayment(null);
+                setSelectedReceipt(null);
+              }}
+            />
+          ) : selectedReceipt ? (
             <PaymentReceipt
               payment={selectedReceipt}
               onReset={() => setSelectedReceipt(null)}
+              onViewSaga={() => {
+                setActiveTrackingPayment(selectedReceipt);
+                setSelectedReceipt(null);
+              }}
             />
           ) : (
             <PaymentHistory
               payments={payments}
               currentUser={auth}
               onViewReceipt={(p) => setSelectedReceipt(p)}
+              onTrackSaga={(p) => {
+                setActiveTrackingPayment(p);
+                setSelectedReceipt(null);
+              }}
               onApprove={handleApprovePayment}
               onReject={handleRejectPayment}
               onRetryCompensation={handleRetryCompensation}

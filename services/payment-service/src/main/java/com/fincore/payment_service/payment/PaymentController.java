@@ -77,6 +77,13 @@ public class PaymentController {
         return ResponseEntity.ok(paymentService.getPaymentById(id));
     }
 
+    @GetMapping("/{id}/saga")
+    public ResponseEntity<com.fincore.payment_service.saga.PaymentSaga> getPaymentSaga(@PathVariable UUID id) {
+        return paymentService.getPaymentSaga(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
     @GetMapping("/utr/{utr}")
     public ResponseEntity<PaymentResponse> getPaymentByUtr(@PathVariable String utr) {
         return ResponseEntity.ok(paymentService.getPaymentByUtr(utr));

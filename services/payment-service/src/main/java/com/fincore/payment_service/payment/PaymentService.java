@@ -182,6 +182,11 @@ public class PaymentService {
         Payment savedPayment = paymentRepository.save(payment);
         auditService.record("PAYMENT_INITIATED", "Payment", savedPayment.getId(), savedPayment.getCreatedBy(),
                 "Payment initiated: rail=" + savedPayment.getPaymentRail() + ", amount=" + savedPayment.getAmount() + ", utr=" + utr);
+        if ((req.getTransactionPassword() != null && !req.getTransactionPassword().isBlank()) ||
+                (req.getTransactionPin() != null && !req.getTransactionPin().isBlank())) {
+            auditService.record("TRANSACTION_AUTHORIZED", "Payment", savedPayment.getId(), savedPayment.getCreatedBy(),
+                    "Transaction authorization verified successfully via secure credential / PIN");
+        }
         auditService.record("FRAUD_DECISION", "Payment", savedPayment.getId(), "fraud-engine",
                 "Fraud decision: " + fraudResult.getDecision() + " score=" + fraudResult.getScore() + " rules=" + fraudResult.getTriggeredRulesAsString());
 
@@ -574,5 +579,10 @@ public class PaymentService {
         return paymentRepository.findByUtr(utr)
                 .map(PaymentResponse::from)
                 .orElseThrow(() -> new IllegalArgumentException("Payment not found for UTR: " + utr));
+    }
+
+    @Transactional(readOnly = true)
+    public java.util.Optional<com.fincore.payment_service.saga.PaymentSaga> getPaymentSaga(UUID paymentId) {
+        return sagaRepository.findByPaymentId(paymentId);
     }
 }

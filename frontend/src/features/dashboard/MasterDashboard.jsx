@@ -14,9 +14,17 @@ import {
 import Card from "../../components/ui/Card";
 import Button from "../../components/ui/Button";
 import { apiRequest } from "../../api/client";
+import { useAuth } from "../../context/AuthContext";
 import { money } from "../../utils/money";
 
 export default function MasterDashboard() {
+  let auth = null;
+  try {
+    const authCtx = useAuth();
+    auth = authCtx?.auth;
+  } catch {
+    // Fallback if rendered outside AuthProvider (e.g. standalone test)
+  }
   const [loading, setLoading] = useState(true);
   const [coreSummary, setCoreSummary] = useState(null);
   const [loanPortfolio, setLoanPortfolio] = useState(null);
@@ -24,54 +32,64 @@ export default function MasterDashboard() {
   const [kycData, setKycData] = useState(null);
   const [pciData, setPciData] = useState(null);
 
-  // Per-module service availability tracking
+  // Per-module service availability tracking: 'ok' | 'restricted' | 'unauthorized' | 'unavailable'
   const [coreStatus, setCoreStatus] = useState("ok");
   const [loanStatus, setLoanStatus] = useState("ok");
   const [paymentStatus, setPaymentStatus] = useState("ok");
   const [complianceStatus, setComplianceStatus] = useState("ok");
+
+  const resolveStatusFromError = (err) => {
+    if (!err) return "unavailable";
+    const status = err.status || err.statusCode;
+    if (status === 403) return "restricted";
+    if (status === 401) return "unauthorized";
+    return "unavailable";
+  };
 
   const fetchAllMetrics = useCallback(async () => {
     setLoading(true);
     try {
       // 1. Core banking metrics
       const [coreRes, auditRes] = await Promise.allSettled([
-        apiRequest("/dashboard/summary"),
-        apiRequest("/audit/verify"),
+        apiRequest("/dashboard/summary", {}, auth),
+        apiRequest("/audit/verify", {}, auth),
       ]);
-      const isCoreOk = coreRes.status === "fulfilled" && coreRes.value && !coreRes.value.error;
-      setCoreStatus(isCoreOk ? "ok" : "unavailable");
-      setCoreSummary(
-        isCoreOk
-          ? {
-              ...coreRes.value,
-              auditValid: auditRes.status === "fulfilled" && auditRes.value ? auditRes.value.valid : false,
-            }
-          : null
-      );
+
+      if (coreRes.status === "fulfilled" && coreRes.value && !coreRes.value.error) {
+        setCoreStatus("ok");
+        setCoreSummary({
+          ...coreRes.value,
+          auditValid: auditRes.status === "fulfilled" && auditRes.value ? auditRes.value.valid : false,
+        });
+      } else {
+        const err = coreRes.status === "rejected" ? coreRes.reason : null;
+        setCoreStatus(resolveStatusFromError(err));
+        setCoreSummary(null);
+      }
 
       // 2. Loan metrics
-      let isLoanOk = false;
       try {
-        const loanRes = await apiRequest("/loans/portfolio");
+        const loanRes = await apiRequest("/loans/portfolio", {}, auth);
         if (loanRes && !loanRes.error) {
           setLoanPortfolio(loanRes);
-          isLoanOk = true;
+          setLoanStatus("ok");
         } else {
           setLoanPortfolio(null);
+          setLoanStatus(loanRes?.status === 403 ? "restricted" : "unavailable");
         }
-      } catch {
+      } catch (err) {
         setLoanPortfolio(null);
+        setLoanStatus(resolveStatusFromError(err));
       }
-      setLoanStatus(isLoanOk ? "ok" : "unavailable");
 
       // 3. Payment metrics
       const [paymentsRes, settlementRes] = await Promise.allSettled([
-        apiRequest("/payments"),
-        apiRequest("/settlement/report"),
+        apiRequest("/payments", {}, auth),
+        apiRequest("/settlement/report", {}, auth),
       ]);
-      const isPaymentOk = paymentsRes.status === "fulfilled" && Array.isArray(paymentsRes.value);
-      setPaymentStatus(isPaymentOk ? "ok" : "unavailable");
-      if (isPaymentOk) {
+
+      if (paymentsRes.status === "fulfilled" && Array.isArray(paymentsRes.value)) {
+        setPaymentStatus("ok");
         const payments = paymentsRes.value;
         const totalPayments = payments.length;
         const successfulPayments = payments.filter((p) => p.status === "SETTLED" || p.status === "CREDITED").length;
@@ -83,17 +101,26 @@ export default function MasterDashboard() {
           settlement: settlementRes.status === "fulfilled" ? settlementRes.value : null,
         });
       } else {
+        const err = paymentsRes.status === "rejected" ? paymentsRes.reason : null;
+        setPaymentStatus(resolveStatusFromError(err));
         setPaymentReport(null);
       }
 
       // 4. KYC & Compliance metrics
       const [kycRes, complianceRes] = await Promise.allSettled([
-        apiRequest("/kyc"),
-        apiRequest("/compliance/pci-dss"),
+        apiRequest("/kyc", {}, auth),
+        apiRequest("/compliance/pci-dss", {}, auth),
       ]);
+
       const isKycOk = kycRes.status === "fulfilled" && Array.isArray(kycRes.value);
       const isPciOk = complianceRes.status === "fulfilled" && complianceRes.value && !complianceRes.value.error;
-      setComplianceStatus(isKycOk || isPciOk ? "ok" : "unavailable");
+
+      if (isKycOk || isPciOk) {
+        setComplianceStatus("ok");
+      } else {
+        const err = complianceRes.status === "rejected" ? complianceRes.reason : (kycRes.status === "rejected" ? kycRes.reason : null);
+        setComplianceStatus(resolveStatusFromError(err));
+      }
 
       if (isKycOk) {
         const kycList = kycRes.value;
@@ -112,11 +139,32 @@ export default function MasterDashboard() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [auth]);
 
   useEffect(() => {
     fetchAllMetrics();
   }, [fetchAllMetrics]);
+
+  const renderStatusBadge = (status) => {
+    if (status === "restricted") {
+      return (
+        <span className="badge badge-warning text-[10px] font-semibold px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40">
+          Restricted (Manager+)
+        </span>
+      );
+    }
+    if (status === "unauthorized") {
+      return (
+        <span className="badge badge-error text-[10px] font-semibold px-2 py-0.5 rounded bg-red-500/20 text-red-300 border border-red-500/40">
+          Auth Required
+        </span>
+      );
+    }
+    if (status === "unavailable") {
+      return <span className="service-unavailable-badge">service unavailable</span>;
+    }
+    return null;
+  };
 
   return (
     <div className="telemetry-page">
@@ -202,9 +250,7 @@ export default function MasterDashboard() {
           <div className="domain-card-top">
             <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
               <span className="domain-label">Core Banking Ledger</span>
-              {coreStatus === "unavailable" && (
-                <span className="service-unavailable-badge">service unavailable</span>
-              )}
+              {renderStatusBadge(coreStatus)}
             </div>
             <div className="domain-icon-circle blue">
               <Wallet size={18} />
@@ -230,9 +276,7 @@ export default function MasterDashboard() {
           <div className="domain-card-top">
             <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
               <span className="domain-label">Loans & Credit Portfolio</span>
-              {loanStatus === "unavailable" && (
-                <span className="service-unavailable-badge">service unavailable</span>
-              )}
+              {renderStatusBadge(loanStatus)}
             </div>
             <div className="domain-icon-circle indigo">
               <Landmark size={18} />
@@ -260,9 +304,7 @@ export default function MasterDashboard() {
           <div className="domain-card-top">
             <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
               <span className="domain-label">Payment Clearing Rails</span>
-              {paymentStatus === "unavailable" && (
-                <span className="service-unavailable-badge">service unavailable</span>
-              )}
+              {renderStatusBadge(paymentStatus)}
             </div>
             <div className="domain-icon-circle emerald">
               <Send size={18} />
@@ -288,9 +330,7 @@ export default function MasterDashboard() {
           <div className="domain-card-top">
             <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
               <span className="domain-label">Identity & Regulatory Compliance</span>
-              {complianceStatus === "unavailable" && (
-                <span className="service-unavailable-badge">service unavailable</span>
-              )}
+              {renderStatusBadge(complianceStatus)}
             </div>
             <div className="domain-icon-circle purple">
               <ShieldCheck size={18} />

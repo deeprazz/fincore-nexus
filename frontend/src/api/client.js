@@ -8,9 +8,23 @@ export function setLatencyListener(listener) {
 
 export async function apiRequestWithResponse(path, options = {}, auth = null) {
   const startedAt = typeof performance !== "undefined" ? performance.now() : Date.now();
-  const token = auth?.token;
-  const username = auth?.username;
-  const password = auth?.password;
+  
+  // Resolve authentication: prioritize explicit auth, fall back to sessionStorage
+  let effectiveAuth = auth;
+  if (!effectiveAuth && typeof window !== "undefined") {
+    try {
+      const stored = sessionStorage.getItem("fincore_auth");
+      if (stored) {
+        effectiveAuth = JSON.parse(stored);
+      }
+    } catch {
+      // ignore parsing errors
+    }
+  }
+
+  const token = effectiveAuth?.token;
+  const username = effectiveAuth?.username;
+  const password = effectiveAuth?.password;
 
   const authHeader = token
     ? { Authorization: `Bearer ${token}` }

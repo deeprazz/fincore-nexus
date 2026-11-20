@@ -5,6 +5,7 @@ import EmptyState from "../../components/ui/EmptyState";
 export default function PaymentHistory({
   payments = [],
   onViewReceipt,
+  onTrackSaga,
   onApprove,
   onReject,
   onRetryCompensation,
@@ -203,6 +204,17 @@ export default function PaymentHistory({
                           className="border-amber-500/40 text-amber-400 hover:bg-amber-500/10 text-xs py-0.5 px-2"
                         >
                           Retry Refund
+                        </Button>
+                      )}
+
+                      {onTrackSaga && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => onTrackSaga(p)}
+                          className="text-xs py-0.5 px-2 border-primary/30 text-primary hover:bg-primary/10"
+                        >
+                          ⚡ Saga
                         </Button>
                       )}
 

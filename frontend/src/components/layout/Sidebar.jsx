@@ -70,11 +70,11 @@ export function Sidebar({ sidebarOpen, setSidebarOpen, role = "TELLER" }) {
     { label: "Customers", to: "/customers", icon: Users },
     { label: "Transactions", to: "/transactions", icon: ArrowLeftRight },
     { label: "Operations", to: "/operations", icon: Activity },
-    { label: "Approvals", to: "/approvals", icon: ShieldAlert },
+    { label: "Approvals", to: "/approvals", icon: ShieldAlert, badge: "Manager" },
     { label: "Statements", to: "/statements", icon: FileText },
     { label: "KYC", to: "/kyc", icon: UserCheck },
     { label: "Compliance", to: "/compliance", icon: ShieldCheck },
-    { label: "Audit Trail", to: "/audit", icon: ShieldCheck },
+    { label: "Audit Trail", to: "/audit", icon: ShieldCheck, badge: "Manager" },
     { label: "Settings", to: "/settings", icon: Settings },
   ];
 
@@ -92,7 +92,7 @@ export function Sidebar({ sidebarOpen, setSidebarOpen, role = "TELLER" }) {
         <div className="sidebar-label">WORKSPACE</div>
 
         <nav>
-          {staffNav.map(({ label, to, icon: Icon }) => (
+          {staffNav.map(({ label, to, icon: Icon, badge }) => (
             <NavLink
               key={label}
               to={to}
@@ -106,6 +106,11 @@ export function Sidebar({ sidebarOpen, setSidebarOpen, role = "TELLER" }) {
                 <>
                   <Icon size={18} />
                   <span>{label}</span>
+                  {badge && role === "TELLER" && (
+                    <span className="text-[10px] font-semibold px-1.5 py-0.2 rounded bg-amber-500/10 text-amber-400 border border-amber-500/30 ml-auto">
+                      {badge}
+                    </span>
+                  )}
                   {isActive && <span className="active-indicator" />}
                 </>
               )}

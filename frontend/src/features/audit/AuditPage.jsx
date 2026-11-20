@@ -13,19 +13,25 @@ export function AuditPage() {
   const { auth } = useAuth();
   const { setError, setSuccess } = useToast();
 
+  const isTeller = auth?.role === "TELLER";
+
   const loadData = useCallback(async () => {
+    if (isTeller) return;
     setLoading(true);
     try {
       const data = await getAuditLogs(auth);
       setAuditLogs(Array.isArray(data) ? data : []);
     } catch (err) {
-      setError(err.message || "Failed to load audit logs");
+      if (err.status !== 403) {
+        setError(err.message || "Failed to load audit logs");
+      }
     } finally {
       setLoading(false);
     }
-  }, [auth, setError]);
+  }, [auth, isTeller, setError]);
 
   const handleVerifyChain = useCallback(async () => {
+    if (isTeller) return;
     setVerifying(true);
     try {
       const result = await verifyAuditChain(auth);
@@ -36,16 +42,44 @@ export function AuditPage() {
         setError(result.message || "Audit chain verification failed!");
       }
     } catch (err) {
-      setError(err.message || "Failed to verify audit chain");
+      if (err.status !== 403) {
+        setError(err.message || "Failed to verify audit chain");
+      }
     } finally {
       setVerifying(false);
     }
-  }, [auth, setError, setSuccess]);
+  }, [auth, isTeller, setError, setSuccess]);
 
   useEffect(() => {
-    loadData();
-    handleVerifyChain();
-  }, [loadData, handleVerifyChain]);
+    if (!isTeller) {
+      loadData();
+      handleVerifyChain();
+    }
+  }, [isTeller, loadData, handleVerifyChain]);
+
+  if (isTeller) {
+    return (
+      <section className="panel p-6">
+        <div className="p-6 rounded-lg border border-amber-500/30 bg-amber-500/10 text-center max-w-xl mx-auto space-y-4">
+          <div className="w-12 h-12 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center mx-auto">
+            <ShieldCheck size={26} />
+          </div>
+          <div>
+            <h3 className="text-lg font-bold text-amber-200">Manager Authorization Required</h3>
+            <p className="text-sm text-muted mt-1">
+              Under FinCore Security & Governance policy, inspecting cryptographic audit trails and verifying SHA-256 hash chains requires <strong>MANAGER</strong> or <strong>ADMIN</strong> authorization.
+            </p>
+          </div>
+          <div className="text-xs text-muted font-mono bg-surface p-2.5 rounded border border-border">
+            Current Session: {auth?.username || "teller"} (Role: {auth?.role})
+          </div>
+          <p className="text-xs text-muted">
+            Please authenticate using an authorized Manager (<code>manager / Manager@123</code>) or Admin (<code>admin / Admin@123</code>) account to view immutable audit trails.
+          </p>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="panel">
