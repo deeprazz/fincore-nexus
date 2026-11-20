@@ -26,28 +26,33 @@
 - **Separate Microservice Architecture**:
   - `services/payment-service` running on port 8083 with PostgreSQL database `fincore_payment`.
   - `services/notification-service` running on port 8085 with PostgreSQL database `fincore_notification`.
-- **Beneficiary Lifecycle & Penny Drop**:
-  - Simulated penny-drop verification (`INR 1.00` verification cycle) validating account name matches prior to activation.
+- **Beneficiary Lifecycle & Simulated Penny Drop**:
+  - Replaced legacy basic length check with simulated penny-drop (`INR 1.00` verification cycle) validating account name matches prior to activation.
+  - Strict format validation: Indian IFSC regex (`^[A-Z]{4}0[A-Z0-9]{6}$`), account number regex (`^[0-9]{9,18}$`), and UPI VPA regex.
+  - Beneficiaries require successful penny-drop verification (`VERIFIED`) before transfers can be initiated. Unverified or rejected beneficiaries block transfers.
   - Mandatory regulatory 30-minute cooling-off period restricting transfers > ₹50,000 to recently added beneficiaries.
-- **Payment Rails & UTR Generation**:
-  - Support for `IMPS` (instant, T+0), `UPI` (instant VPA/account routing, T+0), and `NEFT` (hourly batch settlement).
-  - Deterministic banking UTR generation adhering to standard format: `<RAIL><YYYYMMDD><10-digit-sequence>`.
-- **Rule-Based Fraud Detection Engine**:
-  - Evaluates velocity (hourly transaction frequency and cumulative amount), deviation against 30-day historical average, cooling-off beneficiary status, odd-hour window (23:00–05:00), and rapid consecutive failures.
-  - Multi-tier classification: `ALLOW` (score < 0.40), `REVIEW` (score 0.40–0.70), and `BLOCK` (score > 0.70). High-risk transactions are rejected or quarantined before account debit.
-- **Payment SAGA & Distributed Idempotency**:
-  - End-to-end idempotency backed by unique client request keys and `payment_saga` workflow tracking.
-  - Multi-step choreography: Account debit -> External clearing/credit -> SAGA completion / Kafka event emission (`payment.completed` / `payment.failed`).
-  - Automatic compensatory rollback (initiating sender refund) if credit/outward execution fails.
-- **Settlement Engine & Reconciliation**:
-  - Instantaneous gross settlement for IMPS and UPI.
-  - Scheduled batch settlement for NEFT with configurable batch cut-offs, computing gross/net volume, fee deductions, and reconciliation anomaly tracking.
-- **Notification Service Architecture**:
-  - Asynchronously subscribes to Kafka topics (`payment.completed`, `payment.failed`, `loan.disbursed`).
-  - Stores notifications in `fincore_notification` and dispatches via simulated SMS/Email providers with delivery audit logs.
-  - Exposes REST API for customer notifications with read/unread tracking.
-- **Frontend Payment Hub & Real-Time Alerts**:
-  - Built comprehensive payments suite: transfer form with dynamic rail limits, beneficiary registry with one-click penny drop, interactive SAGA step timeline, live fraud risk badge, payment receipts, settlement batch viewer, and topbar notification bell.
+- **Rule-Based Fraud Detection & Maker-Checker Dual Control**:
+  - Rule-based Fraud Detection Engine evaluating transaction velocity, high amounts (> ₹2,00,000), unverified beneficiaries, round sums, odd hours, and repeated failures.
+  - Fraud decisions:
+    - `ALLOW` (score < 0.50): Immediate execution through Saga.
+    - `REVIEW` (score 0.50–0.79): Payment transitions to `PENDING_REVIEW` *without* source account debit. Requires dual-control manager/admin review (`POST /api/payments/{id}/approve` or `POST /api/payments/{id}/reject`).
+    - `BLOCK` (score >= 0.80): Outright rejection without debit.
+  - Enforced strict Maker-Checker dual control: the user who created the payment (`createdBy` / maker) cannot approve or reject their own transaction (HTTP 403 Forbidden).
+- **Payment Saga & Compensation Reliability**:
+  - Idempotency protection with payload validation (reusing a key with a different payload throws HTTP 409/conflict).
+  - Compensating transactions: If destination credit fails, source account is refunded. If the compensatory refund itself fails, status transitions to `COMPENSATION_PENDING` instead of falsely claiming `REVERSED`.
+  - Exposed manual/automated compensation retry (`POST /api/payments/{id}/retry-compensation`).
+- **NEFT Settlement Lifecycle**:
+  - IMPS/UPI settle immediately (T+0).
+  - NEFT payments remain in `CREDITED` state without publishing `payment.completed` until the batch settlement job runs (`SettlementScheduler` / `SettlementEngine.processNeftBatch()`).
+  - Configurable batch rate (`fincore.settlement.neft-rate-ms`).
+- **Cross-Service Ledger Reconciliation**:
+  - Automated comparison between settled payments in `fincore_payment` and Core Banking journal entries.
+  - Distinguishes connectivity/service offline state (`CORE_BANKING_UNAVAILABLE`) from missing transaction discrepancies.
+- **Notification Delivery Alignment**:
+  - Notification Service idempotently consumes `payment.completed` and dispatches SMS/Email notifications only when payments are truly settled.
+- **Flyway Database Migration**:
+  - Added migration `V4__add_payment_review_and_beneficiary_verification.sql` introducing `created_by`, `reviewed_by`, `reviewed_at` on `payment` and `verification_details` on `beneficiary`.
 
 ## Phase 4: KYC & Compliance Service (Milestone 4)
 - **Separate Microservice Architecture**:

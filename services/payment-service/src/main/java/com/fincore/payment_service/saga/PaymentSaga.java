@@ -36,6 +36,7 @@ public class PaymentSaga {
     public void onUpdate() { this.updatedAt = OffsetDateTime.now(); }
 
     public UUID getId() { return id; }
+    public void setId(UUID id) { this.id = id; }
     public UUID getPaymentId() { return paymentId; }
     public void setPaymentId(UUID paymentId) { this.paymentId = paymentId; }
     public UUID getCorrelationId() { return correlationId; }

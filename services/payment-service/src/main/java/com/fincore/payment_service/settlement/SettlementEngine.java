@@ -5,8 +5,11 @@ import com.fincore.payment_service.client.CoreBankingClient;
 import com.fincore.payment_service.client.CoreTransactionDto;
 import com.fincore.payment_service.event.OutboxEvent;
 import com.fincore.payment_service.event.OutboxEventRepository;
+import com.fincore.payment_service.event.PaymentCompletedEvent;
 import com.fincore.payment_service.event.PaymentSettledEvent;
 import com.fincore.payment_service.payment.*;
+import com.fincore.payment_service.saga.PaymentSaga;
+import com.fincore.payment_service.saga.PaymentSagaRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -28,17 +31,20 @@ public class SettlementEngine {
 
     private final PaymentRepository paymentRepository;
     private final SettlementBatchRepository batchRepository;
+    private final PaymentSagaRepository sagaRepository;
     private final OutboxEventRepository outboxEventRepository;
     private final ObjectMapper objectMapper;
     private final CoreBankingClient coreBankingClient;
 
     public SettlementEngine(PaymentRepository paymentRepository,
                             SettlementBatchRepository batchRepository,
+                            PaymentSagaRepository sagaRepository,
                             OutboxEventRepository outboxEventRepository,
                             ObjectMapper objectMapper,
                             CoreBankingClient coreBankingClient) {
         this.paymentRepository = paymentRepository;
         this.batchRepository = batchRepository;
+        this.sagaRepository = sagaRepository;
         this.outboxEventRepository = outboxEventRepository;
         this.objectMapper = objectMapper;
         this.coreBankingClient = coreBankingClient;
@@ -71,6 +77,7 @@ public class SettlementEngine {
 
     /**
      * Process batch settlement for NEFT payments.
+     * Settles pending CREDITED NEFT payments, completes their Sagas, and publishes payment.completed & payment.settled.
      */
     public SettlementBatch processNeftBatch() {
         List<Payment> pendingNeft = paymentRepository.findByPaymentRailAndStatus(PaymentRail.NEFT, PaymentStatus.CREDITED);
@@ -88,18 +95,47 @@ public class SettlementEngine {
             paymentRepository.save(p);
             totalAmount = totalAmount.add(p.getAmount());
 
-            PaymentSettledEvent event = new PaymentSettledEvent(
+            // Complete the Saga
+            Optional<PaymentSaga> sagaOpt = sagaRepository.findByPaymentId(p.getId());
+            if (sagaOpt.isPresent()) {
+                PaymentSaga saga = sagaOpt.get();
+                saga.setStatus("COMPLETED");
+                saga.setCurrentStep("SETTLED");
+                sagaRepository.save(saga);
+            }
+
+            // Publish payment.completed event now that NEFT batch settlement actually finished
+            PaymentCompletedEvent completedEvent = new PaymentCompletedEvent(
+                    UUID.randomUUID(),
+                    p.getId(),
+                    p.getCustomerId(),
+                    p.getSourceAccountId(),
+                    p.getTargetAccountNumber() != null ? p.getTargetAccountNumber() : p.getTargetVpa(),
+                    p.getAmount(),
+                    p.getPaymentRail(),
+                    p.getUtr(),
+                    p.getSettledAt()
+            );
+
+            PaymentSettledEvent settledEvent = new PaymentSettledEvent(
                     p.getId(), p.getUtr(), p.getPaymentRail(), p.getAmount(), p.getSettledAt()
             );
+
             try {
                 outboxEventRepository.save(new OutboxEvent(
                         "Payment",
                         p.getId().toString(),
+                        "payment.completed",
+                        objectMapper.writeValueAsString(completedEvent)
+                ));
+                outboxEventRepository.save(new OutboxEvent(
+                        "Payment",
+                        p.getId().toString(),
                         "payment.settled",
-                        objectMapper.writeValueAsString(event)
+                        objectMapper.writeValueAsString(settledEvent)
                 ));
             } catch (Exception e) {
-                log.error("Failed to queue batch outbox event for payment.settled: {}", e.getMessage());
+                log.error("Failed to queue batch outbox events for payment {}: {}", p.getId(), e.getMessage());
             }
         }
 
@@ -129,6 +165,7 @@ public class SettlementEngine {
      * Real cross-service ledger reconciliation comparing settled payments against core banking transactions.
      * Verifies: amount, direction, status, and reference ID.
      * Identifies: matched, missing-in-core, amount-mismatch, and orphan-in-core records.
+     * Distinguishes connectivity failure from genuine discrepancies.
      */
     @Transactional(readOnly = true)
     public ReconciliationReportResponse reconcileWithCoreLedger() {
@@ -136,7 +173,30 @@ public class SettlementEngine {
                 .filter(p -> p.getStatus() == PaymentStatus.SETTLED)
                 .toList();
 
-        List<CoreTransactionDto> coreTxns = coreBankingClient.getAllTransactions();
+        CoreBankingClient.CoreTransactionsResult coreResult = coreBankingClient.fetchCoreTransactions();
+        if (!coreResult.success()) {
+            log.warn("Core Banking is unavailable during ledger reconciliation: {}", coreResult.errorMessage());
+            return new ReconciliationReportResponse(
+                    Instant.now(),
+                    settledPayments.size(),
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    "CORE_BANKING_UNAVAILABLE",
+                    List.of(new ReconciliationDiscrepancy(
+                            null,
+                            "N/A",
+                            "CORE_BANKING_UNAVAILABLE",
+                            BigDecimal.ZERO,
+                            BigDecimal.ZERO,
+                            "Core Banking service is currently offline or unreachable (" + coreResult.errorMessage() + "). Ledger comparison deferred to avoid false discrepancies."
+                    ))
+            );
+        }
+
+        List<CoreTransactionDto> coreTxns = coreResult.transactions();
 
         Map<UUID, CoreTransactionDto> coreTxnByRef = new HashMap<>();
         for (CoreTransactionDto tx : coreTxns) {

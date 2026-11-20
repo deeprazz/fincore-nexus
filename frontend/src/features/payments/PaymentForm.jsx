@@ -31,12 +31,15 @@ export default function PaymentForm({
     }
   }, [accounts, sourceAccountId]);
 
+  const selectedBeneficiary = beneficiaries.find((b) => b.id === selectedBeneficiaryId);
+  const isBeneficiaryUnverified = selectedBeneficiary && selectedBeneficiary.status !== "VERIFIED";
+
   const handleBeneficiaryChange = (e) => {
     const val = e.target.value;
     setSelectedBeneficiaryId(val);
     const ben = beneficiaries.find((b) => b.id === val);
     if (ben) {
-      setTargetAccount(ben.accountNumber);
+      setTargetAccount(ben.accountNumber || "");
       setTargetIfsc(ben.ifscCode || "FINC0001234");
       setTargetVpa(ben.vpa || "");
     } else {
@@ -49,22 +52,41 @@ export default function PaymentForm({
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
+
+    const selectedAcc = accounts.find((a) => a.id === sourceAccountId) || accounts[0];
+    if (!selectedAcc || !selectedAcc.id) {
+      setError("Please select a valid source bank account.");
+      return;
+    }
+
+    if (isBeneficiaryUnverified) {
+      setError(`Cannot transfer funds to ${selectedBeneficiary.status} beneficiary. Simulated penny-drop verification must be completed first.`);
+      return;
+    }
+
+    const trimmedAmount = amount.trim();
+    if (!trimmedAmount || !/^\d+(\.\d{1,2})?$/.test(trimmedAmount) || Number(trimmedAmount) <= 0) {
+      setError("Please enter a valid positive transfer amount (up to 2 decimal places).");
+      return;
+    }
+
     setSubmitting(true);
 
     try {
-      const selectedAcc = accounts.find((a) => a.id === sourceAccountId) || accounts[0];
       const payload = {
-        customerId: selectedAcc?.customerId || "00000000-0000-0000-0000-000000000001",
-        sourceAccountId: selectedAcc?.id || sourceAccountId || "00000000-0000-0000-0000-000000000002",
+        customerId: selectedAcc.customerId,
+        sourceAccountId: selectedAcc.id,
         beneficiaryId: selectedBeneficiaryId || null,
         targetAccountNumber: paymentRail === "UPI" ? "" : targetAccount,
         targetIfsc: paymentRail === "UPI" ? "UPI0000000" : (targetIfsc || "FINC0001234"),
         targetVpa: paymentRail === "UPI" ? targetVpa : "",
-        amount: parseFloat(amount),
+        amount: trimmedAmount,
         paymentRail,
-        purpose: purpose || "Fund Transfer",
+        purpose: purpose.trim() || "Fund Transfer",
       };
-      await onSubmitPayment(payload);
+
+      const idempotencyKey = crypto.randomUUID();
+      await onSubmitPayment(payload, idempotencyKey);
     } catch (err) {
       setError(err.message || "Failed to initiate payment");
     } finally {
@@ -75,7 +97,7 @@ export default function PaymentForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-5 max-w-2xl">
       {error && (
-        <div className="p-3 bg-red-50 border border-red-200 text-red-700 rounded text-sm">
+        <div className="p-3 bg-red-500/10 border border-red-500/30 text-red-400 rounded text-sm">
           {error}
         </div>
       )}
@@ -83,18 +105,24 @@ export default function PaymentForm({
       {/* Rail Selection */}
       <div>
         <label className="block text-sm font-semibold mb-2">Select Transfer Rail</label>
-        <div className="rails-grid">
+        <div className="rails-grid grid grid-cols-3 gap-3">
           {RAILS.map((rail) => (
             <div
               key={rail.id}
               onClick={() => setPaymentRail(rail.id)}
-              className={`rail-card ${paymentRail === rail.id ? "active" : ""}`}
+              className={`p-3 rounded-lg border cursor-pointer transition-all ${
+                paymentRail === rail.id
+                  ? "bg-primary/10 border-primary text-primary"
+                  : "bg-surface border-border hover:border-muted"
+              }`}
             >
-              <div className="rail-card-header">
-                <span className="rail-card-title">{rail.id}</span>
-                <span className="rail-card-badge">{rail.badge}</span>
+              <div className="flex justify-between items-center mb-1">
+                <span className="font-bold text-sm">{rail.id}</span>
+                <span className="text-[10px] uppercase font-semibold px-1.5 py-0.5 rounded bg-surface-alt border">
+                  {rail.badge}
+                </span>
               </div>
-              <div className="rail-card-limit">Max: {rail.limit}</div>
+              <div className="text-xs text-muted">Max: {rail.limit}</div>
             </div>
           ))}
         </div>
@@ -136,6 +164,18 @@ export default function PaymentForm({
         </select>
       </FormField>
 
+      {/* Warning if selected beneficiary is not verified */}
+      {isBeneficiaryUnverified && (
+        <div className="p-3 bg-amber-500/10 border border-amber-500/30 text-amber-400 rounded text-xs flex items-center justify-between">
+          <span>
+            <strong>Warning:</strong> Selected beneficiary is <strong>{selectedBeneficiary.status}</strong>. Complete simulated penny-drop verification before transfers.
+          </span>
+          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40">
+            SIMULATED
+          </span>
+        </div>
+      )}
+
       {/* Account / IFSC or VPA based on Rail */}
       {paymentRail === "UPI" ? (
         <FormField label="Recipient UPI VPA" required>
@@ -157,7 +197,7 @@ export default function PaymentForm({
             <input
               type="text"
               className="form-input"
-              placeholder="e.g. 1000-0000-0012"
+              placeholder="e.g. 100000000012"
               value={targetAccount}
               onChange={(e) => setTargetAccount(e.target.value)}
               required
@@ -167,14 +207,14 @@ export default function PaymentForm({
           <FormField label="Destination IFSC Code" required>
             <input
               type="text"
-              className="form-input"
+              className="form-input font-mono"
               placeholder="FINC0001234"
               value={targetIfsc}
               onChange={(e) => setTargetIfsc(e.target.value.toUpperCase())}
               required
             />
             <span className="text-2xs text-muted block mt-1">
-              FinCore branch IFSC: FINC0001234 (Pre-filled for internal transfers)
+              FinCore branch IFSC: FINC0001234
             </span>
           </FormField>
         </div>
@@ -187,7 +227,7 @@ export default function PaymentForm({
             type="number"
             step="0.01"
             min="1"
-            className="form-input"
+            className="form-input font-mono"
             placeholder="5000.00"
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
@@ -207,7 +247,13 @@ export default function PaymentForm({
       </div>
 
       <div className="pt-2">
-        <Button type="submit" variant="primary" loading={submitting} className="w-full md:w-auto">
+        <Button
+          type="submit"
+          variant="primary"
+          loading={submitting}
+          disabled={submitting || isBeneficiaryUnverified}
+          className="w-full md:w-auto"
+        >
           Execute Payment via {paymentRail}
         </Button>
       </div>

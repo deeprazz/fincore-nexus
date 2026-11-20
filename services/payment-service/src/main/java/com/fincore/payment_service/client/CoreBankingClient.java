@@ -99,10 +99,17 @@ public class CoreBankingClient {
         }
     }
 
+    public record CoreTransactionsResult(
+            boolean success,
+            java.util.List<CoreTransactionDto> transactions,
+            String errorMessage,
+            int statusCode
+    ) {}
+
     /**
-     * Retrieve all core banking transactions for ledger reconciliation.
+     * Retrieve all core banking transactions with explicit connectivity/status reporting.
      */
-    public java.util.List<CoreTransactionDto> getAllTransactions() {
+    public CoreTransactionsResult fetchCoreTransactions() {
         try {
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(baseUrl + "/api/transactions"))
@@ -111,17 +118,25 @@ public class CoreBankingClient {
                     .build();
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
             if (response.statusCode() == 200) {
-                return objectMapper.readValue(
+                java.util.List<CoreTransactionDto> txns = objectMapper.readValue(
                         response.body(),
                         objectMapper.getTypeFactory().constructCollectionType(java.util.List.class, CoreTransactionDto.class)
                 );
+                return new CoreTransactionsResult(true, txns, null, 200);
             }
             log.error("Failed to fetch core transactions: status {}", response.statusCode());
-            return java.util.List.of();
+            return new CoreTransactionsResult(false, java.util.List.of(), "Core Banking responded with HTTP " + response.statusCode(), response.statusCode());
         } catch (Exception e) {
             log.error("Exception fetching core transactions: {}", e.getMessage());
-            return java.util.List.of();
+            return new CoreTransactionsResult(false, java.util.List.of(), "Core Banking unreachable: " + e.getMessage(), 503);
         }
+    }
+
+    /**
+     * Retrieve all core banking transactions for ledger reconciliation.
+     */
+    public java.util.List<CoreTransactionDto> getAllTransactions() {
+        return fetchCoreTransactions().transactions();
     }
 
     /**

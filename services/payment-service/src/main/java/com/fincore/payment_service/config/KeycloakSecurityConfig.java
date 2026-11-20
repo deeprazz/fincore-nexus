@@ -33,6 +33,7 @@ public class KeycloakSecurityConfig {
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/actuator/**").permitAll()
                         .requestMatchers("/api/payments/audit/**").hasAnyRole("MANAGER", "ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/payments/*/approve", "/api/payments/*/reject", "/api/payments/*/retry-compensation").hasAnyRole("MANAGER", "ADMIN")
                         .requestMatchers(HttpMethod.GET, "/api/beneficiaries/**").hasAnyRole("TELLER", "MANAGER", "ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/beneficiaries/**").hasAnyRole("TELLER", "MANAGER", "ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/beneficiaries/**").hasAnyRole("TELLER", "MANAGER", "ADMIN")

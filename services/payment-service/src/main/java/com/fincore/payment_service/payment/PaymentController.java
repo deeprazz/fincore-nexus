@@ -2,8 +2,10 @@ package com.fincore.payment_service.payment;
 
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -27,11 +29,42 @@ public class PaymentController {
     @PostMapping
     public ResponseEntity<PaymentResponse> initiatePayment(
             @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyHeader,
-            @Valid @RequestBody PaymentRequest req) {
+            @Valid @RequestBody PaymentRequest req,
+            Authentication auth) {
         if (idempotencyHeader != null && !idempotencyHeader.isBlank() && req.getIdempotencyKey() == null) {
             req.setIdempotencyKey(idempotencyHeader);
         }
-        return ResponseEntity.ok(paymentService.initiatePayment(req));
+        String maker = (auth != null && auth.getName() != null && !auth.getName().isBlank()) ? auth.getName() : "teller";
+        if (req.getCreatedBy() == null || req.getCreatedBy().isBlank()) {
+            req.setCreatedBy(maker);
+        }
+        return ResponseEntity.ok(paymentService.initiatePayment(req, req.getCreatedBy()));
+    }
+
+    @PostMapping("/{id}/approve")
+    public ResponseEntity<PaymentResponse> approvePayment(
+            @PathVariable UUID id,
+            Authentication auth) {
+        String checker = (auth != null && auth.getName() != null) ? auth.getName() : "manager";
+        return ResponseEntity.ok(paymentService.approveReviewPayment(id, checker));
+    }
+
+    @PostMapping("/{id}/reject")
+    public ResponseEntity<PaymentResponse> rejectPayment(
+            @PathVariable UUID id,
+            @RequestBody(required = false) Map<String, String> body,
+            Authentication auth) {
+        String reason = (body != null && body.containsKey("reason")) ? body.get("reason") : "Fraud risk unacceptable";
+        String checker = (auth != null && auth.getName() != null) ? auth.getName() : "manager";
+        return ResponseEntity.ok(paymentService.rejectReviewPayment(id, reason, checker));
+    }
+
+    @PostMapping("/{id}/retry-compensation")
+    public ResponseEntity<PaymentResponse> retryCompensation(
+            @PathVariable UUID id,
+            Authentication auth) {
+        String operator = (auth != null && auth.getName() != null) ? auth.getName() : "manager";
+        return ResponseEntity.ok(paymentService.retryCompensation(id, operator));
     }
 
     @GetMapping

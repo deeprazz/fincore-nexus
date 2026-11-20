@@ -28,6 +28,9 @@ FinCore Nexus strictly separates duties across four distinct principal roles: `C
 | **Account Close** | `POST /api/accounts/*/close` | DENY (403) | DENY (403) | **ALLOW** | **ALLOW** | Dual-control manager approval |
 | **KYC Verification** | `POST /api/customers/*/kyc`, `/api/kyc/verify` | DENY (403) | DENY (403) | **ALLOW** | **ALLOW** | Maker != Checker dual control |
 | **Loan Approval / Reject** | `PATCH /api/loans/applications/*/approve, reject` | DENY (403) | DENY (403) | **ALLOW** | **ALLOW** | Maker != Checker dual control |
+| **Payment Approval / Reject** | `POST /api/payments/*/approve, reject` | DENY (403) | DENY (403) | **ALLOW** | **ALLOW** | Maker != Checker dual control (Fraud REVIEW) |
+| **Payment Compensation Retry** | `POST /api/payments/*/retry-compensation` | DENY (403) | DENY (403) | **ALLOW** | **ALLOW** | Operational refund recovery |
+| **Beneficiary Penny-Drop** | `POST /api/beneficiaries/*/verify` | **ALLOW** | **ALLOW** | **ALLOW** | **ALLOW** | Simulated ₹1.00 credit check & name match |
 | **Portfolio Analytics** | `GET /api/loans/portfolio` | DENY (403) | DENY (403) | **ALLOW** | **ALLOW** | Delinquency & NPA analytics |
 | **Collections Hub** | `GET/POST /api/loans/collections/**` | DENY (403) | DENY (403) | **ALLOW** | **ALLOW** | Delinquency outreach & recovery |
 | **Audit Log Viewing** | `GET /api/audit/**` | DENY (403) | DENY (403) | **ALLOW** | **ALLOW** | Immutable record inspection |

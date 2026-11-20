@@ -37,6 +37,9 @@ public class Beneficiary {
     @Column(name = "verified_at")
     private OffsetDateTime verifiedAt;
 
+    @Column(name = "verification_details")
+    private String verificationDetails;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private OffsetDateTime createdAt = OffsetDateTime.now();
 
@@ -47,6 +50,7 @@ public class Beneficiary {
     public void onUpdate() { this.updatedAt = OffsetDateTime.now(); }
 
     public UUID getId() { return id; }
+    public void setId(UUID id) { this.id = id; }
     public UUID getCustomerId() { return customerId; }
     public void setCustomerId(UUID customerId) { this.customerId = customerId; }
     public String getAccountNumber() { return accountNumber; }
@@ -67,6 +71,9 @@ public class Beneficiary {
     public void setStatus(BeneficiaryStatus status) { this.status = status; }
     public OffsetDateTime getVerifiedAt() { return verifiedAt; }
     public void setVerifiedAt(OffsetDateTime verifiedAt) { this.verifiedAt = verifiedAt; }
+    public String getVerificationDetails() { return verificationDetails; }
+    public void setVerificationDetails(String verificationDetails) { this.verificationDetails = verificationDetails; }
     public OffsetDateTime getCreatedAt() { return createdAt; }
+    public void setCreatedAt(OffsetDateTime createdAt) { this.createdAt = createdAt; }
     public OffsetDateTime getUpdatedAt() { return updatedAt; }
 }

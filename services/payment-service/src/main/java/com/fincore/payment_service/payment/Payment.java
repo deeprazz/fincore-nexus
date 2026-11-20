@@ -65,6 +65,15 @@ public class Payment {
     @Column(name = "failure_reason", columnDefinition = "text")
     private String failureReason;
 
+    @Column(name = "created_by")
+    private String createdBy;
+
+    @Column(name = "reviewed_by")
+    private String reviewedBy;
+
+    @Column(name = "reviewed_at")
+    private OffsetDateTime reviewedAt;
+
     @Column(name = "settled_at")
     private OffsetDateTime settledAt;
 
@@ -111,6 +120,12 @@ public class Payment {
     public void setPurpose(String purpose) { this.purpose = purpose; }
     public String getFailureReason() { return failureReason; }
     public void setFailureReason(String failureReason) { this.failureReason = failureReason; }
+    public String getCreatedBy() { return createdBy; }
+    public void setCreatedBy(String createdBy) { this.createdBy = createdBy; }
+    public String getReviewedBy() { return reviewedBy; }
+    public void setReviewedBy(String reviewedBy) { this.reviewedBy = reviewedBy; }
+    public OffsetDateTime getReviewedAt() { return reviewedAt; }
+    public void setReviewedAt(OffsetDateTime reviewedAt) { this.reviewedAt = reviewedAt; }
     public OffsetDateTime getSettledAt() { return settledAt; }
     public void setSettledAt(OffsetDateTime settledAt) { this.settledAt = settledAt; }
     public OffsetDateTime getCreatedAt() { return createdAt; }

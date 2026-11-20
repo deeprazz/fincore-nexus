@@ -4,7 +4,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fincore.payment_service.client.CoreBankingClient;
 import com.fincore.payment_service.client.CoreTransactionDto;
 import com.fincore.payment_service.event.OutboxEventRepository;
-import com.fincore.payment_service.payment.*;
+import com.fincore.payment_service.payment.Payment;
+import com.fincore.payment_service.payment.PaymentRail;
+import com.fincore.payment_service.payment.PaymentRepository;
+import com.fincore.payment_service.payment.PaymentStatus;
+import com.fincore.payment_service.saga.PaymentSagaRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -15,13 +19,15 @@ import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
 class SettlementEngineReconciliationTest {
 
     private PaymentRepository paymentRepository;
     private SettlementBatchRepository batchRepository;
+    private PaymentSagaRepository sagaRepository;
     private OutboxEventRepository outboxEventRepository;
     private ObjectMapper objectMapper;
     private CoreBankingClient coreBankingClient;
@@ -31,10 +37,11 @@ class SettlementEngineReconciliationTest {
     void setUp() {
         paymentRepository = Mockito.mock(PaymentRepository.class);
         batchRepository = Mockito.mock(SettlementBatchRepository.class);
+        sagaRepository = Mockito.mock(PaymentSagaRepository.class);
         outboxEventRepository = Mockito.mock(OutboxEventRepository.class);
         objectMapper = new ObjectMapper();
         coreBankingClient = Mockito.mock(CoreBankingClient.class);
-        settlementEngine = new SettlementEngine(paymentRepository, batchRepository, outboxEventRepository, objectMapper, coreBankingClient);
+        settlementEngine = new SettlementEngine(paymentRepository, batchRepository, sagaRepository, outboxEventRepository, objectMapper, coreBankingClient);
     }
 
     @Test
@@ -48,7 +55,9 @@ class SettlementEngineReconciliationTest {
         );
 
         when(paymentRepository.findAll()).thenReturn(List.of(payment));
-        when(coreBankingClient.getAllTransactions()).thenReturn(List.of(coreTx));
+        when(coreBankingClient.fetchCoreTransactions()).thenReturn(
+                new CoreBankingClient.CoreTransactionsResult(true, List.of(coreTx), null, 200)
+        );
 
         ReconciliationReportResponse report = settlementEngine.reconcileWithCoreLedger();
 
@@ -66,7 +75,9 @@ class SettlementEngineReconciliationTest {
         Payment payment = createSettledPayment(paymentId, new BigDecimal("2000.00"), "UTR456");
 
         when(paymentRepository.findAll()).thenReturn(List.of(payment));
-        when(coreBankingClient.getAllTransactions()).thenReturn(List.of());
+        when(coreBankingClient.fetchCoreTransactions()).thenReturn(
+                new CoreBankingClient.CoreTransactionsResult(true, List.of(), null, 200)
+        );
 
         ReconciliationReportResponse report = settlementEngine.reconcileWithCoreLedger();
 
@@ -90,7 +101,9 @@ class SettlementEngineReconciliationTest {
         );
 
         when(paymentRepository.findAll()).thenReturn(List.of(payment));
-        when(coreBankingClient.getAllTransactions()).thenReturn(List.of(coreTx));
+        when(coreBankingClient.fetchCoreTransactions()).thenReturn(
+                new CoreBankingClient.CoreTransactionsResult(true, List.of(coreTx), null, 200)
+        );
 
         ReconciliationReportResponse report = settlementEngine.reconcileWithCoreLedger();
 
@@ -111,7 +124,9 @@ class SettlementEngineReconciliationTest {
         );
 
         when(paymentRepository.findAll()).thenReturn(List.of());
-        when(coreBankingClient.getAllTransactions()).thenReturn(List.of(orphanTx));
+        when(coreBankingClient.fetchCoreTransactions()).thenReturn(
+                new CoreBankingClient.CoreTransactionsResult(true, List.of(orphanTx), null, 200)
+        );
 
         ReconciliationReportResponse report = settlementEngine.reconcileWithCoreLedger();
 
@@ -121,6 +136,24 @@ class SettlementEngineReconciliationTest {
         assertEquals(0, report.amountMismatch());
         assertEquals(1, report.orphanInCore());
         assertEquals("ORPHAN_IN_CORE", report.discrepancies().get(0).discrepancyType());
+    }
+
+    @Test
+    void testReconciliationCoreBankingUnavailable() {
+        UUID paymentId = UUID.randomUUID();
+        Payment payment = createSettledPayment(paymentId, new BigDecimal("1000.00"), "UTR999");
+
+        when(paymentRepository.findAll()).thenReturn(List.of(payment));
+        when(coreBankingClient.fetchCoreTransactions()).thenReturn(
+                new CoreBankingClient.CoreTransactionsResult(false, List.of(), "Connection refused", 503)
+        );
+
+        ReconciliationReportResponse report = settlementEngine.reconcileWithCoreLedger();
+
+        assertEquals("CORE_BANKING_UNAVAILABLE", report.status());
+        assertEquals(0, report.matched());
+        assertEquals(1, report.discrepancies().size());
+        assertEquals("CORE_BANKING_UNAVAILABLE", report.discrepancies().get(0).discrepancyType());
     }
 
     private Payment createSettledPayment(UUID id, BigDecimal amount, String utr) {

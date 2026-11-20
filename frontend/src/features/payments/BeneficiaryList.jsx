@@ -39,7 +39,7 @@ export default function BeneficiaryList({
         return (
           <div
             key={b.id}
-            className="card p-4 flex flex-col justify-between hover:shadow-md transition-shadow"
+            className="card p-4 flex flex-col justify-between hover:shadow-md transition-shadow border"
           >
             <div>
               <div className="flex items-start justify-between gap-2 mb-2">
@@ -53,11 +53,11 @@ export default function BeneficiaryList({
               <div className="space-y-1 my-3 text-xs">
                 <div className="flex justify-between">
                   <span className="text-muted">Account:</span>
-                  <span className="font-mono font-medium">{b.accountNumber}</span>
+                  <span className="font-mono font-medium">{b.accountNumber || "—"}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted">IFSC:</span>
-                  <span className="font-mono font-medium">{b.ifscCode}</span>
+                  <span className="font-mono font-medium">{b.ifscCode || "—"}</span>
                 </div>
                 {b.vpa && (
                   <div className="flex justify-between">
@@ -67,9 +67,23 @@ export default function BeneficiaryList({
                 )}
               </div>
 
+              {b.verificationDetails && (
+                <div className="p-2 my-2 rounded bg-surface-alt border text-xs">
+                  <div className="flex items-center justify-between text-[10px] font-semibold text-primary mb-1">
+                    <span>Penny-Drop Status</span>
+                    <span className="px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40 font-bold">
+                      SIMULATED
+                    </span>
+                  </div>
+                  <div className="text-muted text-2xs leading-relaxed font-mono">
+                    {b.verificationDetails}
+                  </div>
+                </div>
+              )}
+
               {inCoolingOff && (
-                <div className="p-2 mb-3 rounded bg-amber-50 border border-amber-200 text-amber-800 text-xs">
-                  <span className="font-semibold">Cooling-off active:</span> Transfers &gt; ₹50,000 locked for {30 - minutesOld}m.
+                <div className="p-2 mb-3 rounded bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs">
+                  <span className="font-semibold">Cooling-off active:</span> Transfers &gt; ₹50,000 locked for {Math.max(0, 30 - minutesOld)}m.
                 </div>
               )}
             </div>
@@ -85,7 +99,7 @@ export default function BeneficiaryList({
                   >
                     Verify Penny-Drop
                   </Button>
-                  <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 border border-amber-300">
+                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40">
                     SIMULATED
                   </span>
                 </div>

@@ -23,6 +23,9 @@ public record PaymentResponse(
         String triggeredRules,
         String purpose,
         String failureReason,
+        String createdBy,
+        String reviewedBy,
+        OffsetDateTime reviewedAt,
         OffsetDateTime settledAt,
         OffsetDateTime createdAt
 ) {
@@ -45,6 +48,9 @@ public record PaymentResponse(
                 p.getTriggeredRules(),
                 p.getPurpose(),
                 p.getFailureReason(),
+                p.getCreatedBy(),
+                p.getReviewedBy(),
+                p.getReviewedAt(),
                 p.getSettledAt(),
                 p.getCreatedAt()
         );

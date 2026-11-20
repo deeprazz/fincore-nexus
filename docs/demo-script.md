@@ -100,28 +100,33 @@ Default credentials:
 
 ---
 
-## Step 5: Beneficiary Penny-Drop & IMPS Transfer (1.5 Mins)
+## Step 5: Beneficiary Penny-Drop, Fraud REVIEW & IMPS/NEFT Lifecycle (2 Mins)
 
-1. **Add Beneficiary**:
-   - Navigate to `/payments` -> Beneficiaries tab.
-   - Name: `Vikram Malhotra`
-   - Account: `987654321099`
-   - IFSC: `HDFC0001234`
+1. **Add Beneficiary & Simulated Penny-Drop**:
+   - Navigate to `/payments` -> **Beneficiaries** tab.
+   - Click **+ Add Beneficiary**: Name: `Vikram Malhotra`, Account: `987654321099`, IFSC: `HDFC0001234`.
    - Click **Save Beneficiary** -> Status: `PENDING`.
-2. **Penny-Drop Verification**:
-   - Click **Verify via Penny Drop**.
-   - Simulated `₹1.00` reverse-clearing cycle executes -> Status updates to `VERIFIED`.
-3. **Execute Immediate IMPS Payment**:
-   - Switch to **Initiate Payment** tab.
-   - Source Account: `FINC100000000045`
-   - Rail: `IMPS` (Instant T+0 Gross Settlement)
-   - Amount: `₹25,000.00`
-   - Purpose: `Vendor Invoice Settlement`
-   - Click **Execute Payment**.
+   - Click **Verify Penny-Drop** (labeled **SIMULATED**):
+   - Simulated `₹1.00` reverse-clearing cycle executes -> Status updates to `VERIFIED` with simulated reference ID.
+2. **Execute Immediate IMPS Payment**:
+   - Switch to **Transfer Funds** tab.
+   - Select Source Account and Beneficiary `Vikram Malhotra`.
+   - Rail: `IMPS` (Instant T+0 Gross Settlement), Amount: `₹25,000.00`.
+   - Click **Execute Payment via IMPS**.
    - Observe **Rule Fraud Check**: Velocity OK, Outlier OK -> **Decision: ALLOW (Risk Score: 0.12)**.
    - Payment SAGA completes: Debited -> Credited -> Settled.
-   - **Unique Banking UTR Generated**: `IMPS20261114XXXXXXXXXX`.
-   - Click **Download Payment Receipt** -> Generates formatted PDF receipt with transaction watermark.
+   - Banking UTR generated: `IMPS202611...`. Click **Download Receipt** for PDF advice.
+3. **Trigger Fraud Engine REVIEW & Maker-Checker Dual Control**:
+   - Initiate high-value transfer: Amount `₹250,000.00` with remarks "Urgent Vendor Clear".
+   - Fraud Engine flags high risk -> Decision: `REVIEW`, Status: `PENDING_REVIEW`.
+   - Source account is **NOT debited**.
+   - Attempt approval as the creating user -> Blocked with **403 Forbidden** (Maker cannot approve own transaction).
+   - Log in or authorize as `manager` -> Click **Approve** in Transaction History -> Dual-control verified, source debited, payment released to settlement!
+4. **NEFT Batch Settlement Demonstration**:
+   - Submit transfer via `NEFT` rail.
+   - Payment transitions to `CREDITED` without immediate notification.
+   - Navigate to **Settlement & Reconciliation** tab -> Trigger scheduled NEFT batch.
+   - Batch settles pending items, transitions status to `SETTLED`, and emits `payment.completed` event to Notification Service.
 
 ---
 

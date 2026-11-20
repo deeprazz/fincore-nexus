@@ -29,6 +29,8 @@ public class PaymentRequest {
 
     private String purpose;
 
+    private String createdBy;
+
     public UUID getCustomerId() { return customerId; }
     public void setCustomerId(UUID customerId) { this.customerId = customerId; }
     public UUID getSourceAccountId() { return sourceAccountId; }
@@ -49,4 +51,6 @@ public class PaymentRequest {
     public void setIdempotencyKey(String idempotencyKey) { this.idempotencyKey = idempotencyKey; }
     public String getPurpose() { return purpose; }
     public void setPurpose(String purpose) { this.purpose = purpose; }
+    public String getCreatedBy() { return createdBy; }
+    public void setCreatedBy(String createdBy) { this.createdBy = createdBy; }
 }

@@ -234,28 +234,61 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
     autonumber
-    actor Teller as Teller / Customer
+    actor Maker as Maker (Teller / Customer)
+    actor Checker as Checker (Manager)
     participant Pay as Payment Service (:8083)
     participant Core as Core Banking (:8081)
+    participant Sched as Settlement Scheduler
     participant Kafka as Apache Kafka (:9092)
     participant Notif as Notification Service (:8085)
 
-    Teller->>Pay: POST /api/payments (Idempotency-Key)
-    Pay->>Pay: Check Beneficiary Cooling-Off
-    Pay->>Pay: Evaluate Fraud Rules (Velocity, Outlier, Watchlist)
-    alt Fraud Score > 0.70
-        Pay-->>Teller: 400 Bad Request (FRAUD_BLOCKED)
-    else Fraud Score <= 0.70 (ALLOW)
-        Pay->>Core: Debit Sender Account
-        alt Debit Success
-            Pay->>Pay: Credit Beneficiary (Instant IMPS/UPI or Batch NEFT)
-            Pay->>Kafka: Publish payment.completed
-            Kafka->>Notif: Consume payment.completed -> Send Receipt
-            Pay-->>Teller: 200 OK (UTR generated, Status: SETTLED)
-        else Debit Failed (Insufficient Funds)
-            Pay->>Pay: Status -> FAILED
-            Pay->>Kafka: Publish payment.failed
-            Pay-->>Teller: 400 Bad Request (DEBIT_FAILED)
+    Maker->>Pay: POST /api/payments (Idempotency-Key)
+    Pay->>Pay: Validate Format & Verify Beneficiary (Status == VERIFIED)
+    Pay->>Pay: Check Beneficiary 30-min Cooling-Off (> ₹50,000 threshold)
+    Pay->>Pay: Evaluate Fraud Rules (Velocity, Amount Outlier, Odd Hour, Failures)
+    
+    alt Fraud Score >= 0.80 (BLOCK)
+        Pay-->>Maker: 200 OK (Status: FAILED, Reason: Blocked by fraud rules, No debit)
+    else Fraud Score 0.50 - 0.79 (REVIEW)
+        Pay-->>Maker: 200 OK (Status: PENDING_REVIEW, No source debit)
+        Note over Maker,Checker: Dual Control Maker-Checker Required
+        Checker->>Pay: POST /api/payments/{id}/approve (Checker != Maker)
+        alt Self-Approval Attempt
+            Pay-->>Checker: 403 Forbidden (Maker cannot approve own transaction)
+        else Approved by Manager
+            Pay->>Core: Debit Source Account
+        end
+    else Fraud Score < 0.50 (ALLOW)
+        Pay->>Core: Debit Source Account
+    end
+
+    alt Debit Failed (e.g. Insufficient Balance)
+        Pay->>Pay: Status -> FAILED
+        Pay->>Kafka: Publish payment.failed
+    else Debit Success
+        Pay->>Pay: Attempt Destination Credit
+        alt Destination Credit Fails
+            Pay->>Core: Attempt Compensatory Refund to Source Account
+            alt Refund Succeeded
+                Pay->>Pay: Status -> REVERSED (Funds Restored)
+                Pay->>Kafka: Publish payment.failed
+            else Refund Failed
+                Pay->>Pay: Status -> COMPENSATION_PENDING (Manual Operator Action)
+                Pay->>Kafka: Publish payment.failed
+            end
+        else Destination Credit Succeeded
+            alt IMPS / UPI (T+0 Instant)
+                Pay->>Pay: Settle Instant (Status: SETTLED)
+                Pay->>Kafka: Publish payment.completed & payment.settled
+                Kafka->>Notif: Consume payment.completed -> Dispatch SMS & Email
+            else NEFT (Batch Settlement)
+                Pay->>Pay: Status remains CREDITED (Awaiting batch)
+                Note over Sched,Pay: Scheduled Half-Hourly Clearing Batch
+                Sched->>Pay: Trigger NEFT Settlement Batch
+                Pay->>Pay: Status -> SETTLED (Batch Created)
+                Pay->>Kafka: Publish payment.completed & payment.settled
+                Kafka->>Notif: Consume payment.completed -> Dispatch SMS & Email
+            end
         end
     end
 ```

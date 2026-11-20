@@ -66,6 +66,7 @@ export default function PaymentReceipt({ payment, onReset }) {
       <SagaStatusTimeline
         status={payment.status}
         failureReason={payment.failureReason}
+        paymentRail={payment.paymentRail}
       />
 
       <FraudCheckBadge

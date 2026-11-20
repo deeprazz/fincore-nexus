@@ -17,12 +17,34 @@ export default function BeneficiaryForm({ customerId, onCreated, onCancel }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setSubmitting(true);
     setError(null);
+
+    const trimmedAccount = formData.accountNumber.trim();
+    const trimmedIfsc = formData.ifscCode.trim().toUpperCase();
+
+    if (!/^[0-9]{9,18}$/.test(trimmedAccount)) {
+      setError("Account number must be 9 to 18 digits.");
+      return;
+    }
+
+    if (!/^[A-Z]{4}0[A-Z0-9]{6}$/.test(trimmedIfsc)) {
+      setError("Invalid IFSC format. Must be 4 uppercase letters, a '0', and 6 alphanumeric characters (e.g., FINC0001234).");
+      return;
+    }
+
+    if (formData.vpa && !/^[a-zA-Z0-9._-]+@[a-zA-Z0-9]+$/.test(formData.vpa.trim())) {
+      setError("Invalid UPI VPA format. Must be like username@bank or mobile@upi.");
+      return;
+    }
+
+    setSubmitting(true);
 
     try {
       const payload = {
         ...formData,
+        accountNumber: trimmedAccount,
+        ifscCode: trimmedIfsc,
+        vpa: formData.vpa ? formData.vpa.trim() : null,
         customerId: customerId || "00000000-0000-0000-0000-000000000001",
       };
       await onCreated(payload);
@@ -36,10 +58,19 @@ export default function BeneficiaryForm({ customerId, onCreated, onCancel }) {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       {error && (
-        <div className="p-3 bg-red-50 border border-red-200 text-red-700 rounded text-sm">
+        <div className="p-3 bg-red-500/10 border border-red-500/30 text-red-400 rounded text-sm">
           {error}
         </div>
       )}
+
+      <div className="p-2.5 rounded bg-blue-500/10 border border-blue-500/30 text-blue-300 text-xs flex items-center justify-between">
+        <span>
+          <strong>Note:</strong> Registered beneficiaries require a simulated ₹1.00 penny-drop verification before funds can be transferred.
+        </span>
+        <span className="text-[10px] uppercase font-bold px-1.5 py-0.5 rounded bg-blue-500/20 border border-blue-500/40">
+          Simulated
+        </span>
+      </div>
 
       <FormField label="Beneficiary Full Name" required>
         <input
@@ -53,10 +84,10 @@ export default function BeneficiaryForm({ customerId, onCreated, onCancel }) {
       </FormField>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <FormField label="Account Number" required>
+        <FormField label="Account Number (9-18 digits)" required>
           <input
             type="text"
-            className="form-input"
+            className="form-input font-mono"
             placeholder="100000000002"
             value={formData.accountNumber}
             onChange={(e) => setFormData({ ...formData, accountNumber: e.target.value })}
@@ -64,10 +95,10 @@ export default function BeneficiaryForm({ customerId, onCreated, onCancel }) {
           />
         </FormField>
 
-        <FormField label="IFSC Code" required>
+        <FormField label="IFSC Code (e.g. FINC0001234)" required>
           <input
             type="text"
-            className="form-input"
+            className="form-input font-mono uppercase"
             placeholder="FINC0001234"
             value={formData.ifscCode}
             onChange={(e) => setFormData({ ...formData, ifscCode: e.target.value.toUpperCase() })}

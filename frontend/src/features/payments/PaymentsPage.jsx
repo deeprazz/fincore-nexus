@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import Tabs from "../../components/ui/Tabs";
 import Spinner from "../../components/ui/Spinner";
 import PaymentForm from "./PaymentForm";
@@ -14,8 +14,12 @@ import {
   addBeneficiary,
   verifyPennyDrop,
   deleteBeneficiary,
+  approvePayment,
+  rejectPayment,
+  retryCompensation,
 } from "../../api/payments";
 import { getAccounts } from "../../api/accounts";
+import { useAuth } from "../../context/AuthContext";
 
 const TABS = [
   { id: "transfer", label: "Transfer Funds" },
@@ -25,6 +29,7 @@ const TABS = [
 ];
 
 export default function PaymentsPage() {
+  const { auth } = useAuth();
   const [activeTab, setActiveTab] = useState("transfer");
   const [accounts, setAccounts] = useState([]);
   const [beneficiaries, setBeneficiaries] = useState([]);
@@ -33,14 +38,15 @@ export default function PaymentsPage() {
   const [prefilledBeneficiary, setPrefilledBeneficiary] = useState(null);
   const [showAddBenModal, setShowAddBenModal] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [feedbackMessage, setFeedbackMessage] = useState(null);
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       setLoading(true);
       const [accs, bens, pmts] = await Promise.all([
-        getAccounts().catch(() => []),
-        getBeneficiaries().catch(() => []),
-        getPayments().catch(() => []),
+        getAccounts(auth).catch(() => []),
+        getBeneficiaries(null, auth).catch(() => []),
+        getPayments(null, auth).catch(() => []),
       ]);
       setAccounts(Array.isArray(accs) ? accs : []);
       setBeneficiaries(Array.isArray(bens) ? bens : []);
@@ -48,32 +54,79 @@ export default function PaymentsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [auth]);
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [loadData]);
 
-  const handlePaymentSubmit = async (payload) => {
-    const res = await initiatePayment(payload);
+  const handlePaymentSubmit = async (payload, idempotencyKey) => {
+    setFeedbackMessage(null);
+    const res = await initiatePayment(payload, idempotencyKey, auth);
     setSelectedReceipt(res);
     await loadData();
   };
 
   const handleAddBeneficiary = async (payload) => {
-    await addBeneficiary(payload);
+    setFeedbackMessage(null);
+    await addBeneficiary(payload, auth);
     setShowAddBenModal(false);
     await loadData();
+    setFeedbackMessage({ type: "success", text: "Beneficiary registered. Proceed with simulated penny-drop verification." });
   };
 
   const handleVerifyPennyDrop = async (id) => {
-    await verifyPennyDrop(id);
-    await loadData();
+    setFeedbackMessage(null);
+    try {
+      const updated = await verifyPennyDrop(id, auth);
+      await loadData();
+      setFeedbackMessage({
+        type: updated.status === "VERIFIED" ? "success" : "warning",
+        text: `Penny-Drop complete: Status is ${updated.status}. ${updated.verificationDetails || ""}`
+      });
+    } catch (err) {
+      setFeedbackMessage({ type: "error", text: err.message || "Failed to verify beneficiary" });
+      await loadData();
+    }
   };
 
   const handleDeleteBeneficiary = async (id) => {
-    await deleteBeneficiary(id);
+    setFeedbackMessage(null);
+    await deleteBeneficiary(id, auth);
     await loadData();
+  };
+
+  const handleApprovePayment = async (id) => {
+    setFeedbackMessage(null);
+    try {
+      const res = await approvePayment(id, auth);
+      await loadData();
+      setFeedbackMessage({ type: "success", text: `Payment ${res.utr || id} approved and released to settlement.` });
+    } catch (err) {
+      setFeedbackMessage({ type: "error", text: err.message || "Approval failed" });
+    }
+  };
+
+  const handleRejectPayment = async (id, reason) => {
+    setFeedbackMessage(null);
+    try {
+      await rejectPayment(id, reason, auth);
+      await loadData();
+      setFeedbackMessage({ type: "warning", text: `Payment rejected by reviewer.` });
+    } catch (err) {
+      setFeedbackMessage({ type: "error", text: err.message || "Rejection failed" });
+    }
+  };
+
+  const handleRetryCompensation = async (id) => {
+    setFeedbackMessage(null);
+    try {
+      await retryCompensation(id, auth);
+      await loadData();
+      setFeedbackMessage({ type: "success", text: "Refund compensation retried successfully." });
+    } catch (err) {
+      setFeedbackMessage({ type: "error", text: err.message || "Compensation retry failed" });
+    }
   };
 
   const handlePayBeneficiary = (ben) => {
@@ -96,6 +149,23 @@ export default function PaymentsPage() {
           </p>
         </div>
       </div>
+
+      {feedbackMessage && (
+        <div className={`p-3 rounded text-sm flex items-center justify-between border ${
+          feedbackMessage.type === "success" ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400" :
+          feedbackMessage.type === "warning" ? "bg-amber-500/10 border-amber-500/30 text-amber-400" :
+          "bg-red-500/10 border-red-500/30 text-red-400"
+        }`}>
+          <span>{feedbackMessage.text}</span>
+          <button
+            type="button"
+            onClick={() => setFeedbackMessage(null)}
+            className="text-xs ml-4 underline opacity-75 hover:opacity-100"
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
 
       <Tabs tabs={TABS} activeTab={activeTab} onChange={(tab) => { setActiveTab(tab); setSelectedReceipt(null); }} />
 
@@ -163,7 +233,11 @@ export default function PaymentsPage() {
           ) : (
             <PaymentHistory
               payments={payments}
+              currentUser={auth}
               onViewReceipt={(p) => setSelectedReceipt(p)}
+              onApprove={handleApprovePayment}
+              onReject={handleRejectPayment}
+              onRetryCompensation={handleRetryCompensation}
             />
           )}
         </div>

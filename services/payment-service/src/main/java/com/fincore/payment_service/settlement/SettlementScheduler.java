@@ -16,9 +16,9 @@ public class SettlementScheduler {
     }
 
     /**
-     * NEFT batch settlement every 30 minutes (1800000 ms).
+     * NEFT batch settlement schedule (configurable, defaults to half-hourly batch: 1800000 ms).
      */
-    @Scheduled(fixedRate = 1800000)
+    @Scheduled(fixedRateString = "${fincore.settlement.neft-rate-ms:1800000}")
     public void runNeftBatchSettlement() {
         log.info("Running scheduled NEFT settlement batch...");
         try {

@@ -15,6 +15,7 @@ public record BeneficiaryResponse(
         String bankName,
         BeneficiaryStatus status,
         OffsetDateTime verifiedAt,
+        String verificationDetails,
         OffsetDateTime createdAt
 ) {
     public static BeneficiaryResponse from(Beneficiary b) {
@@ -30,6 +31,7 @@ public record BeneficiaryResponse(
                 b.getBankName(),
                 b.getStatus(),
                 b.getVerifiedAt(),
+                b.getVerificationDetails(),
                 b.getCreatedAt()
         );
     }
