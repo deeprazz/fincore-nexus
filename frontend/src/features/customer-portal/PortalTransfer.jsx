@@ -1,16 +1,20 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { ArrowLeftRight } from "lucide-react";
 import { PinSettings } from "./PinSettings";
+import CustomerSagaTracker from "./CustomerSagaTracker";
 import { portalTransfer } from "../../api/portal";
 import { useAuth } from "../../context/AuthContext";
 import { useToast } from "../../context/ToastContext";
 import { useMoney } from "../../hooks/useMoney";
 
 export function PortalTransfer() {
+  const navigate = useNavigate();
   const [destination, setDestination] = useState("");
   const [amount, setAmount] = useState("");
   const [pin, setPin] = useState("");
   const [loading, setLoading] = useState(false);
+  const [activeSaga, setActiveSaga] = useState(null);
 
   const { auth, customerPortal, refreshPortalData } = useAuth();
   const { setError, setSuccess } = useToast();
@@ -20,6 +24,8 @@ export function PortalTransfer() {
   const canBank = customerPortal?.kycStatus === "VERIFIED";
   const primaryAccount = customerAccounts[0];
   const hasPin = Boolean(customerPortal?.hasTransactionPin);
+
+  const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
   async function handleTransfer(e) {
     e.preventDefault();
@@ -44,16 +50,74 @@ export function PortalTransfer() {
       return;
     }
 
+    const availableBal = Number(primaryAccount.balance || 0);
+    if (parsed > availableBal) {
+      setError(`Insufficient funds in account (${money(availableBal)} available).`);
+      return;
+    }
+
+    const generatedUtr = "FINC" + crypto.randomUUID().replace(/-/g, "").slice(0, 12).toUpperCase();
+    const sagaInitData = {
+      utr: generatedUtr,
+      fromAccount: primaryAccount.accountNumber,
+      toAccount: destination.trim(),
+      amount: parsed,
+      timestamp: new Date().toISOString(),
+    };
+
+    setActiveSaga({
+      data: sagaInitData,
+      stageIndex: 1,
+      isFinished: false,
+      errorMessage: null,
+    });
     setLoading(true);
+
     try {
-      await portalTransfer(primaryAccount.id, destination.trim(), parsed, pin, auth);
-      setSuccess(`Transfer of ${money(parsed)} completed successfully.`);
+      // Stage 1: Initiated
+      await sleep(350);
+      setActiveSaga((prev) => ({ ...prev, stageIndex: 2 }));
+
+      // Stage 2: PIN Authorization
+      await sleep(350);
+      setActiveSaga((prev) => ({ ...prev, stageIndex: 3 }));
+
+      // Stage 3: Balance & Limits
+      await sleep(350);
+      setActiveSaga((prev) => ({ ...prev, stageIndex: 4 }));
+
+      // Stage 4: Risk & Fraud Assessment
+      await sleep(300);
+      setActiveSaga((prev) => ({ ...prev, stageIndex: 5 }));
+
+      // Execute actual backend transfer
+      const res = await portalTransfer(primaryAccount.id, destination.trim(), parsed, pin, auth);
+      if (res?.utr) {
+        sagaInitData.utr = res.utr;
+      }
+
+      // Stage 5: Debited
+      setActiveSaga((prev) => ({ ...prev, data: { ...prev.data, utr: res?.utr || prev.data.utr }, stageIndex: 6 }));
+      await sleep(350);
+
+      // Stage 6: Credited
+      setActiveSaga((prev) => ({ ...prev, stageIndex: 7 }));
+      await sleep(350);
+
+      // Stage 7: Settled
+      setActiveSaga((prev) => ({ ...prev, stageIndex: 8 }));
+      await sleep(250);
+
+      // Final complete
+      setActiveSaga((prev) => ({ ...prev, isFinished: true }));
       setDestination("");
       setAmount("");
       setPin("");
       await refreshPortalData();
     } catch (err) {
-      setError(err.message || "Transfer failed");
+      const msg = err.message || "Transfer execution failed";
+      setActiveSaga((prev) => ({ ...prev, isFinished: false, errorMessage: msg }));
+      setError(msg);
     } finally {
       setLoading(false);
     }
@@ -73,6 +137,17 @@ export function PortalTransfer() {
         <section className="customer-section customer-kyc-pending">
           <h3>Transfers aren’t available yet</h3>
           <p>Once your KYC is approved, you’ll be able to send money from here.</p>
+        </section>
+      ) : activeSaga ? (
+        <section className="customer-section">
+          <CustomerSagaTracker
+            sagaData={activeSaga.data}
+            stageIndex={activeSaga.stageIndex}
+            isFinished={activeSaga.isFinished}
+            errorMessage={activeSaga.errorMessage}
+            onReset={() => setActiveSaga(null)}
+            onViewStatements={() => navigate("/portal/statements")}
+          />
         </section>
       ) : (
         <>

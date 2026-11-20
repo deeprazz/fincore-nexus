@@ -129,8 +129,9 @@ export default function PaymentForm({
     setSubmitting(true);
 
     try {
+      const resolvedCustomerId = selectedAcc?.customerId || selectedBeneficiary?.customerId || selectedAcc?.id;
       const payload = {
-        customerId: selectedAcc.customerId,
+        customerId: resolvedCustomerId,
         sourceAccountId: selectedAcc.id,
         beneficiaryId: selectedBeneficiaryId || null,
         targetAccountNumber: paymentRail === "UPI" ? "" : targetAccount,
@@ -168,18 +169,18 @@ export default function PaymentForm({
     <div className="max-w-2xl mx-auto space-y-6">
       {/* Wizard Progress Stepper */}
       <div className="flex items-center justify-between pb-4 border-b border-border text-xs">
-        <div className={`flex items-center gap-1.5 ${step === "details" ? "text-primary font-bold" : "text-muted"}`}>
-          <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${step === "details" ? "bg-primary text-white" : "bg-surface border border-border"}`}>1</span>
+        <div className={`flex items-center gap-2 ${step === "details" ? "text-primary font-bold" : "text-muted"}`}>
+          <span className={`w-6 h-6 rounded-full inline-flex items-center justify-center text-xs font-semibold shrink-0 ${step === "details" ? "bg-primary text-white ring-2 ring-primary/20" : "bg-surface-alt border border-border text-muted"}`}>1</span>
           <span>Enter Details</span>
         </div>
-        <span className="text-muted">→</span>
-        <div className={`flex items-center gap-1.5 ${step === "review" ? "text-primary font-bold" : "text-muted"}`}>
-          <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${step === "review" ? "bg-primary text-white" : "bg-surface border border-border"}`}>2</span>
+        <span className="text-muted/60">→</span>
+        <div className={`flex items-center gap-2 ${step === "review" ? "text-primary font-bold" : "text-muted"}`}>
+          <span className={`w-6 h-6 rounded-full inline-flex items-center justify-center text-xs font-semibold shrink-0 ${step === "review" ? "bg-primary text-white ring-2 ring-primary/20" : "bg-surface-alt border border-border text-muted"}`}>2</span>
           <span>Review Transfer</span>
         </div>
-        <span className="text-muted">→</span>
-        <div className={`flex items-center gap-1.5 ${step === "authorize" ? "text-primary font-bold" : "text-muted"}`}>
-          <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${step === "authorize" ? "bg-primary text-white" : "bg-surface border border-border"}`}>3</span>
+        <span className="text-muted/60">→</span>
+        <div className={`flex items-center gap-2 ${step === "authorize" ? "text-primary font-bold" : "text-muted"}`}>
+          <span className={`w-6 h-6 rounded-full inline-flex items-center justify-center text-xs font-semibold shrink-0 ${step === "authorize" ? "bg-primary text-white ring-2 ring-primary/20" : "bg-surface-alt border border-border text-muted"}`}>3</span>
           <span>Authorize & Pay</span>
         </div>
       </div>

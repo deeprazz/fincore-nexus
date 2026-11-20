@@ -143,7 +143,28 @@ public class PaymentService {
             isNewBeneficiary = minutesSinceCreation < 1440; // < 24 hours
         }
 
-        // 4. Fraud Assessment
+        // 4. Resolve customerId if not explicitly provided
+        UUID customerId = req.getCustomerId();
+        if (customerId == null) {
+            if (beneficiary != null && beneficiary.getCustomerId() != null) {
+                customerId = beneficiary.getCustomerId();
+            } else {
+                try {
+                    var acc = coreBankingClient.getAccount(req.getSourceAccountId());
+                    if (acc != null && acc.has("customerId") && !acc.get("customerId").isNull()) {
+                        customerId = UUID.fromString(acc.get("customerId").asText());
+                    }
+                } catch (Exception e) {
+                    log.debug("Could not resolve customerId from core banking account: {}", e.getMessage());
+                }
+            }
+            if (customerId == null) {
+                customerId = req.getSourceAccountId();
+            }
+            req.setCustomerId(customerId);
+        }
+
+        // 5. Fraud Assessment
         OffsetDateTime fiveMinsAgo = OffsetDateTime.now().minusMinutes(5);
         long recentTxnCount = paymentRepository.countRecentPaymentsByCustomer(req.getCustomerId(), fiveMinsAgo);
         BigDecimal avgAmount = paymentRepository.averagePaymentAmountByCustomer(req.getCustomerId());

@@ -450,7 +450,8 @@ public class AccountService {
                 .map(account -> new AccountResponse(
                         account.getId(),
                         account.getAccountNumber(),
-                        account.getBalance()
+                        account.getBalance(),
+                        account.getCustomer() != null ? account.getCustomer().getId() : null
                 ));
     }
 
@@ -486,7 +487,8 @@ public class AccountService {
                 .map(account -> new AccountResponse(
                         account.getId(),
                         account.getAccountNumber(),
-                        account.getBalance()
+                        account.getBalance(),
+                        account.getCustomer() != null ? account.getCustomer().getId() : null
                 ))
                 .collect(Collectors.toList());
     }

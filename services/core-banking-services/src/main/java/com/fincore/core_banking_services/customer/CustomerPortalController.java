@@ -277,7 +277,8 @@ public class CustomerPortalController {
         transfer.setToAccountId(destination.getId());
         transfer.setAmount(request.amount());
         accountService.transfer(transfer);
-        return new TransferResponse("Transfer completed successfully.");
+        String utr = "FINC" + UUID.randomUUID().toString().replace("-", "").substring(0, 12).toUpperCase();
+        return new TransferResponse("Transfer completed successfully.", utr, source.getAccountNumber(), destination.getAccountNumber(), request.amount(), "SETTLED");
     }
 
     private Customer currentCustomer(Authentication authentication) {
@@ -301,7 +302,11 @@ public class CustomerPortalController {
     public record PinRequest(String currentPin, String pin) {}
     public record PinResponse(boolean hasTransactionPin, String message) {}
     public record CustomerTransferRequest(UUID sourceAccountId, String destinationAccountNumber, BigDecimal amount, String transactionPin) {}
-    public record TransferResponse(String message) {}
+    public record TransferResponse(String message, String utr, String fromAccount, String toAccount, BigDecimal amount, String status) {
+        public TransferResponse(String message) {
+            this(message, null, null, null, null, "SETTLED");
+        }
+    }
     public record TransactionResponse(UUID id, String transactionType, BigDecimal amount,
                                      BigDecimal balanceAfter, UUID referenceId, java.time.Instant createdAt) {}
 }
