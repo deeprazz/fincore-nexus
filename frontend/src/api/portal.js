@@ -55,21 +55,60 @@ export function portalTransfer(sourceAccountId, destinationAccountNumber, amount
   );
 }
 
-export function getPortalStatement(from, to, auth) {
+export function getPortalStatement(accountIdOrFrom, fromOrTo, toOrAuth, maybeAuth) {
+  let accountId = null;
+  let from = "";
+  let to = "";
+  let auth = null;
+
+  if (arguments.length >= 4) {
+    accountId = accountIdOrFrom;
+    from = fromOrTo;
+    to = toOrAuth;
+    auth = maybeAuth;
+  } else if (arguments.length === 3) {
+    if (typeof toOrAuth === "object" && toOrAuth !== null) {
+      from = accountIdOrFrom;
+      to = fromOrTo;
+      auth = toOrAuth;
+    } else {
+      accountId = accountIdOrFrom;
+      from = fromOrTo;
+      to = toOrAuth;
+    }
+  } else if (arguments.length === 2) {
+    from = accountIdOrFrom;
+    to = fromOrTo;
+  } else if (arguments.length === 1) {
+    from = accountIdOrFrom;
+  }
+
   const params = new URLSearchParams();
   if (from) params.set("from", from);
   if (to) params.set("to", to);
+  if (accountId) params.set("accountId", accountId);
   const q = params.toString();
-  return apiRequest(`/customer-portal/statement${q ? `?${q}` : ""}`, {}, auth);
+
+  const path = accountId
+    ? `/customer-portal/accounts/${encodeURIComponent(accountId)}/statement${q ? `?${q}` : ""}`
+    : `/customer-portal/statement${q ? `?${q}` : ""}`;
+
+  return apiRequest(path, {}, auth);
 }
 
 export async function exportPortalStatementCsv(accountId, from, to, auth) {
   const params = new URLSearchParams();
   if (from) params.set("from", from);
   if (to) params.set("to", to);
+  if (accountId) params.set("accountId", accountId);
   const q = params.toString();
+
+  const path = accountId
+    ? `/customer-portal/accounts/${encodeURIComponent(accountId)}/statement/export${q ? `?${q}` : ""}`
+    : `/customer-portal/statement/export${q ? `?${q}` : ""}`;
+
   const res = await apiRequestWithResponse(
-    `/customer-portal/accounts/${encodeURIComponent(accountId)}/statement/export${q ? `?${q}` : ""}`,
+    path,
     { headers: { Accept: "text/csv" } },
     auth
   );

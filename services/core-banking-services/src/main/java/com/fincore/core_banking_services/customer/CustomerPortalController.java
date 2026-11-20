@@ -77,6 +77,44 @@ public class CustomerPortalController {
                 .toList();
     }
 
+    @GetMapping("/statement")
+    @Transactional(readOnly = true)
+    public AccountStatementResponse statementForCustomer(
+            @RequestParam(required = false) UUID accountId,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
+            Authentication authentication) {
+        Customer customer = requireVerifiedCustomer(authentication);
+        UUID targetAccountId = accountId;
+        if (targetAccountId == null) {
+            List<Account> ownAccounts = accounts.findByCustomer_Id(customer.getId());
+            if (ownAccounts.isEmpty()) {
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No accounts found for customer");
+            }
+            targetAccountId = ownAccounts.get(0).getId();
+        }
+        return statement(targetAccountId, from, to, authentication);
+    }
+
+    @GetMapping(value = "/statement/export", produces = "text/csv")
+    @Transactional(readOnly = true)
+    public org.springframework.http.ResponseEntity<String> exportStatementCsvForCustomer(
+            @RequestParam(required = false) UUID accountId,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
+            Authentication authentication) {
+        Customer customer = requireVerifiedCustomer(authentication);
+        UUID targetAccountId = accountId;
+        if (targetAccountId == null) {
+            List<Account> ownAccounts = accounts.findByCustomer_Id(customer.getId());
+            if (ownAccounts.isEmpty()) {
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No accounts found for customer");
+            }
+            targetAccountId = ownAccounts.get(0).getId();
+        }
+        return exportStatementCsv(targetAccountId, from, to, authentication);
+    }
+
     @GetMapping("/accounts/{accountId}/statement")
     @Transactional(readOnly = true)
     public AccountStatementResponse statement(

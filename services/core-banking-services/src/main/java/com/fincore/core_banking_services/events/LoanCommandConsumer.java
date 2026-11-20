@@ -35,6 +35,8 @@ public class LoanCommandConsumer {
     private final AccountRepository accountRepository;
     private final AccountService accountService;
     private final KafkaTemplate<String, Object> kafkaTemplate;
+    private final com.fasterxml.jackson.databind.ObjectMapper objectMapper =
+            new com.fasterxml.jackson.databind.ObjectMapper().findAndRegisterModules();
 
     public LoanCommandConsumer(
             ProcessedEventRepository processedEventRepository,
@@ -222,6 +224,19 @@ public class LoanCommandConsumer {
                     evt.currency()
             );
         }
+        if (payload instanceof String str) {
+            try {
+                payload = objectMapper.readValue(str, Map.class);
+            } catch (Exception e) {
+                log.error("Failed to parse LoanApprovedCommand from JSON string: {}", e.getMessage());
+            }
+        } else if (payload instanceof byte[] bytes) {
+            try {
+                payload = objectMapper.readValue(bytes, Map.class);
+            } catch (Exception e) {
+                log.error("Failed to parse LoanApprovedCommand from byte array: {}", e.getMessage());
+            }
+        }
         if (payload instanceof Map<?, ?> map) {
             try {
                 UUID correlationId = map.get("correlationId") != null ? UUID.fromString(map.get("correlationId").toString()) : null;
@@ -251,6 +266,19 @@ public class LoanCommandConsumer {
                     evt.amount(),
                     evt.dueDate()
             );
+        }
+        if (payload instanceof String str) {
+            try {
+                payload = objectMapper.readValue(str, Map.class);
+            } catch (Exception e) {
+                log.error("Failed to parse EmiDebitCommand from JSON string: {}", e.getMessage());
+            }
+        } else if (payload instanceof byte[] bytes) {
+            try {
+                payload = objectMapper.readValue(bytes, Map.class);
+            } catch (Exception e) {
+                log.error("Failed to parse EmiDebitCommand from byte array: {}", e.getMessage());
+            }
         }
         if (payload instanceof Map<?, ?> map) {
             try {

@@ -18,6 +18,7 @@ import org.springframework.kafka.core.*;
 import org.springframework.kafka.listener.DefaultErrorHandler;
 import org.springframework.kafka.support.converter.RecordMessageConverter;
 import org.springframework.kafka.support.converter.StringJsonMessageConverter;
+import org.springframework.kafka.support.serializer.ErrorHandlingDeserializer;
 import org.springframework.kafka.support.serializer.JsonDeserializer;
 import org.springframework.kafka.support.serializer.JsonSerializer;
 import org.springframework.util.backoff.FixedBackOff;
@@ -68,9 +69,12 @@ public class KafkaConfig {
         Map<String, Object> config = new HashMap<>();
         config.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         config.put(ConsumerConfig.GROUP_ID_CONFIG, "core-banking-loan-group");
-        config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
-        config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, JsonDeserializer.class);
-        config.put(JsonDeserializer.TRUSTED_PACKAGES, "com.fincore.*");
+        config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, ErrorHandlingDeserializer.class);
+        config.put(ErrorHandlingDeserializer.KEY_DESERIALIZER_CLASS, StringDeserializer.class);
+        config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, ErrorHandlingDeserializer.class);
+        config.put(ErrorHandlingDeserializer.VALUE_DESERIALIZER_CLASS, JsonDeserializer.class);
+        config.put(JsonDeserializer.TRUSTED_PACKAGES, "*");
+        config.put(JsonDeserializer.VALUE_DEFAULT_TYPE, "java.util.Map");
         config.put(JsonDeserializer.TYPE_MAPPINGS,
                 "com.fincore.loan_service.event.LoanApprovedEvent:com.fincore.core_banking_services.events.LoanApprovedCommand," +
                 "com.fincore.loan_service.event.EmiDebitRequestedEvent:com.fincore.core_banking_services.events.EmiDebitCommand");

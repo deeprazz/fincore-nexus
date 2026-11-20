@@ -9,6 +9,7 @@ import { useMoney } from "../../hooks/useMoney";
 export function PortalStatements() {
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
+  const [selectedAccountId, setSelectedAccountId] = useState("");
   const [statement, setStatement] = useState(null);
   const [loading, setLoading] = useState(false);
 
@@ -17,7 +18,7 @@ export function PortalStatements() {
   const money = useMoney();
 
   const customerAccounts = customerPortal?.accounts || [];
-  const primaryAccount = customerAccounts[0];
+  const primaryAccount = customerAccounts.find((a) => a.id === selectedAccountId) || customerAccounts[0];
   const canBank = customerPortal?.kycStatus === "VERIFIED";
 
   async function handleGenerate(e) {
@@ -36,7 +37,7 @@ export function PortalStatements() {
 
     setLoading(true);
     try {
-      const data = await getPortalStatement(from, to, auth);
+      const data = await getPortalStatement(primaryAccount.id, from, to, auth);
       setStatement(data);
       setSuccess("Statement generated successfully.");
     } catch (err) {
@@ -78,6 +79,25 @@ export function PortalStatements() {
               className="customer-transfer-form customer-statement-form"
               onSubmit={handleGenerate}
             >
+              {customerAccounts.length > 1 && (
+                <label>
+                  Account
+                  <select
+                    value={selectedAccountId || primaryAccount?.id || ""}
+                    onChange={(e) => {
+                      setSelectedAccountId(e.target.value);
+                      setStatement(null);
+                    }}
+                    disabled={loading}
+                  >
+                    {customerAccounts.map((acc) => (
+                      <option key={acc.id} value={acc.id}>
+                        {acc.accountNumber} ({money(acc.balance)})
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              )}
               <label>
                 From date
                 <input
