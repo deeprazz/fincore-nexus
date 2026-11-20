@@ -45,6 +45,12 @@ public class AccountController {
         return ResponseEntity.ok(accountService.getAllAccounts());
     }
 
+    @GetMapping("/customer/{customerId}")
+    public ResponseEntity<List<AccountResponse>> getAccountsByCustomer(
+            @PathVariable UUID customerId) {
+        return ResponseEntity.ok(accountService.getAccountsByCustomerId(customerId));
+    }
+
     @PostMapping
     public ResponseEntity<AccountResponse> createAccount(
             @RequestBody CreateAccountRequest request) {

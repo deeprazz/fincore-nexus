@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { getLoan, prepayLoan, forecloseLoan } from "../../api/loans";
+import { getCustomers } from "../../api/customers";
 import { useAuth } from "../../context/AuthContext";
 import { useToast } from "../../context/ToastContext";
 import { money } from "../../utils/money";
@@ -27,6 +28,7 @@ export function LoanDetail({
   const { setError, setSuccess } = useToast();
 
   const [loan, setLoan] = useState(initialLoan || null);
+  const [customer, setCustomer] = useState(null);
   const [loading, setLoading] = useState(!initialLoan && !!loanId);
 
   // Prepay Modal state
@@ -43,8 +45,15 @@ export function LoanDetail({
     if (!targetId) return;
     setLoading(true);
     try {
-      const data = await getLoan(targetId, auth);
+      const [data, custList] = await Promise.all([
+        getLoan(targetId, auth),
+        getCustomers("ALL", auth).catch(() => []),
+      ]);
       setLoan(data);
+      if (Array.isArray(custList) && data?.customerId) {
+        const found = custList.find((c) => c.id === data.customerId);
+        if (found) setCustomer(found);
+      }
     } catch (err) {
       setError(err.message || "Failed to load loan details");
     } finally {
@@ -175,9 +184,14 @@ export function LoanDetail({
           <div>
             <h2>Loan Account #{String(loan.id).substring(0, 8)}</h2>
             <p>
-              Customer: <strong>{loan.customerId ? String(loan.customerId).substring(0, 8) + "..." : "N/A"}</strong>
+              Customer: <strong>{customer?.name || (loan.customerId ? String(loan.customerId).substring(0, 8) + "..." : "N/A")}</strong>
+              {customer?.email && <> ({customer.email})</>}
+              {customer?.kycStatus && (
+                <> · KYC: <span className={`status-badge status-${String(customer.kycStatus).toLowerCase()}`}>{customer.kycStatus}</span></>
+              )}
+              {customer?.phoneNumber && <> · 📞 {customer.phoneNumber}</>}
               {loan.accountId && (
-                <> · Disbursed To Account: <strong>{String(loan.accountId).substring(0, 8)}...</strong></>
+                <> · Linked Account: <strong>{String(loan.accountId).substring(0, 8)}...</strong></>
               )}
             </p>
           </div>

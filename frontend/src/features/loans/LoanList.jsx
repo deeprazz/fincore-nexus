@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { getLoans, disburseLoan } from "../../api/loans";
+import { getCustomers } from "../../api/customers";
 import { useAuth } from "../../context/AuthContext";
 import { useToast } from "../../context/ToastContext";
 import { money } from "../../utils/money";
@@ -18,6 +19,7 @@ export function LoanList({
   const { setError, setSuccess } = useToast();
 
   const [loans, setLoans] = useState([]);
+  const [customers, setCustomers] = useState({});
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
@@ -25,8 +27,18 @@ export function LoanList({
   const loadLoans = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await getLoans(auth);
+      const [data, custList] = await Promise.all([
+        getLoans(auth),
+        getCustomers("ALL", auth).catch(() => []),
+      ]);
       setLoans(Array.isArray(data) ? data : []);
+      const map = {};
+      if (Array.isArray(custList)) {
+        custList.forEach((c) => {
+          if (c.id) map[c.id] = c;
+        });
+      }
+      setCustomers(map);
     } catch (err) {
       setError(err.message || "Failed to load loans");
     } finally {
@@ -50,10 +62,13 @@ export function LoanList({
 
   const filteredLoans = loans.filter((loan) => {
     const q = searchQuery.toLowerCase().trim();
+    const cust = customers[loan.customerId];
     const matchesSearch =
       !q ||
       String(loan.id || "").toLowerCase().includes(q) ||
-      String(loan.customerId || "").toLowerCase().includes(q);
+      String(loan.customerId || "").toLowerCase().includes(q) ||
+      String(cust?.name || "").toLowerCase().includes(q) ||
+      String(cust?.email || "").toLowerCase().includes(q);
 
     const matchesStatus =
       statusFilter === "ALL" ||
@@ -137,7 +152,7 @@ export function LoanList({
             <thead>
               <tr>
                 <th>Loan ID</th>
-                <th>Customer ID</th>
+                <th>Customer</th>
                 <th>Principal</th>
                 <th>Outstanding</th>
                 <th>Tenure</th>
@@ -178,16 +193,27 @@ export function LoanList({
                 filteredLoans.map((loan) => {
                   const status = String(loan.status || "ACTIVE").toUpperCase();
                   const npa = String(loan.npaCategory || "STANDARD").toUpperCase();
+                  const cust = customers[loan.customerId];
 
                   return (
                     <tr key={loan.id}>
                       <td className="account-number font-mono">
                         {String(loan.id).substring(0, 8)}...
                       </td>
-                      <td className="muted-cell font-mono">
-                        {loan.customerId
-                          ? `${String(loan.customerId).substring(0, 8)}...`
-                          : "N/A"}
+                      <td className="customer-cell">
+                        <div>
+                          <strong style={{ color: "var(--text-primary, #edf3fb)", fontSize: "13px", display: "block" }}>
+                            {cust?.name || (loan.customerId ? `Cust #${String(loan.customerId).slice(0, 8)}` : "N/A")}
+                          </strong>
+                          <small style={{ color: "var(--text-secondary, #8fa3bd)", fontSize: "11px", display: "block" }}>
+                            {cust?.email || (loan.customerId ? `CUST-${String(loan.customerId).replace(/-/g, "").slice(0, 8).toUpperCase()}` : "")}
+                          </small>
+                          {cust?.kycStatus && (
+                            <span className={`status-badge status-${String(cust.kycStatus).toLowerCase()}`} style={{ fontSize: "9px", padding: "1px 5px", marginTop: "2px" }}>
+                              KYC: {cust.kycStatus}
+                            </span>
+                          )}
+                        </div>
                       </td>
                       <td>{money(loan.principalAmount || loan.principal || 0)}</td>
                       <td className="amount-cell">

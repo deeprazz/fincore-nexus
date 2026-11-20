@@ -81,12 +81,14 @@ export function disburseLoan(loanId, auth) {
   );
 }
 
-export function prepayLoan(loanId, amount, auth) {
+export function prepayLoan(loanId, amount, auth, accountId) {
+  const payload = { amount: Number(amount) };
+  if (accountId) payload.accountId = accountId;
   return apiRequest(
     `/api/loans/${encodeURIComponent(loanId)}/prepay`,
     {
       method: "POST",
-      body: JSON.stringify({ amount: Number(amount) }),
+      body: JSON.stringify(payload),
     },
     auth
   );

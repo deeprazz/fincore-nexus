@@ -53,7 +53,10 @@ export function PortalLoans() {
   // Prepayment state
   const [prepayLoanId, setPrepayLoanId] = useState(null);
   const [prepayAmount, setPrepayAmount] = useState("");
+  const [selectedDebitAccountId, setSelectedDebitAccountId] = useState("");
   const [prepaying, setPrepaying] = useState(false);
+
+  const customerAccounts = customerPortal?.accounts || [];
 
   // Application Form State
   const [formData, setFormData] = useState({
@@ -227,10 +230,18 @@ export function PortalLoans() {
       setError("Please enter a valid prepayment amount.");
       return;
     }
+
+    const accountToDebit = selectedDebitAccountId || customerAccounts[0]?.id || null;
+    const chosenAccount = customerAccounts.find((a) => a.id === accountToDebit);
+    if (chosenAccount && chosenAccount.balance != null && Number(chosenAccount.balance) < amount) {
+      setError(`Insufficient balance in account ${chosenAccount.accountNumber || ""}. Available: ${money(chosenAccount.balance)}, required: ${money(amount)}.`);
+      return;
+    }
+
     setPrepaying(true);
     try {
-      await prepayLoan(loanId, amount, auth);
-      setSuccess(`Prepayment of ${money(amount)} processed successfully.`);
+      await prepayLoan(loanId, amount, auth, accountToDebit);
+      setSuccess(`Prepayment of ${money(amount)} processed successfully. Amount debited from your bank account.`);
       setPrepayLoanId(null);
       setPrepayAmount("");
       // Refresh schedule cache & loan list
@@ -240,6 +251,9 @@ export function PortalLoans() {
         return copy;
       });
       fetchData();
+      if (refreshPortalData) {
+        await refreshPortalData();
+      }
     } catch (err) {
       setError(err.message || "Prepayment failed");
     } finally {
@@ -807,53 +821,89 @@ export function PortalLoans() {
                     {isPrepayingThis && (
                       <div
                         style={{
-                          padding: "14px 16px",
+                          padding: "16px",
                           background: "var(--bg-tertiary, #151f2c)",
                           borderTop: "1px solid var(--border-color, #283446)",
                         }}
                       >
                         <form
                           onSubmit={(e) => handlePrepaySubmit(e, loan.id)}
-                          style={{ display: "flex", gap: "12px", alignItems: "center", flexWrap: "wrap" }}
+                          style={{ display: "grid", gap: "12px" }}
                         >
-                          <label style={{ fontSize: "12px", color: "var(--text-primary, #edf3fb)" }}>
-                            Enter Prepayment Amount (₹):
-                          </label>
-                          <input
-                            type="number"
-                            min="100"
-                            max={loan.outstandingAmount}
-                            step="100"
-                            required
-                            value={prepayAmount}
-                            onChange={(e) => setPrepayAmount(e.target.value)}
-                            placeholder="e.g. 10000"
-                            style={{
-                              padding: "6px 10px",
-                              borderRadius: "6px",
-                              border: "1px solid var(--border-color, #283446)",
-                              background: "var(--card-bg, #0d141e)",
-                              color: "var(--text-primary, #edf3fb)",
-                              fontSize: "12px",
-                              minWidth: "160px",
-                            }}
-                          />
-                          <button
-                            type="submit"
-                            className="primary-btn"
-                            disabled={prepaying}
-                            style={{ minHeight: "32px", fontSize: "12px", padding: "6px 14px" }}
-                          >
-                            {prepaying ? "Processing..." : "Confirm Prepayment"}
-                          </button>
-                          <button
-                            type="button"
-                            className="secondary-btn"
-                            onClick={() => setPrepayLoanId(null)}
-                            style={{ minHeight: "32px", fontSize: "12px" }}
-                          >
-                            Cancel
-                          </button>
+                          <div style={{ display: "flex", gap: "14px", alignItems: "center", flexWrap: "wrap" }}>
+                            {customerAccounts.length > 0 && (
+                              <label style={{ fontSize: "12px", color: "var(--text-primary, #edf3fb)", display: "flex", alignItems: "center", gap: "8px" }}>
+                                <span>Debit From Account:</span>
+                                <select
+                                  value={selectedDebitAccountId || (customerAccounts[0]?.id || "")}
+                                  onChange={(e) => setSelectedDebitAccountId(e.target.value)}
+                                  style={{
+                                    padding: "6px 10px",
+                                    borderRadius: "6px",
+                                    border: "1px solid var(--border-color, #283446)",
+                                    background: "var(--card-bg, #0d141e)",
+                                    color: "var(--text-primary, #edf3fb)",
+                                    fontSize: "12px",
+                                    minWidth: "220px",
+                                  }}
+                                >
+                                  {customerAccounts.map((acc) => (
+                                    <option key={acc.id} value={acc.id}>
+                                      {acc.accountNumber || String(acc.id).slice(0, 8)} (Balance: {money(acc.balance || 0)})
+                                    </option>
+                                  ))}
+                                </select>
+                              </label>
+                            )}
+
+                            <label style={{ fontSize: "12px", color: "var(--text-primary, #edf3fb)", display: "flex", alignItems: "center", gap: "8px" }}>
+                              <span>Amount (₹):</span>
+                              <input
+                                type="number"
+                                min="100"
+                                max={loan.outstandingAmount}
+                                step="100"
+                                required
+                                value={prepayAmount}
+                                onChange={(e) => setPrepayAmount(e.target.value)}
+                                placeholder="e.g. 10000"
+                                style={{
+                                  padding: "6px 10px",
+                                  borderRadius: "6px",
+                                  border: "1px solid var(--border-color, #283446)",
+                                  background: "var(--card-bg, #0d141e)",
+                                  color: "var(--text-primary, #edf3fb)",
+                                  fontSize: "12px",
+                                  minWidth: "140px",
+                                }}
+                              />
+                            </label>
+
+                            <button
+                              type="submit"
+                              className="primary-btn"
+                              disabled={prepaying || !prepayAmount || Number(prepayAmount) <= 0}
+                              style={{ minHeight: "32px", fontSize: "12px", padding: "6px 16px" }}
+                            >
+                              {prepaying ? "Deducting Funds..." : "Confirm & Pay"}
+                            </button>
+                            <button
+                              type="button"
+                              className="secondary-btn"
+                              onClick={() => {
+                                setPrepayLoanId(null);
+                                setPrepayAmount("");
+                              }}
+                              style={{ minHeight: "32px", fontSize: "12px" }}
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                          {Number(prepayAmount) > 0 && (
+                            <small style={{ color: "#60a5fa", fontSize: "11px" }}>
+                              ℹ {money(Number(prepayAmount))} will be immediately withdrawn from your bank account and applied against this loan facility.
+                            </small>
+                          )}
                         </form>
                       </div>
                     )}

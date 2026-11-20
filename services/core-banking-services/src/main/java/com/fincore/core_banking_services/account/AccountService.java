@@ -96,6 +96,13 @@ public class AccountService {
         return repository.findById(id);
     }
 
+    public List<AccountResponse> getAccountsByCustomerId(UUID customerId) {
+        return repository.findByCustomerId(customerId).stream()
+                .filter(a -> a.getStatus() == AccountStatus.ACTIVE)
+                .map(a -> new AccountResponse(a.getId(), a.getAccountNumber(), a.getBalance()))
+                .collect(Collectors.toList());
+    }
+
     // Reject transactions on frozen or closed accounts.
     private void requireActiveAccount(Account account) {
         if (account.getStatus() != AccountStatus.ACTIVE) {

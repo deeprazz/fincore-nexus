@@ -87,6 +87,114 @@ public class CoreBankingClient {
         }
     }
 
+    public record DebitResult(boolean success, String errorMessage) {}
+
+    public record CustomerDto(
+            UUID id,
+            String name,
+            String email,
+            String phoneNumber,
+            String kycStatus,
+            String panNumber,
+            String aadhaarNumber
+    ) {}
+
+    /**
+     * Look up full customer details by customer ID from core banking.
+     */
+    public CustomerDto getCustomer(UUID customerId) {
+        if (customerId == null) return null;
+        try {
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(baseUrl + "/api/customers/" + customerId))
+                    .header("Authorization", "Basic " + credentials)
+                    .GET()
+                    .build();
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            if (response.statusCode() == 200) {
+                JsonNode n = objectMapper.readTree(response.body());
+                return new CustomerDto(
+                        customerId,
+                        n.path("name").asText(null),
+                        n.path("email").asText(null),
+                        n.path("phoneNumber").asText(null),
+                        n.path("kycStatus").asText("UNKNOWN"),
+                        n.path("panNumber").asText(null),
+                        n.path("aadhaarNumber").asText(null)
+                );
+            }
+            log.warn("Core banking returned status {} for customer {}", response.statusCode(), customerId);
+        } catch (Exception e) {
+            log.warn("Failed to get customer {}: {}", customerId, e.getMessage());
+        }
+        return null;
+    }
+
+    /**
+     * Find the first active bank account for a customer from core banking.
+     */
+    public UUID getCustomerFirstActiveAccountId(UUID customerId) {
+        if (customerId == null) return null;
+        try {
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(baseUrl + "/api/accounts/customer/" + customerId))
+                    .header("Authorization", "Basic " + credentials)
+                    .GET()
+                    .build();
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            if (response.statusCode() == 200) {
+                JsonNode array = objectMapper.readTree(response.body());
+                if (array.isArray() && array.size() > 0) {
+                    return UUID.fromString(array.get(0).get("id").asText());
+                }
+            }
+        } catch (Exception e) {
+            log.warn("Failed to find account for customer {}: {}", customerId, e.getMessage());
+        }
+        return null;
+    }
+
+    /**
+     * Debit an account in core banking by calling the withdraw endpoint.
+     * Returns DebitResult with success=true, or success=false and the error message (e.g. Insufficient balance).
+     */
+    public DebitResult debitAccount(UUID accountId, java.math.BigDecimal amount, String description) {
+        if (accountId == null) {
+            return new DebitResult(false, "Account ID is required for withdrawal");
+        }
+        try {
+            String body = objectMapper.writeValueAsString(
+                    new java.util.HashMap<String, Object>() {{
+                        put("amount", amount);
+                        put("description", description);
+                    }}
+            );
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(baseUrl + "/api/accounts/" + accountId + "/withdraw"))
+                    .header("Authorization", "Basic " + credentials)
+                    .header("Content-Type", "application/json")
+                    .POST(HttpRequest.BodyPublishers.ofString(body))
+                    .build();
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            if (response.statusCode() == 200) {
+                return new DebitResult(true, null);
+            }
+            String errorMsg = "Account withdrawal failed with status " + response.statusCode();
+            try {
+                JsonNode n = objectMapper.readTree(response.body());
+                if (n.has("message") && !n.get("message").asText().isBlank()) {
+                    errorMsg = n.get("message").asText();
+                } else if (n.has("error") && !n.get("error").asText().isBlank()) {
+                    errorMsg = n.get("error").asText();
+                }
+            } catch (Exception ignored) {}
+            return new DebitResult(false, errorMsg);
+        } catch (Exception e) {
+            log.error("Failed to debit account {}: {}", accountId, e.getMessage());
+            return new DebitResult(false, "Connection to core banking failed: " + e.getMessage());
+        }
+    }
+
     /**
      * Validates customer or staff credentials against core banking /api/auth/me.
      * Returns true if core banking returns HTTP 200 OK.

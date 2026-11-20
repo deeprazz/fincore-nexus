@@ -10,7 +10,9 @@ public record LoanApplicationResponse(
         BigDecimal requestedAmount,
         int tenureMonths,
         String purpose,
+        BigDecimal annualIncome,
         String employmentType,
+        BigDecimal existingObligations,
         ApplicationStatus status,
         Integer creditScore,
         String rejectionReason,
@@ -23,7 +25,8 @@ public record LoanApplicationResponse(
     public static LoanApplicationResponse from(LoanApplication app) {
         return new LoanApplicationResponse(
                 app.getId(), app.getCustomerId(), app.getRequestedAmount(),
-                app.getTenureMonths(), app.getPurpose(), app.getEmploymentType(),
+                app.getTenureMonths(), app.getPurpose(), app.getAnnualIncome(),
+                app.getEmploymentType(), app.getExistingObligations(),
                 app.getStatus(), app.getCreditScore(), app.getRejectionReason(),
                 app.getReviewerId(), app.getCreatedBy(), app.getReviewedAt(), app.getCreatedAt(), app.getUpdatedAt()
         );
