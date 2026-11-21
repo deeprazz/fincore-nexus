@@ -1,0 +1,832 @@
+/* ==============================================================================
+   FinCore Nexus — Transaction Saga Tracker (Light & Dark Theme Optimized)
+   ============================================================================== */
+
+/* --- Keyframe Animations --- */
+@keyframes sagaEntrance {
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes sagaSlideRight {
+  0% {
+    opacity: 0;
+    transform: translateX(-12px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes pulseRipple {
+  0% {
+    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 8px rgba(59, 130, 246, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
+  }
+}
+
+@keyframes checkmarkPop {
+  0% {
+    transform: scale(0.6);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.15);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes shimmerPulse {
+  0%, 100% {
+    opacity: 0.75;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes liveSyncPing {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.6);
+    opacity: 0.3;
+  }
+}
+
+/* ==============================================================================
+   Design Tokens & CSS Variables (Adaptive Light / Dark)
+   ============================================================================== */
+
+/* Default Dark Theme */
+:root,
+[data-theme="dark"],
+.theme-dark {
+  --saga-bg: #101726;
+  --saga-border: #1e293b;
+  --saga-border-subtle: #141e30;
+  --saga-text-primary: #f8fafc;
+  --saga-text-secondary: #cbd5e1;
+  --saga-text-muted: #94a3b8;
+  --saga-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.45), 0 8px 10px -6px rgba(0, 0, 0, 0.35);
+  --saga-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+
+  /* Hero Amount Card */
+  --saga-hero-bg: linear-gradient(135deg, #131d2e 0%, #0d1522 100%);
+  --saga-hero-border: #24334a;
+  --saga-hero-amount: #38bdf8;
+  --saga-account-pill-bg: #090e17;
+
+  /* Timeline */
+  --saga-timeline-track: #1e293b;
+  --saga-timeline-fill: #3b82f6;
+  --saga-card-bg: #0c1320;
+  --saga-card-hover-bg: #111a2c;
+  --saga-card-border: #1e293b;
+  --saga-card-active-border: #3b82f6;
+
+  /* Badges */
+  --saga-badge-success-bg: rgba(16, 185, 129, 0.16);
+  --saga-badge-success-text: #34d399;
+  --saga-badge-success-border: rgba(16, 185, 129, 0.4);
+
+  --saga-badge-active-bg: rgba(59, 130, 246, 0.16);
+  --saga-badge-active-text: #60a5fa;
+  --saga-badge-active-border: rgba(59, 130, 246, 0.4);
+
+  --saga-badge-error-bg: rgba(239, 68, 68, 0.16);
+  --saga-badge-error-text: #f87171;
+  --saga-badge-error-border: rgba(239, 68, 68, 0.4);
+
+  --saga-badge-review-bg: rgba(245, 158, 11, 0.16);
+  --saga-badge-review-text: #fbbf24;
+  --saga-badge-review-border: rgba(245, 158, 11, 0.4);
+
+  /* Buttons */
+  --saga-btn-primary-bg: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  --saga-btn-primary-text: #ffffff;
+  --saga-btn-primary-shadow: 0 4px 14px rgba(59, 130, 246, 0.4);
+
+  --saga-btn-secondary-bg: #172132;
+  --saga-btn-secondary-border: #2c3a50;
+  --saga-btn-secondary-text: #e2e8f0;
+  --saga-btn-secondary-hover: #223048;
+}
+
+/* Light Theme Overrides */
+[data-theme="light"],
+.theme-light {
+  --saga-bg: #ffffff;
+  --saga-border: #e2e8f0;
+  --saga-border-subtle: #f1f5f9;
+  --saga-text-primary: #0f172a;
+  --saga-text-secondary: #334155;
+  --saga-text-muted: #64748b;
+  --saga-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.06), 0 8px 10px -6px rgba(0, 0, 0, 0.02);
+  --saga-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05);
+
+  /* Hero Amount Card */
+  --saga-hero-bg: linear-gradient(135deg, #f0fdf4 0%, #f0f9ff 100%);
+  --saga-hero-border: #cbd5e1;
+  --saga-hero-amount: #0284c7;
+  --saga-account-pill-bg: #ffffff;
+
+  /* Timeline */
+  --saga-timeline-track: #e2e8f0;
+  --saga-timeline-fill: #2563eb;
+  --saga-card-bg: #f8fafc;
+  --saga-card-hover-bg: #f1f5f9;
+  --saga-card-border: #e2e8f0;
+  --saga-card-active-border: #2563eb;
+
+  /* Badges */
+  --saga-badge-success-bg: #ecfdf5;
+  --saga-badge-success-text: #059669;
+  --saga-badge-success-border: #a7f3d0;
+
+  --saga-badge-active-bg: #eff6ff;
+  --saga-badge-active-text: #1d4ed8;
+  --saga-badge-active-border: #bfdbfe;
+
+  --saga-badge-error-bg: #fef2f2;
+  --saga-badge-error-text: #dc2626;
+  --saga-badge-error-border: #fecaca;
+
+  --saga-badge-review-bg: #fffbeb;
+  --saga-badge-review-text: #b45309;
+  --saga-badge-review-border: #fde68a;
+
+  /* Buttons */
+  --saga-btn-primary-bg: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  --saga-btn-primary-text: #ffffff;
+  --saga-btn-primary-shadow: 0 4px 14px rgba(37, 99, 235, 0.28);
+
+  --saga-btn-secondary-bg: #f8fafc;
+  --saga-btn-secondary-border: #cbd5e1;
+  --saga-btn-secondary-text: #1e293b;
+  --saga-btn-secondary-hover: #e2e8f0;
+}
+
+/* ==============================================================================
+   Core Component Classes
+   ============================================================================== */
+
+/* Container */
+.saga-tracker-container {
+  background: var(--saga-bg);
+  border: 1px solid var(--saga-border);
+  border-radius: 18px;
+  box-shadow: var(--saga-shadow);
+  padding: 28px;
+  max-width: 720px;
+  margin: 0 auto;
+  animation: sagaEntrance 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  box-sizing: border-box;
+}
+
+/* Header */
+.saga-header-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--saga-border);
+}
+
+@media (min-width: 640px) {
+  .saga-header-bar {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+
+.saga-eyebrow {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 700;
+  color: var(--saga-text-muted);
+}
+
+.saga-utr-code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--saga-text-primary);
+  margin-top: 2px;
+  letter-spacing: 0.02em;
+}
+
+.saga-timestamp {
+  font-size: 12px;
+  color: var(--saga-text-muted);
+  margin-top: 4px;
+}
+
+/* Status Pill Badge */
+.saga-pill-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 14px;
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.saga-pill-badge.success {
+  background: var(--saga-badge-success-bg);
+  color: var(--saga-badge-success-text);
+  border: 1px solid var(--saga-badge-success-border);
+}
+
+.saga-pill-badge.active {
+  background: var(--saga-badge-active-bg);
+  color: var(--saga-badge-active-text);
+  border: 1px solid var(--saga-badge-active-border);
+  animation: pulseRipple 2s infinite;
+}
+
+.saga-pill-badge.failed {
+  background: var(--saga-badge-error-bg);
+  color: var(--saga-badge-error-text);
+  border: 1px solid var(--saga-badge-error-border);
+}
+
+.saga-pill-badge.review {
+  background: var(--saga-badge-review-bg);
+  color: var(--saga-badge-review-text);
+  border: 1px solid var(--saga-badge-review-border);
+}
+
+/* Hero Amount Card */
+.saga-hero-card {
+  background: var(--saga-hero-bg);
+  border: 1px solid var(--saga-hero-border);
+  border-radius: 14px;
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin: 22px 0;
+  box-shadow: var(--saga-shadow-sm);
+}
+
+@media (min-width: 640px) {
+  .saga-hero-card {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+
+.saga-hero-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--saga-text-muted);
+  display: block;
+  margin-bottom: 4px;
+}
+
+.saga-hero-amount {
+  font-size: 28px;
+  font-weight: 800;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  color: var(--saga-hero-amount);
+  letter-spacing: -0.02em;
+}
+
+.saga-hero-accounts {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12px;
+}
+
+@media (min-width: 640px) {
+  .saga-hero-accounts {
+    text-align: right;
+  }
+}
+
+.saga-account-row {
+  color: var(--saga-text-muted);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+@media (min-width: 640px) {
+  .saga-account-row {
+    justify-content: flex-end;
+  }
+}
+
+.saga-account-pill {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-weight: 600;
+  color: var(--saga-text-primary);
+  background: var(--saga-account-pill-bg);
+  padding: 2px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--saga-border);
+}
+
+/* Error Banner */
+.saga-error-banner {
+  padding: 14px 18px;
+  border-radius: 12px;
+  background: var(--saga-badge-error-bg);
+  border: 1px solid var(--saga-badge-error-border);
+  color: var(--saga-badge-error-text);
+  font-size: 13px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin: 16px 0;
+  animation: sagaEntrance 0.3s ease;
+}
+
+/* Timeline Wrapper */
+.saga-timeline-wrapper {
+  margin-top: 24px;
+}
+
+.saga-timeline-heading {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--saga-text-muted);
+  margin-bottom: 18px;
+}
+
+/* Stages List Container */
+.saga-stages-list {
+  position: relative;
+  padding-left: 38px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* Background Connector Track Line */
+.saga-stages-list::before {
+  content: "";
+  position: absolute;
+  left: 17px;
+  top: 14px;
+  bottom: 24px;
+  width: 2px;
+  background: var(--saga-timeline-track);
+  border-radius: 2px;
+  z-index: 1;
+}
+
+/* Dynamic Active Fill Line */
+.saga-connector-fill {
+  position: absolute;
+  left: 17px;
+  top: 14px;
+  width: 2px;
+  background: linear-gradient(180deg, #10b981 0%, #3b82f6 100%);
+  border-radius: 2px;
+  z-index: 1;
+  transition: height 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Individual Stage Item */
+.saga-stage-item {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  animation: sagaEntrance 0.35s ease both;
+}
+
+/* Node Dot on the left */
+.saga-node-dot {
+  position: absolute;
+  left: -38px;
+  top: 12px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+  font-size: 11px;
+  font-weight: 700;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.saga-node-dot.completed {
+  background: #10b981;
+  color: #ffffff;
+  box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.25);
+  animation: checkmarkPop 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.saga-node-dot.active {
+  background: #2563eb;
+  color: #ffffff;
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.3);
+  animation: pulseRipple 1.8s infinite;
+}
+
+.saga-node-dot.failed {
+  background: #ef4444;
+  color: #ffffff;
+  box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.25);
+}
+
+.saga-node-dot.review {
+  background: #f59e0b;
+  color: #ffffff;
+  box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.25);
+}
+
+.saga-node-dot.pending {
+  background: var(--saga-bg);
+  border: 2px solid var(--saga-timeline-track);
+  color: var(--saga-text-muted);
+  font-size: 10px;
+}
+
+/* Stage Card Content */
+.saga-stage-content {
+  flex: 1;
+  padding: 14px 18px;
+  border-radius: 12px;
+  background: var(--saga-card-bg);
+  border: 1px solid var(--saga-card-border);
+  transition: all 0.25s ease;
+  box-sizing: border-box;
+}
+
+.saga-stage-content:hover {
+  background: var(--saga-card-hover-bg);
+  border-color: var(--saga-text-muted);
+}
+
+.saga-stage-content.active {
+  border-color: var(--saga-card-active-border);
+  box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.3), var(--saga-shadow-sm);
+}
+
+.saga-stage-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.saga-stage-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.saga-stage-title {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--saga-text-primary);
+  letter-spacing: -0.01em;
+}
+
+.saga-stage-title.completed {
+  color: var(--saga-badge-success-text);
+  font-weight: 700;
+}
+
+.saga-stage-title.active {
+  color: var(--saga-badge-active-text);
+  font-weight: 700;
+}
+
+.saga-stage-title.failed {
+  color: var(--saga-badge-error-text);
+  font-weight: 700;
+}
+
+.saga-stage-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  font-size: 10px;
+  font-weight: 700;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  letter-spacing: 0.05em;
+}
+
+.saga-stage-badge.verified {
+  background: var(--saga-badge-success-bg);
+  color: var(--saga-badge-success-text);
+  border: 1px solid var(--saga-badge-success-border);
+}
+
+.saga-stage-badge.processing {
+  background: var(--saga-badge-active-bg);
+  color: var(--saga-badge-active-text);
+  border: 1px solid var(--saga-badge-active-border);
+  animation: shimmerPulse 1.6s infinite ease-in-out;
+}
+
+.saga-stage-desc {
+  font-size: 12px;
+  color: var(--saga-text-muted);
+  margin-top: 5px;
+  line-height: 1.45;
+}
+
+/* Action Footer */
+.saga-actions-bar {
+  margin-top: 26px;
+  padding-top: 20px;
+  border-top: 1px solid var(--saga-border);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+@media (min-width: 640px) {
+  .saga-actions-bar {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+
+.saga-btn-group {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.saga-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  background: var(--saga-btn-primary-bg);
+  color: var(--saga-btn-primary-text);
+  border: none;
+  cursor: pointer;
+  box-shadow: var(--saga-btn-primary-shadow);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  text-decoration: none;
+}
+
+.saga-btn-primary:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.08);
+}
+
+.saga-btn-primary:active {
+  transform: translateY(0);
+}
+
+.saga-btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  background: var(--saga-btn-secondary-bg);
+  color: var(--saga-btn-secondary-text);
+  border: 1px solid var(--saga-btn-secondary-border);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+}
+
+.saga-btn-secondary:hover {
+  background: var(--saga-btn-secondary-hover);
+  border-color: var(--saga-text-muted);
+  transform: translateY(-1px);
+}
+
+.saga-btn-secondary:active {
+  transform: translateY(0);
+}
+
+.saga-link-action {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--saga-hero-amount);
+  text-decoration: none;
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: opacity 0.2s ease;
+}
+
+.saga-link-action:hover {
+  text-decoration: underline;
+  opacity: 0.85;
+}
+
+
+/* ==============================================================================
+   Admin & Teller Payment Hub Companion Classes
+   ============================================================================== */
+
+.saga-status-banner {
+  padding: 18px 22px;
+  border-radius: 14px;
+  border: 1px solid var(--saga-border);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  transition: all 0.3s ease;
+}
+
+@media (min-width: 640px) {
+  .saga-status-banner {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+
+.saga-status-banner.settled {
+  background: var(--saga-badge-success-bg);
+  border-color: var(--saga-badge-success-border);
+  color: var(--saga-badge-success-text);
+}
+
+.saga-status-banner.executing {
+  background: var(--saga-badge-active-bg);
+  border-color: var(--saga-badge-active-border);
+  color: var(--saga-badge-active-text);
+}
+
+.saga-status-banner.pending-review {
+  background: var(--saga-badge-review-bg);
+  border-color: var(--saga-badge-review-border);
+  color: var(--saga-badge-review-text);
+}
+
+.saga-status-banner.failed {
+  background: var(--saga-badge-error-bg);
+  border-color: var(--saga-badge-error-border);
+  color: var(--saga-badge-error-text);
+}
+
+.saga-status-banner.reversed {
+  background: rgba(168, 85, 247, 0.12);
+  border-color: rgba(168, 85, 247, 0.35);
+  color: #a855f7;
+}
+
+[data-theme="light"] .saga-status-banner.reversed,
+.theme-light .saga-status-banner.reversed {
+  background: #faf5ff;
+  border-color: #d8b4fe;
+  color: #6b21a8;
+}
+
+.saga-status-icon-box {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  background: var(--saga-bg);
+  border: 1px solid var(--saga-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.saga-grid-summary {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin: 18px 0;
+}
+
+@media (min-width: 640px) {
+  .saga-grid-summary {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.saga-summary-card {
+  background: var(--saga-card-bg);
+  border: 1px solid var(--saga-card-border);
+  border-radius: 12px;
+  padding: 14px 16px;
+  box-shadow: var(--saga-shadow-sm);
+  transition: all 0.2s ease;
+}
+
+.saga-summary-card:hover {
+  border-color: var(--saga-text-muted);
+}
+
+.saga-summary-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--saga-text-muted);
+  display: block;
+  margin-bottom: 4px;
+}
+
+.saga-summary-value {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--saga-text-primary);
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.saga-summary-value.amount {
+  font-size: 18px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  color: var(--saga-hero-amount);
+}
+
+.saga-summary-value.mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 12.5px;
+}
+
+.saga-comp-alert {
+  padding: 14px 18px;
+  border-radius: 12px;
+  background: rgba(168, 85, 247, 0.12);
+  border: 1px solid rgba(168, 85, 247, 0.35);
+  color: #c084fc;
+  font-size: 12.5px;
+  line-height: 1.5;
+  margin-top: 18px;
+}
+
+[data-theme="light"] .saga-comp-alert,
+.theme-light .saga-comp-alert {
+  background: #faf5ff;
+  border-color: #d8b4fe;
+  color: #581c87;
+}
+
+.saga-live-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 600;
+  background: var(--saga-badge-active-bg);
+  border: 1px solid var(--saga-badge-active-border);
+  color: var(--saga-badge-active-text);
+}
+
+.saga-live-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--saga-badge-active-text);
+  animation: liveSyncPing 1.8s infinite;
+}

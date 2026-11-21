@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import {
   CheckCircle2,
   XCircle,
@@ -6,19 +6,19 @@ import {
   Loader2,
   Clock,
   ShieldCheck,
-  ArrowRight,
-  Download,
-  RotateCcw,
-  FileText,
   CreditCard,
   Building,
+  FileText,
+  RotateCcw,
+  Download,
 } from "lucide-react";
 import jsPDF from "jspdf";
+import "../../styles/sagaTracker.css";
 
 export default function CustomerSagaTracker({
   sagaData,
-  stageIndex,
-  isFinished,
+  stageIndex = 1,
+  isFinished = false,
   errorMessage,
   onReset,
   onViewStatements,
@@ -50,7 +50,7 @@ export default function CustomerSagaTracker({
     {
       id: 3,
       title: "Account Balance & Limit Validation",
-      desc: `Source account funds confirmed; amount within daily limits.`,
+      desc: "Source account funds confirmed; amount within daily limits.",
       icon: CreditCard,
     },
     {
@@ -84,6 +84,15 @@ export default function CustomerSagaTracker({
       icon: FileText,
     },
   ];
+
+  // Calculate connector line progress fill percentage
+  const totalSteps = STAGES.length;
+  let progressPercent = 0;
+  if (isFinished) {
+    progressPercent = 100;
+  } else if (stageIndex > 1) {
+    progressPercent = Math.min(100, Math.round(((stageIndex - 1) / (totalSteps - 1)) * 100));
+  }
 
   const downloadReceipt = () => {
     const doc = new jsPDF();
@@ -125,17 +134,13 @@ export default function CustomerSagaTracker({
   };
 
   return (
-    <div className="card p-6 max-w-2xl mx-auto space-y-6 border bg-surface">
+    <div className="saga-tracker-container">
       {/* Header with live status */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 pb-5 border-b border-border">
+      <div className="saga-header-bar">
         <div>
-          <div className="text-2xs uppercase tracking-wider font-semibold text-muted">
-            Transfer Orchestration
-          </div>
-          <h3 className="text-xl font-bold font-mono text-foreground mt-0.5">
-            {utr}
-          </h3>
-          <p className="text-xs text-muted mt-0.5">
+          <div className="saga-eyebrow">Transfer Orchestration</div>
+          <div className="saga-utr-code">{utr}</div>
+          <div className="saga-timestamp">
             {new Date(timestamp).toLocaleDateString("en-IN", {
               day: "numeric",
               month: "short",
@@ -144,22 +149,22 @@ export default function CustomerSagaTracker({
               minute: "2-digit",
               second: "2-digit",
             })}
-          </p>
+          </div>
         </div>
 
         <div>
           {isFailed ? (
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-red-500/10 text-red-400 border border-red-500/30">
+            <span className="saga-pill-badge failed">
               <XCircle size={14} />
               FAILED
             </span>
           ) : isFinished ? (
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+            <span className="saga-pill-badge success">
               <CheckCircle2 size={14} />
               SETTLED
             </span>
           ) : (
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-blue-500/10 text-blue-400 border border-blue-500/30">
+            <span className="saga-pill-badge active">
               <Loader2 size={14} className="animate-spin" />
               EXECUTING SAGA
             </span>
@@ -167,98 +172,126 @@ export default function CustomerSagaTracker({
         </div>
       </div>
 
-      {/* Amount and Account Card */}
-      <div className="p-4 rounded-xl bg-surface-alt border border-border flex items-center justify-between">
+      {/* Amount and Account Hero Card */}
+      <div className="saga-hero-card">
         <div>
-          <span className="text-xs text-muted block">Transfer Amount</span>
-          <span className="text-2xl font-bold font-mono text-primary">
+          <span className="saga-hero-label">Transfer Amount</span>
+          <span className="saga-hero-amount">
             ₹{numAmount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
           </span>
         </div>
-        <div className="text-right text-xs">
-          <div className="text-muted">
-            From: <span className="font-mono font-medium text-foreground">{fromAccount}</span>
+        <div className="saga-hero-accounts">
+          <div className="saga-account-row">
+            <span>From:</span>
+            <span className="saga-account-pill">{fromAccount}</span>
           </div>
-          <div className="text-muted mt-0.5">
-            To: <span className="font-mono font-medium text-foreground">{toAccount}</span>
+          <div className="saga-account-row">
+            <span>To:</span>
+            <span className="saga-account-pill">{toAccount}</span>
           </div>
         </div>
       </div>
 
       {/* Error banner if failed */}
       {isFailed && (
-        <div className="p-3.5 bg-red-500/10 border border-red-500/30 text-red-400 rounded-lg text-sm flex items-start gap-2.5">
-          <AlertTriangle size={18} className="mt-0.5 shrink-0" />
+        <div className="saga-error-banner">
+          <AlertTriangle size={20} className="shrink-0" />
           <div>
-            <div className="font-semibold text-xs">Transfer Execution Failed</div>
-            <div className="text-xs opacity-90 mt-0.5">{errorMessage}</div>
+            <strong style={{ display: "block", marginBottom: "2px" }}>
+              Transfer Execution Failed
+            </strong>
+            <span>{errorMessage}</span>
           </div>
         </div>
       )}
 
       {/* Vertical Ordered Saga Timeline */}
-      <div className="space-y-4 pt-2">
-        <h4 className="text-xs font-bold uppercase tracking-wider text-muted">
+      <div className="saga-timeline-wrapper">
+        <div className="saga-timeline-heading">
           Distributed Transaction Stages
-        </h4>
+        </div>
 
-        <div className="relative pl-6 space-y-5 before:absolute before:left-2.5 before:top-2 before:bottom-2 before:w-0.5 before:bg-border">
-          {STAGES.map((s) => {
+        <div className="saga-stages-list">
+          {/* Animated Green/Blue progress fill line */}
+          <div
+            className="saga-connector-fill"
+            style={{ height: `${progressPercent}%` }}
+          />
+
+          {STAGES.map((s, idx) => {
             const isStepDone = isFinished ? true : stageIndex > s.id;
             const isStepActive = !isFinished && !isFailed && stageIndex === s.id;
             const isStepFailed = isFailed && stageIndex === s.id;
 
             return (
-              <div key={s.id} className="relative flex items-start gap-3">
-                {/* Status Dot */}
-                <span
-                  className={`absolute -left-6 mt-0.5 w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
+              <div
+                key={s.id}
+                className="saga-stage-item"
+                style={{ animationDelay: `${idx * 40}ms` }}
+              >
+                {/* Node Status Dot on timeline */}
+                <div
+                  className={`saga-node-dot ${
                     isStepFailed
-                      ? "bg-red-500 text-white ring-4 ring-red-500/20"
+                      ? "failed"
                       : isStepDone
-                      ? "bg-emerald-500 text-white ring-4 ring-emerald-500/20"
+                      ? "completed"
                       : isStepActive
-                      ? "bg-blue-600 text-white ring-4 ring-blue-500/20"
-                      : "bg-surface-alt border border-border text-muted"
+                      ? "active"
+                      : "pending"
                   }`}
                 >
                   {isStepFailed ? (
-                    <XCircle size={12} />
+                    <XCircle size={13} strokeWidth={2.5} />
                   ) : isStepDone ? (
-                    <CheckCircle2 size={12} />
+                    <CheckCircle2 size={13} strokeWidth={2.5} />
                   ) : isStepActive ? (
-                    <Loader2 size={12} className="animate-spin" />
+                    <Loader2 size={13} className="animate-spin" strokeWidth={2.5} />
                   ) : (
-                    <span className="text-[10px]">{s.id}</span>
+                    <span>{s.id}</span>
                   )}
-                </span>
+                </div>
 
-                {/* Stage Info */}
-                <div className="flex-1">
-                  <div
-                    className={`text-sm font-semibold flex items-center gap-2 ${
-                      isStepFailed
-                        ? "text-red-400"
-                        : isStepDone
-                        ? "text-emerald-400 font-bold"
-                        : isStepActive
-                        ? "text-blue-400 font-bold"
-                        : "text-muted"
-                    }`}
-                  >
-                    <span>{s.title}</span>
+                {/* Stage Content Card */}
+                <div
+                  className={`saga-stage-content ${
+                    isStepActive ? "active" : ""
+                  }`}
+                >
+                  <div className="saga-stage-header">
+                    <div className="saga-stage-title-wrap">
+                      <span
+                        className={`saga-stage-title ${
+                          isStepFailed
+                            ? "failed"
+                            : isStepDone
+                            ? "completed"
+                            : isStepActive
+                            ? "active"
+                            : ""
+                        }`}
+                      >
+                        {s.title}
+                      </span>
+                    </div>
+
                     {isStepDone && (
-                      <span className="text-[10px] px-1.5 py-0.2 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-mono">
+                      <span className="saga-stage-badge verified">
                         VERIFIED
                       </span>
                     )}
                     {isStepActive && (
-                      <span className="text-[10px] px-1.5 py-0.2 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20 font-mono animate-pulse">
+                      <span className="saga-stage-badge processing">
                         PROCESSING
                       </span>
                     )}
+                    {isStepFailed && (
+                      <span className="saga-stage-badge failed">
+                        FAILED
+                      </span>
+                    )}
                   </div>
-                  <p className="text-xs text-muted mt-0.5">{s.desc}</p>
+                  <p className="saga-stage-desc">{s.desc}</p>
                 </div>
               </div>
             );
@@ -267,13 +300,13 @@ export default function CustomerSagaTracker({
       </div>
 
       {/* Action Buttons */}
-      <div className="pt-4 border-t border-border flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
+      <div className="saga-actions-bar">
+        <div className="saga-btn-group">
           {onReset && (
             <button
               type="button"
               onClick={onReset}
-              className="px-4 py-2 rounded-lg text-xs font-semibold bg-surface-alt hover:bg-surface border border-border transition-colors flex items-center gap-1.5"
+              className="saga-btn-secondary"
             >
               <RotateCcw size={14} />
               {isFailed ? "Try Again" : "Make Another Transfer"}
@@ -284,7 +317,7 @@ export default function CustomerSagaTracker({
             <button
               type="button"
               onClick={downloadReceipt}
-              className="px-4 py-2 rounded-lg text-xs font-semibold bg-primary text-white hover:bg-primary-dark transition-colors flex items-center gap-1.5 shadow-sm"
+              className="saga-btn-primary"
             >
               <Download size={14} />
               Download PDF Receipt
@@ -296,7 +329,7 @@ export default function CustomerSagaTracker({
           <button
             type="button"
             onClick={onViewStatements}
-            className="text-xs text-muted hover:text-foreground underline"
+            className="saga-link-action"
           >
             View in Statements →
           </button>

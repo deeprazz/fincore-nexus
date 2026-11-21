@@ -20,6 +20,7 @@ import FraudCheckBadge from "./FraudCheckBadge";
 import { getPayment, getPaymentSaga } from "../../api/payments";
 import { useAuth } from "../../context/AuthContext";
 import { money } from "../../utils/money";
+import "../../styles/sagaTracker.css";
 
 export default function PaymentSagaTracker({
   payment: propPayment,
@@ -297,14 +298,18 @@ export default function PaymentSagaTracker({
     }
   };
 
-  const getHeaderStyle = () => {
-    if (isSettled) return "border-emerald-500/30 bg-emerald-500/10 text-emerald-300";
-    if (isNeftPending) return "border-blue-500/30 bg-blue-500/10 text-blue-300";
-    if (isPendingReview) return "border-amber-500/30 bg-amber-500/10 text-amber-300";
-    if (isReversed) return "border-purple-500/30 bg-purple-500/10 text-purple-300";
-    if (isCompPending) return "border-rose-500/30 bg-rose-500/10 text-rose-300";
-    if (isFailed) return "border-red-500/30 bg-red-500/10 text-red-300";
-    return "border-blue-500/30 bg-blue-500/10 text-blue-300";
+  const completedStagesCount = timelineStages.filter((s) => s.state === "COMPLETED").length;
+  const progressPercent = isSettled
+    ? 100
+    : Math.min(100, Math.round((completedStagesCount / Math.max(1, timelineStages.length - 1)) * 100));
+
+  const getHeaderBannerClass = () => {
+    if (isSettled) return "settled";
+    if (isNeftPending) return "executing";
+    if (isPendingReview) return "pending-review";
+    if (isReversed || isCompPending) return "reversed";
+    if (isFailed) return "failed";
+    return "executing";
   };
 
   const getHeaderTitle = () => {
@@ -318,37 +323,42 @@ export default function PaymentSagaTracker({
   };
 
   return (
-    <div className="payment-saga-tracker space-y-6 max-w-3xl mx-auto">
+    <div className="saga-tracker-container space-y-6" style={{ maxWidth: "780px" }}>
       {/* Dynamic Status Header */}
-      <div className={`p-5 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${getHeaderStyle()}`}>
-        <div className="flex items-start sm:items-center gap-3">
-          <div className="p-2.5 rounded-lg bg-surface/50 border border-current/20">
+      <div className={`saga-status-banner ${getHeaderBannerClass()}`}>
+        <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
+          <div className="saga-status-icon-box">
             {isSettled ? (
-              <CheckCircle2 size={24} className="text-emerald-400" />
+              <CheckCircle2 size={24} style={{ color: "#10b981" }} />
             ) : isNeftPending ? (
-              <Clock size={24} className="text-blue-400" />
+              <Clock size={24} style={{ color: "#3b82f6" }} />
             ) : isPendingReview ? (
-              <ShieldAlert size={24} className="text-amber-400" />
+              <ShieldAlert size={24} style={{ color: "#f59e0b" }} />
             ) : isReversed ? (
-              <RotateCcw size={24} className="text-purple-400" />
+              <RotateCcw size={24} style={{ color: "#a855f7" }} />
             ) : isFailed ? (
-              <XCircle size={24} className="text-red-400" />
+              <XCircle size={24} style={{ color: "#ef4444" }} />
             ) : (
-              <Loader2 size={24} className="text-blue-400 animate-spin" />
+              <Loader2 size={24} className="animate-spin" style={{ color: "#3b82f6" }} />
             )}
           </div>
           <div>
-            <h2 className="text-lg font-bold">{getHeaderTitle()}</h2>
-            <p className="text-xs opacity-90 mt-0.5">
-              {p.failureReason || (isNeftPending ? "NEFT transfer credited. Half-hourly batch clearing will settle finality." : "Distributed Saga choreography executing across Core Banking, Fraud Engine, and Settlement.")}
+            <h2 style={{ fontSize: "17px", fontWeight: "800", margin: 0, letterSpacing: "-0.01em" }}>
+              {getHeaderTitle()}
+            </h2>
+            <p style={{ fontSize: "12px", opacity: 0.9, margin: "3px 0 0 0" }}>
+              {p.failureReason ||
+                (isNeftPending
+                  ? "NEFT transfer credited. Half-hourly batch clearing will settle finality."
+                  : "Distributed Saga choreography executing across Core Banking, Fraud Engine, and Settlement.")}
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-2 self-end sm:self-auto">
+        <div style={{ display: "flex", alignItems: "center", gap: "8px", alignSelf: "flex-end" }}>
           {polling && (
-            <span className="flex items-center gap-1.5 text-xs text-blue-400 font-medium px-2.5 py-1 rounded-full bg-blue-500/20 border border-blue-500/30">
-              <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-ping" />
+            <span className="saga-live-badge">
+              <span className="saga-live-dot" />
               Live Sync
             </span>
           )}
@@ -356,43 +366,48 @@ export default function PaymentSagaTracker({
         </div>
       </div>
 
-      {/* Transaction Summary Snapshot */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <div className="p-3.5 rounded-lg bg-surface border border-border">
-          <span className="text-xs text-muted block">Amount</span>
-          <span className="text-xl font-bold font-mono text-primary">
+      {/* Transaction Summary Snapshot Grid */}
+      <div className="saga-grid-summary">
+        <div className="saga-summary-card">
+          <span className="saga-summary-label">Amount</span>
+          <span className="saga-summary-value amount">
             ₹{Number(p.amount || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
           </span>
         </div>
-        <div className="p-3.5 rounded-lg bg-surface border border-border">
-          <span className="text-xs text-muted block">Rail & Mode</span>
-          <span className="text-sm font-semibold">{p.paymentRail}</span>
+        <div className="saga-summary-card">
+          <span className="saga-summary-label">Rail & Mode</span>
+          <span className="saga-summary-value">{p.paymentRail}</span>
         </div>
-        <div className="p-3.5 rounded-lg bg-surface border border-border">
-          <span className="text-xs text-muted block">UTR Reference</span>
-          <span className="text-xs font-mono font-bold block truncate" title={p.utr}>
+        <div className="saga-summary-card">
+          <span className="saga-summary-label">UTR Reference</span>
+          <span className="saga-summary-value mono" title={p.utr}>
             {p.utr || "Allocating..."}
           </span>
         </div>
-        <div className="p-3.5 rounded-lg bg-surface border border-border">
-          <span className="text-xs text-muted block">Destination</span>
-          <span className="text-xs font-mono block truncate" title={p.targetAccountNumber || p.targetVpa}>
+        <div className="saga-summary-card">
+          <span className="saga-summary-label">Destination</span>
+          <span className="saga-summary-value mono" title={p.targetAccountNumber || p.targetVpa}>
             {p.targetAccountNumber || p.targetVpa || "N/A"}
           </span>
         </div>
       </div>
 
       {/* Vertical Ordered Saga Timeline Tracker */}
-      <div className="p-6 rounded-xl bg-surface border border-border space-y-4">
-        <div className="flex items-center justify-between pb-3 border-b border-border">
+      <div className="saga-timeline-wrapper">
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
           <div>
-            <h3 className="font-bold text-base">Distributed Payment Saga Execution Timeline</h3>
-            <p className="text-xs text-muted">Real-time trace of all 9 transactional stages across microservice boundaries</p>
+            <h3 className="saga-timeline-heading" style={{ margin: 0 }}>
+              Distributed Payment Saga Execution Timeline
+            </h3>
+            <p style={{ fontSize: "12px", color: "var(--saga-text-muted)", margin: "2px 0 0 0" }}>
+              Real-time trace of all 9 transactional stages across microservice boundaries
+            </p>
           </div>
           <button
             type="button"
             onClick={fetchStatus}
-            className="secondary-button text-xs py-1 px-2.5 flex items-center gap-1.5"
+            className="saga-btn-secondary"
+            style={{ padding: "6px 12px", fontSize: "11.5px" }}
             title="Refresh Saga state"
           >
             <RefreshCw size={12} className={polling ? "animate-spin" : ""} />
@@ -400,8 +415,14 @@ export default function PaymentSagaTracker({
           </button>
         </div>
 
-        <div className="relative pl-6 space-y-6 before:absolute before:left-2.5 before:top-3 before:bottom-3 before:w-0.5 before:bg-border">
-          {timelineStages.map((step) => {
+        <div className="saga-stages-list">
+          {/* Animated Green/Blue progress fill line */}
+          <div
+            className="saga-connector-fill"
+            style={{ height: `${progressPercent}%` }}
+          />
+
+          {timelineStages.map((step, idx) => {
             const isCompleted = step.state === "COMPLETED";
             const isCurrent = step.state === "IN_PROGRESS";
             const isReview = step.state === "REVIEW";
@@ -409,58 +430,86 @@ export default function PaymentSagaTracker({
             const isReversedStep = step.state === "COMPENSATING" || step.state === "REVERSED";
 
             return (
-              <div key={step.id} className="relative flex items-start gap-4">
+              <div
+                key={step.id}
+                className="saga-stage-item"
+                style={{ animationDelay: `${idx * 30}ms` }}
+              >
                 {/* Node indicator */}
                 <div
-                  className={`absolute -left-6 mt-0.5 flex items-center justify-center w-5 h-5 rounded-full border ${
+                  className={`saga-node-dot ${
                     isCompleted
-                      ? "bg-surface border-emerald-500"
+                      ? "completed"
                       : isCurrent
-                      ? "bg-surface border-blue-500 animate-pulse"
+                      ? "active"
                       : isReview
-                      ? "bg-surface border-amber-500"
-                      : isReversedStep
-                      ? "bg-surface border-purple-500"
+                      ? "review"
                       : isFailedStep
-                      ? "bg-surface border-red-500"
-                      : "bg-surface border-border"
+                      ? "failed"
+                      : isReversedStep
+                      ? "failed"
+                      : "pending"
                   }`}
                 >
-                  {getStepIcon(step.state)}
+                  {isCompleted ? (
+                    <CheckCircle2 size={13} strokeWidth={2.5} />
+                  ) : isCurrent ? (
+                    <Loader2 size={13} className="animate-spin" strokeWidth={2.5} />
+                  ) : isReview ? (
+                    <ShieldAlert size={13} strokeWidth={2.5} />
+                  ) : isReversedStep ? (
+                    <RotateCcw size={13} strokeWidth={2.5} />
+                  ) : isFailedStep ? (
+                    <XCircle size={13} strokeWidth={2.5} />
+                  ) : (
+                    <span>{step.id}</span>
+                  )}
                 </div>
 
                 {/* Node content */}
-                <div className="flex-1 bg-surface-alt/40 p-3.5 rounded-lg border border-border/70 hover:border-border transition-all">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-mono text-muted">Stage {step.id}:</span>
-                      <strong className={`text-sm ${
-                        isCompleted ? "text-emerald-300" :
-                        isCurrent ? "text-blue-300" :
-                        isReview ? "text-amber-300" :
-                        isReversedStep ? "text-purple-300" :
-                        isFailedStep ? "text-red-300" :
-                        "text-muted"
-                      }`}>
+                <div className={`saga-stage-content ${isCurrent ? "active" : ""}`}>
+                  <div className="saga-stage-header">
+                    <div className="saga-stage-title-wrap">
+                      <span style={{ fontSize: "11px", fontFamily: "monospace", color: "var(--saga-text-muted)" }}>
+                        Stage {step.id}:
+                      </span>
+                      <strong
+                        className={`saga-stage-title ${
+                          isCompleted
+                            ? "completed"
+                            : isCurrent
+                            ? "active"
+                            : isFailedStep
+                            ? "failed"
+                            : ""
+                        }`}
+                      >
                         {step.title}
                       </strong>
                     </div>
 
-                    <div className="flex items-center gap-2">
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                       {step.detail && (
-                        <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-surface border border-border text-muted">
+                        <span
+                          className="saga-stage-badge"
+                          style={{
+                            background: "var(--saga-account-pill-bg)",
+                            color: "var(--saga-text-muted)",
+                            border: "1px solid var(--saga-border)",
+                          }}
+                        >
                           {step.detail}
                         </span>
                       )}
                       {step.timestamp && (
-                        <span className="text-[11px] text-muted">{step.timestamp}</span>
+                        <span style={{ fontSize: "11px", color: "var(--saga-text-muted)" }}>
+                          {step.timestamp}
+                        </span>
                       )}
                     </div>
                   </div>
 
-                  <p className="text-xs text-muted mt-1.5 leading-relaxed">
-                    {step.desc}
-                  </p>
+                  <p className="saga-stage-desc">{step.desc}</p>
                 </div>
               </div>
             );
@@ -469,12 +518,12 @@ export default function PaymentSagaTracker({
 
         {/* Reversal / Compensation Box when applicable */}
         {(isReversed || isCompPending) && (
-          <div className="p-4 rounded-lg bg-purple-500/10 border border-purple-500/30 text-purple-200 text-xs space-y-2 mt-4">
-            <div className="flex items-center gap-2 font-bold text-sm text-purple-300">
+          <div className="saga-comp-alert">
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: "700", marginBottom: "4px" }}>
               <RotateCcw size={16} />
               Saga Compensation Action Executed
             </div>
-            <p>
+            <p style={{ margin: 0 }}>
               When destination bank clearing failed, the Saga Orchestrator triggered a compensating credit command to Core Banking.
               {isReversed && " The source account balance has been restored."}
               {isCompPending && " Notice: Core Banking refund failed and is staged in COMPENSATION_PENDING for operator retry."}
@@ -493,40 +542,38 @@ export default function PaymentSagaTracker({
       )}
 
       {/* Action Footer */}
-      <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
-        <div className="flex items-center gap-2">
+      <div className="saga-actions-bar">
+        <div className="saga-btn-group">
           {onViewReceipt && (
-            <Button
+            <button
               type="button"
-              variant="primary"
               onClick={() => onViewReceipt(p)}
-              className="flex items-center gap-2"
+              className="saga-btn-primary"
             >
-              <FileText size={16} />
+              <FileText size={15} />
               View Printable Receipt / Advice
-            </Button>
+            </button>
           )}
 
           {onNewPayment && (
-            <Button
+            <button
               type="button"
-              variant="secondary"
               onClick={onNewPayment}
+              className="saga-btn-secondary"
             >
               Make Another Transfer
-            </Button>
+            </button>
           )}
         </div>
 
         {onViewHistory && (
-          <Button
+          <button
             type="button"
-            variant="ghost"
             onClick={onViewHistory}
-            className="text-xs text-muted hover:text-foreground"
+            className="saga-link-action"
           >
             Open Transaction History →
-          </Button>
+          </button>
         )}
       </div>
     </div>
