@@ -564,15 +564,44 @@ tbody tr:hover {
 }
 .action-cell {
   display: flex;
-  gap: 8px;
+  gap: 6px;
+  flex-wrap: wrap;
 }
-.action-cell button {
-  border: 1px solid #344d6f;
-  background: #162943;
-  color: #80b9ff;
+.action-cell button,
+.action-cell .btn-action {
+  border: 1px solid #28374d;
+  background: #141f30;
+  color: #93c5fd;
   border-radius: 6px;
-  padding: 6px 8px;
-  font-size: 10px;
+  padding: 5px 9px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.action-cell button:hover,
+.action-cell .btn-action:hover {
+  background: #1e2e46;
+  border-color: #3b82f6;
+  color: #ffffff;
+}
+.action-cell button.freeze,
+.action-cell .btn-action.freeze {
+  color: #fbbf24;
+  border-color: rgba(245, 158, 11, 0.4);
+  background: rgba(245, 158, 11, 0.12);
+}
+.action-cell button.close,
+.action-cell .btn-action.close {
+  color: #f87171;
+  border-color: rgba(239, 68, 68, 0.4);
+  background: rgba(239, 68, 68, 0.12);
+}
+.action-cell button.unfreeze,
+.action-cell .btn-action.unfreeze {
+  color: #34d399;
+  border-color: rgba(16, 185, 129, 0.4);
+  background: rgba(16, 185, 129, 0.12);
 }
 .empty-state {
   text-align: center;
@@ -581,20 +610,26 @@ tbody tr:hover {
 }
 .transaction-type {
   display: inline-block;
-  padding: 5px 8px;
-  border-radius: 5px;
-  background: #253143;
-  font-size: 10px;
+  padding: 4px 9px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  background: #1e293b;
+  border: 1px solid #334155;
+  color: #cbd5e1;
 }
 .transaction-type.deposit,
 .transaction-type.transfer_in {
-  background: #14372d;
-  color: #70dfb4;
+  background: rgba(16, 185, 129, 0.14);
+  border: 1px solid rgba(16, 185, 129, 0.35);
+  color: #34d399;
 }
 .transaction-type.withdrawal,
 .transaction-type.transfer_out {
-  background: #3a2528;
-  color: #ff9d9d;
+  background: rgba(239, 68, 68, 0.14);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  color: #f87171;
 }
 .transaction-lookup {
   margin-bottom: 20px;
@@ -663,17 +698,27 @@ tbody tr:hover {
   margin-bottom: 24px;
 }
 .operation-tab {
-  background: #192332;
-  border: 1px solid #344257;
-  color: #b8c6d9;
-  padding: 10px 18px;
+  background: #131c2a;
+  border: 1px solid #28374d;
+  color: #94a3b8;
+  padding: 9px 18px;
   border-radius: 8px;
-  font-size: 12px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.operation-tab:hover {
+  background: #1a273b;
+  color: #f8fafc;
+  border-color: #3b82f6;
 }
 .operation-tab.selected {
-  background: #17345b;
-  border-color: #337be9;
-  color: #80b9ff;
+  background: #2563eb;
+  border-color: #3b82f6;
+  color: #ffffff;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.35);
 }
 .operation-form {
   display: grid;
@@ -5588,4 +5633,160 @@ table tr:hover {
   background: #fee2e2 !important;
   border-color: #fecaca !important;
   color: #b91c1c !important;
+}
+
+/* --- Payment Wizard Stepper --- */
+.payment-stepper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border-color, #1f293d);
+  font-size: 12px;
+}
+.payment-step {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted, #94a3b8);
+  font-weight: 500;
+}
+.payment-step.active {
+  color: #3b82f6;
+  font-weight: 700;
+}
+.payment-step-num {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  background: var(--surface-color, #0c121b);
+  border: 1px solid var(--border-color, #1f293d);
+  color: var(--muted, #94a3b8);
+}
+.payment-step.active .payment-step-num {
+  background: #2563eb;
+  border-color: #3b82f6;
+  color: #ffffff;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.25);
+}
+.payment-step-arrow {
+  color: var(--muted, #94a3b8);
+  opacity: 0.5;
+  font-size: 14px;
+}
+
+/* Utility color helpers */
+.border-border { border-color: var(--border-color, #1f293d) !important; }
+.text-primary { color: var(--accent-blue, #3b82f6) !important; }
+.text-foreground { color: var(--text-primary, #f8fafc) !important; }
+
+/* --- Light Mode Overrides for Action Cells, Transaction Types, Operations & Stepper --- */
+[data-theme="light"] .border-border { border-color: #e2e8f0 !important; }
+[data-theme="light"] .text-primary { color: #2563eb !important; }
+[data-theme="light"] .text-foreground { color: #0f172a !important; }
+
+[data-theme="light"] .payment-stepper { border-bottom-color: #e2e8f0 !important; }
+[data-theme="light"] .payment-step { color: #64748b !important; }
+[data-theme="light"] .payment-step.active { color: #2563eb !important; }
+[data-theme="light"] .payment-step-num { background: #f1f5f9 !important; border-color: #cbd5e1 !important; color: #64748b !important; }
+[data-theme="light"] .payment-step.active .payment-step-num { background: #2563eb !important; border-color: #1d4ed8 !important; color: #ffffff !important; }
+[data-theme="light"] .payment-step-arrow { color: #94a3b8 !important; }
+
+[data-theme="light"] .action-cell button,
+[data-theme="light"] .action-cell .btn-action {
+  background: #f1f5f9 !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #1e40af !important;
+  font-weight: 600 !important;
+}
+[data-theme="light"] .action-cell button:hover,
+[data-theme="light"] .action-cell .btn-action:hover {
+  background: #e2e8f0 !important;
+  border-color: #94a3b8 !important;
+  color: #1d4ed8 !important;
+}
+[data-theme="light"] .action-cell button.freeze,
+[data-theme="light"] .action-cell .btn-action.freeze {
+  color: #b45309 !important;
+  background: #fef3c7 !important;
+  border-color: #fde68a !important;
+}
+[data-theme="light"] .action-cell button.close,
+[data-theme="light"] .action-cell .btn-action.close {
+  color: #b91c1c !important;
+  background: #fee2e2 !important;
+  border-color: #fecaca !important;
+}
+[data-theme="light"] .action-cell button.unfreeze,
+[data-theme="light"] .action-cell .btn-action.unfreeze {
+  color: #047857 !important;
+  background: #ecfdf5 !important;
+  border-color: #a7f3d0 !important;
+}
+
+[data-theme="light"] .transaction-type {
+  background: #f1f5f9 !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #334155 !important;
+  font-weight: 700 !important;
+}
+[data-theme="light"] .transaction-type.deposit,
+[data-theme="light"] .transaction-type.transfer_in {
+  background: #ecfdf5 !important;
+  border: 1px solid #a7f3d0 !important;
+  color: #047857 !important;
+}
+[data-theme="light"] .transaction-type.withdrawal,
+[data-theme="light"] .transaction-type.transfer_out {
+  background: #fef2f2 !important;
+  border: 1px solid #fecaca !important;
+  color: #b91c1c !important;
+}
+
+[data-theme="light"] .operation-tab {
+  background: #f8fafc !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #475569 !important;
+  font-weight: 500 !important;
+}
+[data-theme="light"] .operation-tab:hover {
+  background: #f1f5f9 !important;
+  color: #0f172a !important;
+  border-color: #94a3b8 !important;
+}
+[data-theme="light"] .operation-tab.selected {
+  background: #2563eb !important;
+  border-color: #1d4ed8 !important;
+  color: #ffffff !important;
+  font-weight: 600 !important;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.25) !important;
+}
+
+.payment-sla-notice {
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: rgba(37, 99, 235, 0.1);
+  border: 1px solid rgba(37, 99, 235, 0.25);
+  color: #60a5fa;
+}
+[data-theme="light"] .payment-sla-notice {
+  background: #eff6ff !important;
+  border-color: #bfdbfe !important;
+  color: #1d4ed8 !important;
+}
+
+/* Crisp form labels in Light Mode */
+[data-theme="light"] .statement-filters label,
+[data-theme="light"] .operation-form label {
+  color: #334155 !important;
+  font-weight: 600 !important;
 }

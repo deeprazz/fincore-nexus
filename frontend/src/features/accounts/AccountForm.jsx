@@ -75,16 +75,7 @@ export function AccountForm({ customers = [], onAccountCreated }) {
           const selected = customers.find((c) => c.id === customerId);
           if (selected && selected.kycStatus !== "VERIFIED") {
             return (
-              <div
-                style={{
-                  padding: "10px 14px",
-                  background: "rgba(245, 158, 11, 0.12)",
-                  border: "1px solid rgba(245, 158, 11, 0.35)",
-                  borderRadius: "8px",
-                  fontSize: "12px",
-                  color: "#fbbf24",
-                }}
-              >
+              <div className="alert-warning" style={{ gridColumn: "1 / -1", margin: "4px 0" }}>
                 ⚠️ <strong>KYC Compliance Warning:</strong> {selected.name} has KYC status{" "}
                 <strong>{selected.kycStatus || "PENDING"}</strong>. Please confirm their KYC in the <strong>KYC Hub</strong> or <strong>Customers</strong> tab before issuing an account.
               </div>

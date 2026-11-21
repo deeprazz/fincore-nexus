@@ -168,25 +168,25 @@ export default function PaymentForm({
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       {/* Wizard Progress Stepper */}
-      <div className="flex items-center justify-between pb-4 border-b border-border text-xs">
-        <div className={`flex items-center gap-2 ${step === "details" ? "text-primary font-bold" : "text-muted"}`}>
-          <span className={`w-6 h-6 rounded-full inline-flex items-center justify-center text-xs font-semibold shrink-0 ${step === "details" ? "bg-primary text-white ring-2 ring-primary/20" : "bg-surface-alt border border-border text-muted"}`}>1</span>
+      <div className="payment-stepper">
+        <div className={`payment-step ${step === "details" ? "active" : ""}`}>
+          <span className="payment-step-num">1</span>
           <span>Enter Details</span>
         </div>
-        <span className="text-muted/60">→</span>
-        <div className={`flex items-center gap-2 ${step === "review" ? "text-primary font-bold" : "text-muted"}`}>
-          <span className={`w-6 h-6 rounded-full inline-flex items-center justify-center text-xs font-semibold shrink-0 ${step === "review" ? "bg-primary text-white ring-2 ring-primary/20" : "bg-surface-alt border border-border text-muted"}`}>2</span>
+        <span className="payment-step-arrow">→</span>
+        <div className={`payment-step ${step === "review" ? "active" : ""}`}>
+          <span className="payment-step-num">2</span>
           <span>Review Transfer</span>
         </div>
-        <span className="text-muted/60">→</span>
-        <div className={`flex items-center gap-2 ${step === "authorize" ? "text-primary font-bold" : "text-muted"}`}>
-          <span className={`w-6 h-6 rounded-full inline-flex items-center justify-center text-xs font-semibold shrink-0 ${step === "authorize" ? "bg-primary text-white ring-2 ring-primary/20" : "bg-surface-alt border border-border text-muted"}`}>3</span>
+        <span className="payment-step-arrow">→</span>
+        <div className={`payment-step ${step === "authorize" ? "active" : ""}`}>
+          <span className="payment-step-num">3</span>
           <span>Authorize & Pay</span>
         </div>
       </div>
 
       {error && (
-        <div className="p-3 bg-red-500/10 border border-red-500/30 text-red-400 rounded text-sm flex items-start gap-2">
+        <div className="alert-error" style={{ display: "flex", alignItems: "center", gap: "8px" }}>
           <AlertCircle size={16} className="mt-0.5 shrink-0" />
           <span>{error}</span>
         </div>
@@ -198,24 +198,18 @@ export default function PaymentForm({
           {/* Rail Selection */}
           <div>
             <label className="block text-sm font-semibold mb-2">Select Transfer Rail</label>
-            <div className="rails-grid grid grid-cols-3 gap-3">
+            <div className="rails-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "12px" }}>
               {RAILS.map((rail) => (
                 <div
                   key={rail.id}
                   onClick={() => setPaymentRail(rail.id)}
-                  className={`p-3 rounded-lg border cursor-pointer transition-all ${
-                    paymentRail === rail.id
-                      ? "bg-primary/10 border-primary text-primary"
-                      : "bg-surface border-border hover:border-muted"
-                  }`}
+                  className={`rail-card ${paymentRail === rail.id ? "active" : ""}`}
                 >
-                  <div className="flex justify-between items-center mb-1">
-                    <span className="font-bold text-sm">{rail.id}</span>
-                    <span className="text-[10px] uppercase font-semibold px-1.5 py-0.5 rounded bg-surface-alt border">
-                      {rail.badge}
-                    </span>
+                  <div className="rail-card-header">
+                    <span className="rail-card-title">{rail.id}</span>
+                    <span className="rail-card-badge">{rail.badge}</span>
                   </div>
-                  <div className="text-xs text-muted">Max: {rail.limit}</div>
+                  <div className="rail-card-limit">Max: {rail.limit}</div>
                 </div>
               ))}
             </div>
@@ -259,11 +253,11 @@ export default function PaymentForm({
 
           {/* Warning if selected beneficiary is not verified */}
           {isBeneficiaryUnverified && (
-            <div className="p-3 bg-amber-500/10 border border-amber-500/30 text-amber-400 rounded text-xs flex items-center justify-between">
+            <div className="alert-warning" style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
               <span>
                 <strong>Warning:</strong> Selected beneficiary is <strong>{selectedBeneficiary.status}</strong>. Complete simulated penny-drop verification before transfers.
               </span>
-              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40">
+              <span className="badge-warning">
                 SIMULATED
               </span>
             </div>
@@ -411,7 +405,7 @@ export default function PaymentForm({
               </div>
             </div>
 
-            <div className="text-xs text-muted flex items-center gap-2 p-2.5 rounded bg-blue-500/10 border border-blue-500/20 text-blue-300">
+            <div className="payment-sla-notice">
               <Clock size={15} className="shrink-0" />
               <span>
                 <strong>Clearing SLA:</strong> {activeRail.time}. Transferred via FinCore Distributed Saga Orchestrator.
