@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   CheckCircle2,
   XCircle,
@@ -11,8 +11,15 @@ import {
   FileText,
   RotateCcw,
   Download,
+  Volume2,
+  VolumeX,
 } from "lucide-react";
 import jsPDF from "jspdf";
+import {
+  playValidationTick,
+  playSuccessChime,
+  playFailureSound,
+} from "../../utils/soundEffects";
 import "../../styles/sagaTracker.css";
 
 export default function CustomerSagaTracker({
@@ -33,6 +40,60 @@ export default function CustomerSagaTracker({
 
   const numAmount = Number(amount) || 0;
   const isFailed = Boolean(errorMessage);
+
+  const [soundEnabled, setSoundEnabled] = useState(() => {
+    try {
+      return localStorage.getItem("fincore_saga_sound") !== "false";
+    } catch {
+      return true;
+    }
+  });
+
+  const lastPlayedStageRef = useRef(isFinished ? 999 : 0);
+  const isInitialMountRef = useRef(true);
+
+  // Play tick sound as stages progress
+  useEffect(() => {
+    if (isInitialMountRef.current) {
+      isInitialMountRef.current = false;
+      if (!isFinished && !isFailed && stageIndex === 1) {
+        lastPlayedStageRef.current = 0;
+      }
+      return;
+    }
+
+    if (!soundEnabled) return;
+
+    if (isFailed) {
+      playFailureSound();
+      return;
+    }
+
+    if (isFinished) {
+      if (lastPlayedStageRef.current < 999) {
+        lastPlayedStageRef.current = 999;
+        playSuccessChime();
+      }
+      return;
+    }
+
+    // When stageIndex advances (e.g. 1 -> 2 means step 1 just completed and ticked)
+    if (stageIndex > 1 && stageIndex > lastPlayedStageRef.current) {
+      lastPlayedStageRef.current = stageIndex;
+      playValidationTick(stageIndex - 1);
+    }
+  }, [stageIndex, isFinished, isFailed, soundEnabled]);
+
+  const toggleSound = () => {
+    const nextState = !soundEnabled;
+    setSoundEnabled(nextState);
+    try {
+      localStorage.setItem("fincore_saga_sound", String(nextState));
+    } catch {}
+    if (nextState) {
+      playValidationTick(4, 0.08);
+    }
+  };
 
   const STAGES = [
     {
@@ -175,7 +236,17 @@ export default function CustomerSagaTracker({
           </div>
         </div>
 
-        <div>
+        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+          <button
+            type="button"
+            onClick={toggleSound}
+            className={`saga-sound-toggle-btn ${soundEnabled ? "active" : "muted"}`}
+            title={soundEnabled ? "Sound enabled (Click to mute)" : "Sound muted (Click to enable)"}
+          >
+            {soundEnabled ? <Volume2 size={13} /> : <VolumeX size={13} />}
+            <span>{soundEnabled ? "Audio On" : "Muted"}</span>
+          </button>
+
           {isFailed ? (
             <span className="saga-pill-badge failed">
               <XCircle size={13} />

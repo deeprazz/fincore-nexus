@@ -827,3 +827,71 @@
   background: var(--saga-badge-active-text);
   animation: liveSyncPing 1.8s infinite;
 }
+
+/* --- Subtle Audio Toggle Button --- */
+.saga-sound-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 9999px;
+  font-size: 10.5px;
+  font-weight: 600;
+  cursor: pointer;
+  background: var(--saga-account-pill-bg, #090e17);
+  border: 1px solid var(--saga-card-border, #1a2536);
+  color: var(--saga-text-muted, #94a3b8);
+  transition: all 0.15s ease;
+}
+
+.saga-sound-toggle-btn:hover {
+  color: var(--saga-text-primary, #f8fafc);
+  border-color: var(--saga-card-active-border, #3b82f6);
+}
+
+.saga-sound-toggle-btn.active {
+  color: #38bdf8;
+  border-color: rgba(56, 189, 248, 0.4);
+  background: rgba(56, 189, 248, 0.1);
+}
+
+.saga-sound-toggle-btn.muted {
+  opacity: 0.65;
+}
+
+[data-theme="light"] .saga-sound-toggle-btn,
+.theme-light .saga-sound-toggle-btn {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+  color: #64748b;
+}
+
+[data-theme="light"] .saga-sound-toggle-btn.active,
+.theme-light .saga-sound-toggle-btn.active {
+  color: #0284c7;
+  border-color: #bae6fd;
+  background: #f0f9ff;
+}
+
+/* --- Validation Tick Animations --- */
+@keyframes checkPopBounce {
+  0% {
+    transform: scale(0.65);
+    opacity: 0.3;
+  }
+  50% {
+    transform: scale(1.22);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.saga-stage-badge.verified {
+  animation: checkPopBounce 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.saga-stage-icon-wrap .lucide-check-circle-2 {
+  animation: checkPopBounce 0.32s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}

@@ -20,6 +20,11 @@ import FraudCheckBadge from "./FraudCheckBadge";
 import { getPayment, getPaymentSaga } from "../../api/payments";
 import { useAuth } from "../../context/AuthContext";
 import { money } from "../../utils/money";
+import {
+  playValidationTick,
+  playSuccessChime,
+  playFailureSound,
+} from "../../utils/soundEffects";
 import "../../styles/sagaTracker.css";
 
 export default function PaymentSagaTracker({
@@ -36,6 +41,8 @@ export default function PaymentSagaTracker({
   const [polling, setPolling] = useState(true);
   const [pollCount, setPollCount] = useState(0);
   const pollTimerRef = useRef(null);
+  const lastPlayedStageRef = useRef(0);
+  const isInitialMountRef = useRef(true);
 
   const paymentId = payment?.id || propPayment?.id || initialPayment?.id;
 
@@ -314,6 +321,27 @@ export default function PaymentSagaTracker({
   const progressPercent = isSettled
     ? 100
     : Math.min(100, Math.round((completedStagesCount / Math.max(1, timelineStages.length - 1)) * 100));
+
+  useEffect(() => {
+    if (isInitialMountRef.current) {
+      isInitialMountRef.current = false;
+      lastPlayedStageRef.current = isSettled ? 999 : completedStagesCount;
+      return;
+    }
+    if (isFailed) {
+      playFailureSound();
+      return;
+    }
+    if (isSettled && lastPlayedStageRef.current < 999) {
+      lastPlayedStageRef.current = 999;
+      playSuccessChime();
+      return;
+    }
+    if (completedStagesCount > lastPlayedStageRef.current) {
+      playValidationTick(completedStagesCount);
+      lastPlayedStageRef.current = completedStagesCount;
+    }
+  }, [completedStagesCount, isSettled, isFailed]);
 
   const getHeaderBannerClass = () => {
     if (isSettled) return "settled";
