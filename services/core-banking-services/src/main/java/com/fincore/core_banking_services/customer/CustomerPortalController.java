@@ -294,8 +294,10 @@ public class CustomerPortalController {
         if (authentication == null || authentication.getName() == null) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Sign in required");
         }
-        return customers.findByEmailIgnoreCase(authentication.getName())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Customer not found"));
+        String principal = authentication.getName();
+        return customers.findByEmailIgnoreCase(principal)
+                .or(() -> customers.findByNameIgnoreCase(principal))
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Customer not found for: " + principal));
     }
 
     private Customer requireVerifiedCustomer(Authentication authentication) {

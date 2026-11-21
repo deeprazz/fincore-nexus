@@ -124,6 +124,7 @@ public class SecurityConfig {
             }
 
             Customer customer = customers.findByEmailIgnoreCase(username)
+                    .or(() -> customers.findByNameIgnoreCase(username))
                     .filter(c -> c.getPasswordHash() != null)
                     .orElseThrow(() ->
                             new UsernameNotFoundException(
