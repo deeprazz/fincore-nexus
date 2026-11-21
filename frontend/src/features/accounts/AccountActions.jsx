@@ -11,8 +11,9 @@ export function AccountActions({ account, onActionComplete }) {
   const { auth } = useAuth();
   const { setError, setSuccess } = useToast();
 
-  const isFrozen = account.status === "FROZEN";
-  const isClosed = account.status === "CLOSED";
+  const status = (account.status || "ACTIVE").toUpperCase();
+  const isFrozen = status === "FROZEN";
+  const isClosed = status === "CLOSED";
 
   async function handleConfirm() {
     setLoading(true);

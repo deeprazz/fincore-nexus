@@ -99,15 +99,17 @@ export function AuthProvider({ children }) {
     }
   }, [auth]);
 
-  // On mount and whenever a customer is logged in, load portal data immediately and poll every 4 seconds for live updates
+  // On mount and whenever a customer is logged in, load portal data immediately and poll every 2.5 seconds for live updates
   useEffect(() => {
-    if (!auth || auth.role !== "CUSTOMER" || !auth.username || !auth.password) return;
+    if (!auth || auth.role !== "CUSTOMER") return;
 
     let isMounted = true;
     const fetchPortal = async () => {
-      const headers = {
-        Authorization: `Basic ${btoa(`${auth.username}:${auth.password}`)}`,
-      };
+      const headers = auth.token
+        ? { Authorization: `Bearer ${auth.token}` }
+        : auth.username && auth.password
+        ? { Authorization: `Basic ${btoa(`${auth.username}:${auth.password}`)}` }
+        : {};
       try {
         const res = await fetch(`${API_BASE_URL}/customer-portal/me`, { headers });
         if (res.ok && isMounted) {
@@ -127,7 +129,7 @@ export function AuthProvider({ children }) {
     };
 
     fetchPortal();
-    const intervalId = setInterval(fetchPortal, 4000);
+    const intervalId = setInterval(fetchPortal, 2500);
     return () => {
       isMounted = false;
       clearInterval(intervalId);
@@ -265,7 +267,9 @@ export function AuthProvider({ children }) {
     if (!auth || auth.role !== "CUSTOMER") return null;
     const headers = auth.token
       ? { Authorization: `Bearer ${auth.token}` }
-      : { Authorization: `Basic ${btoa(`${auth.username}:${auth.password}`)}` };
+      : auth.username && auth.password
+      ? { Authorization: `Basic ${btoa(`${auth.username}:${auth.password}`)}` }
+      : {};
     try {
       const res = await fetch(`${API_BASE_URL}/customer-portal/me`, { headers });
       if (res.ok) {

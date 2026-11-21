@@ -53,7 +53,12 @@ public class CustomerPortalController {
         Customer customer = currentCustomer(authentication);
         List<AccountResponse> ownAccounts = customer.getKycStatus() == KycStatus.VERIFIED
                 ? accounts.findByCustomer_Id(customer.getId()).stream()
-                    .map(a -> new AccountResponse(a.getId(), a.getAccountNumber(), a.getBalance()))
+                    .map(a -> new AccountResponse(
+                            a.getId(),
+                            a.getAccountNumber(),
+                            a.getBalance(),
+                            customer.getId(),
+                            a.getStatus() != null ? a.getStatus().name() : "ACTIVE"))
                     .toList()
                 : List.of();
         return new PortalResponse(customer.getId(), customer.getName(), customer.getEmail(),
@@ -263,6 +268,10 @@ public class CustomerPortalController {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Source account not found"));
         if (!source.getCustomer().getId().equals(customer.getId())) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You can only transfer from your own account");
+        }
+        if (source.getStatus() != com.fincore.core_banking_services.account.AccountStatus.ACTIVE) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                    "Source account is " + source.getStatus() + ". Only active accounts can perform transfers.");
         }
         String recipientNumber = request.destinationAccountNumber().trim();
         Account destination = accounts.findByAccountNumber(recipientNumber)

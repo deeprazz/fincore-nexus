@@ -98,8 +98,9 @@ export function TellerDashboard() {
   async function handleToggleFreeze() {
     if (!selectedAccount) return;
     setActionLoading(true);
+    const isFrozen = String(selectedAccount.status).toUpperCase() === "FROZEN";
     try {
-      if (selectedAccount.status === "FROZEN") {
+      if (isFrozen) {
         await unfreezeAccount(selectedAccount.id, auth);
         setSuccess(`Account ${selectedAccount.accountNumber} unfrozen.`);
       } else {
@@ -306,12 +307,12 @@ export function TellerDashboard() {
                       disabled={actionLoading}
                       onClick={handleToggleFreeze}
                       style={{
-                        color: selectedAccount.status === "FROZEN" ? "#10b981" : "#ef4444",
-                        borderColor: selectedAccount.status === "FROZEN" ? "rgba(16, 185, 129, 0.4)" : "rgba(239, 68, 68, 0.4)",
+                        color: String(selectedAccount.status).toUpperCase() === "FROZEN" ? "#10b981" : "#ef4444",
+                        borderColor: String(selectedAccount.status).toUpperCase() === "FROZEN" ? "rgba(16, 185, 129, 0.4)" : "rgba(239, 68, 68, 0.4)",
                       }}
                     >
-                      {selectedAccount.status === "FROZEN" ? <Unlock size={15} /> : <Lock size={15} />}
-                      {selectedAccount.status === "FROZEN" ? "Unfreeze Account" : "Freeze Account"}
+                      {String(selectedAccount.status).toUpperCase() === "FROZEN" ? <Unlock size={15} /> : <Lock size={15} />}
+                      {String(selectedAccount.status).toUpperCase() === "FROZEN" ? "Unfreeze Account" : "Freeze Account"}
                     </button>
                   )}
                 </div>

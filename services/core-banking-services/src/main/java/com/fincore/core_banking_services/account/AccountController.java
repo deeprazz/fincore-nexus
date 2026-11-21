@@ -60,7 +60,9 @@ public class AccountController {
         AccountResponse response = new AccountResponse(
                 account.getId(),
                 account.getAccountNumber(),
-                account.getBalance()
+                account.getBalance(),
+                account.getCustomer() != null ? account.getCustomer().getId() : null,
+                account.getStatus() != null ? account.getStatus().name() : "ACTIVE"
         );
 
         return ResponseEntity

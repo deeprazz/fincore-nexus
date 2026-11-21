@@ -18,8 +18,8 @@ export function AccountList() {
   const money = useMoney();
   const navigate = useNavigate();
 
-  const loadData = useCallback(async () => {
-    setLoading(true);
+  const loadData = useCallback(async (silent = false) => {
+    if (!silent) setLoading(true);
     try {
       const [accs, custs] = await Promise.all([
         getAccounts(auth),
@@ -28,14 +28,17 @@ export function AccountList() {
       setAccounts(Array.isArray(accs) ? accs : []);
       setCustomers(Array.isArray(custs) ? custs : []);
     } catch (err) {
-      setError(err.message || "Failed to load accounts");
+      if (!silent) setError(err.message || "Failed to load accounts");
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }, [auth, setError]);
 
   useEffect(() => {
     loadData();
+    // Live polling every 3.5s so freeze/unfreeze actions sync live
+    const interval = setInterval(() => loadData(true), 3500);
+    return () => clearInterval(interval);
   }, [loadData]);
 
   return (
@@ -71,16 +74,17 @@ export function AccountList() {
             </thead>
             <tbody>
               {accounts.map((account) => {
-                const status = account.status || "ACTIVE";
+                const status = (account.status || "ACTIVE").toUpperCase();
+                const isFrozen = status === "FROZEN";
                 return (
-                  <tr key={account.id}>
+                  <tr key={account.id} className={isFrozen ? "account-row-frozen" : ""}>
                     <td className="account-number">{account.accountNumber}</td>
                     <td className="muted-cell" title={`UUID: ${account.id}`}>
                       #{String(account.id).replace(/-/g, "").slice(0, 8).toUpperCase()}
                     </td>
                     <td>{money(account.balance)}</td>
                     <td>
-                      <span className={`kyc-status kyc-${status.toLowerCase()}`}>
+                      <span className={`status-badge status-${status.toLowerCase()}`}>
                         {status}
                       </span>
                     </td>

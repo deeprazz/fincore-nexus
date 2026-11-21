@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeftRight } from "lucide-react";
+import { ArrowLeftRight, AlertTriangle } from "lucide-react";
 import { PinSettings } from "./PinSettings";
 import CustomerSagaTracker from "./CustomerSagaTracker";
 import { portalTransfer } from "../../api/portal";
@@ -24,6 +24,7 @@ export function PortalTransfer() {
   const canBank = customerPortal?.kycStatus === "VERIFIED";
   const primaryAccount = customerAccounts[0];
   const hasPin = Boolean(customerPortal?.hasTransactionPin);
+  const isFrozen = String(primaryAccount?.status).toUpperCase() === "FROZEN";
 
   const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -34,6 +35,10 @@ export function PortalTransfer() {
 
     if (!primaryAccount) {
       setError("No active bank account available for transfer.");
+      return;
+    }
+    if (isFrozen) {
+      setError("This account is currently FROZEN by Bank Management. Transfers are restricted.");
       return;
     }
     const parsed = Number(amount);
@@ -157,6 +162,23 @@ export function PortalTransfer() {
               </div>
               <span className="customer-muted">Review details before sending</span>
             </div>
+
+            {isFrozen && (
+              <div className="portal-account-frozen-alert" style={{ marginBottom: "16px" }} role="alert">
+                <div className="alert-icon-box">
+                  <AlertTriangle size={20} />
+                </div>
+                <div>
+                  <strong>Transfers Disabled: Account Frozen</strong>
+                  <p>
+                    Your account ({primaryAccount?.accountNumber}) is currently FROZEN by Bank Management.
+                    Outgoing payments and fund transfers are paused.
+                    Please contact branch support to unfreeze your account.
+                  </p>
+                </div>
+              </div>
+            )}
+
             <p className="customer-muted">
               Double-check the recipient account number and amount before you confirm.
             </p>
@@ -180,7 +202,7 @@ export function PortalTransfer() {
                   placeholder="e.g. 1000-0000-0002"
                   required
                   maxLength={30}
-                  disabled={loading}
+                  disabled={loading || isFrozen}
                 />
               </label>
               <label>
@@ -194,7 +216,7 @@ export function PortalTransfer() {
                   onChange={(e) => setAmount(e.target.value)}
                   placeholder="0.00"
                   required
-                  disabled={loading}
+                  disabled={loading || isFrozen}
                 />
               </label>
               <label>
@@ -209,15 +231,15 @@ export function PortalTransfer() {
                   onChange={(e) => setPin(e.target.value.replace(/\D/g, "").slice(0, 4))}
                   placeholder={hasPin ? "Enter transaction PIN" : "Set your PIN below first"}
                   required
-                  disabled={!hasPin || loading}
+                  disabled={!hasPin || loading || isFrozen}
                 />
               </label>
               <button
                 className="primary-button customer-transfer-submit"
                 type="submit"
-                disabled={loading || !hasPin}
+                disabled={loading || !hasPin || isFrozen}
               >
-                {loading ? "Sending…" : "Send money"}
+                {loading ? "Sending…" : isFrozen ? "Account Frozen" : "Send money"}
                 <ArrowLeftRight size={15} />
               </button>
             </form>

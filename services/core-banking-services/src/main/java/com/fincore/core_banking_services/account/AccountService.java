@@ -98,8 +98,12 @@ public class AccountService {
 
     public List<AccountResponse> getAccountsByCustomerId(UUID customerId) {
         return repository.findByCustomerId(customerId).stream()
-                .filter(a -> a.getStatus() == AccountStatus.ACTIVE)
-                .map(a -> new AccountResponse(a.getId(), a.getAccountNumber(), a.getBalance()))
+                .map(a -> new AccountResponse(
+                        a.getId(),
+                        a.getAccountNumber(),
+                        a.getBalance(),
+                        a.getCustomer() != null ? a.getCustomer().getId() : null,
+                        a.getStatus() != null ? a.getStatus().name() : "ACTIVE"))
                 .collect(Collectors.toList());
     }
 
@@ -155,7 +159,9 @@ public class AccountService {
         return new AccountResponse(
                 account.getId(),
                 account.getAccountNumber(),
-                account.getBalance()
+                account.getBalance(),
+                account.getCustomer() != null ? account.getCustomer().getId() : null,
+                account.getStatus() != null ? account.getStatus().name() : "ACTIVE"
         );
     }
 
@@ -208,7 +214,9 @@ public class AccountService {
         return new AccountResponse(
                 account.getId(),
                 account.getAccountNumber(),
-                account.getBalance()
+                account.getBalance(),
+                account.getCustomer() != null ? account.getCustomer().getId() : null,
+                account.getStatus() != null ? account.getStatus().name() : "ACTIVE"
         );
     }
 
@@ -451,7 +459,8 @@ public class AccountService {
                         account.getId(),
                         account.getAccountNumber(),
                         account.getBalance(),
-                        account.getCustomer() != null ? account.getCustomer().getId() : null
+                        account.getCustomer() != null ? account.getCustomer().getId() : null,
+                        account.getStatus() != null ? account.getStatus().name() : "ACTIVE"
                 ));
     }
 
@@ -463,7 +472,12 @@ public class AccountService {
             if (cachedBalance.isPresent()) {
                 return repository.findById(id).map(account ->
                         new CachedAccountResponse(
-                                new AccountResponse(account.getId(), account.getAccountNumber(), cachedBalance.get()),
+                                new AccountResponse(
+                                        account.getId(),
+                                        account.getAccountNumber(),
+                                        cachedBalance.get(),
+                                        account.getCustomer() != null ? account.getCustomer().getId() : null,
+                                        account.getStatus() != null ? account.getStatus().name() : "ACTIVE"),
                                 true
                         )
                 );
@@ -475,7 +489,12 @@ public class AccountService {
                 balanceCacheService.cacheBalance(account.getId(), account.getBalance());
             }
             return new CachedAccountResponse(
-                    new AccountResponse(account.getId(), account.getAccountNumber(), account.getBalance()),
+                    new AccountResponse(
+                            account.getId(),
+                            account.getAccountNumber(),
+                            account.getBalance(),
+                            account.getCustomer() != null ? account.getCustomer().getId() : null,
+                            account.getStatus() != null ? account.getStatus().name() : "ACTIVE"),
                     false
             );
         });
@@ -488,7 +507,8 @@ public class AccountService {
                         account.getId(),
                         account.getAccountNumber(),
                         account.getBalance(),
-                        account.getCustomer() != null ? account.getCustomer().getId() : null
+                        account.getCustomer() != null ? account.getCustomer().getId() : null,
+                        account.getStatus() != null ? account.getStatus().name() : "ACTIVE"
                 ))
                 .collect(Collectors.toList());
     }
@@ -549,7 +569,9 @@ public class AccountService {
         return new AccountResponse(
                 account.getId(),
                 account.getAccountNumber(),
-                account.getBalance());
+                account.getBalance(),
+                account.getCustomer() != null ? account.getCustomer().getId() : null,
+                "FROZEN");
     }
 
     @Transactional
@@ -571,7 +593,9 @@ public class AccountService {
         return new AccountResponse(
                 account.getId(),
                 account.getAccountNumber(),
-                account.getBalance());
+                account.getBalance(),
+                account.getCustomer() != null ? account.getCustomer().getId() : null,
+                "ACTIVE");
     }
 
     @Transactional
@@ -601,7 +625,9 @@ public class AccountService {
         return new AccountResponse(
                 account.getId(),
                 account.getAccountNumber(),
-                account.getBalance());
+                account.getBalance(),
+                account.getCustomer() != null ? account.getCustomer().getId() : null,
+                "CLOSED");
     }
 
 

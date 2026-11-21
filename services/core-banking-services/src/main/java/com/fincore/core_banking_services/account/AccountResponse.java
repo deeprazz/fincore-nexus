@@ -1,14 +1,33 @@
-
 package com.fincore.core_banking_services.account;
 
 import java.math.BigDecimal;
 import java.util.UUID;
 
 public class AccountResponse {
+    private UUID id;
     private String accountNumber;
     private BigDecimal balance;
-    private UUID id;
     private UUID customerId;
+    private String status;
+
+    public AccountResponse() {
+    }
+
+    public AccountResponse(UUID id, String accountNumber, BigDecimal balance) {
+        this(id, accountNumber, balance, null, "ACTIVE");
+    }
+
+    public AccountResponse(UUID id, String accountNumber, BigDecimal balance, UUID customerId) {
+        this(id, accountNumber, balance, customerId, "ACTIVE");
+    }
+
+    public AccountResponse(UUID id, String accountNumber, BigDecimal balance, UUID customerId, String status) {
+        this.id = id;
+        this.accountNumber = formatAccountNumber(accountNumber);
+        this.balance = balance;
+        this.customerId = customerId;
+        this.status = status != null ? status : "ACTIVE";
+    }
 
     public UUID getId() {
         return id;
@@ -26,15 +45,12 @@ public class AccountResponse {
         return customerId;
     }
 
-    public AccountResponse(UUID id, String accountNumber, BigDecimal balance) {
-        this(id, accountNumber, balance, null);
+    public String getStatus() {
+        return status;
     }
 
-    public AccountResponse(UUID id, String accountNumber, BigDecimal balance, UUID customerId) {
-        this.id = id;
-        this.accountNumber = formatAccountNumber(accountNumber);
-        this.balance = balance;
-        this.customerId = customerId;
+    public void setStatus(String status) {
+        this.status = status;
     }
 
     private String formatAccountNumber(String accountNumber) {

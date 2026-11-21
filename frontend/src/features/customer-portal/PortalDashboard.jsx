@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 import { Link } from "react-router-dom";
-import { Wallet, LayoutDashboard, ShieldCheck } from "lucide-react";
+import { Wallet, LayoutDashboard, ShieldCheck, AlertTriangle } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { useMoney } from "../../hooks/useMoney";
 
@@ -11,6 +11,7 @@ export function PortalDashboard() {
   const customerAccounts = customerPortal?.accounts || [];
   const canBank = customerPortal?.kycStatus === "VERIFIED";
   const primaryAccount = customerAccounts[0];
+  const isFrozen = String(primaryAccount?.status).toUpperCase() === "FROZEN";
   const totalBalance = customerAccounts.reduce(
     (sum, account) => sum + Number(account.balance || 0),
     0
@@ -18,7 +19,7 @@ export function PortalDashboard() {
 
   useEffect(() => {
     if (!canBank) return;
-    const id = setInterval(() => refreshPortalData(), 10000);
+    const id = setInterval(() => refreshPortalData(), 3000);
     return () => clearInterval(id);
   }, [canBank, refreshPortalData]);
 
@@ -66,19 +67,38 @@ export function PortalDashboard() {
           <strong>{customerAccounts.length}</strong>
           <small>Linked to your profile</small>
         </article>
-        <article className="customer-metric-card">
+        <article className={`customer-metric-card ${isFrozen ? "metric-frozen" : ""}`}>
           <div className="customer-metric-top">
             <span>Account status</span>
             <ShieldCheck size={18} />
           </div>
-          <strong className="customer-metric-status">
-            {primaryAccount?.status || (canBank ? "Active" : "Pending")}
+          <strong className={`customer-metric-status ${isFrozen ? "status-frozen" : ""}`}>
+            {isFrozen ? "FROZEN" : (primaryAccount?.status || (canBank ? "Active" : "Pending"))}
           </strong>
           <small>
-            {canBank ? "Banking access is ready" : "Waiting for Teller approval"}
+            {isFrozen
+              ? "Account frozen by Management"
+              : canBank
+              ? "Banking access is ready"
+              : "Waiting for Teller approval"}
           </small>
         </article>
       </section>
+
+      {isFrozen && (
+        <div className="portal-account-frozen-alert" style={{ marginBottom: "20px" }} role="alert">
+          <div className="alert-icon-box">
+            <AlertTriangle size={20} />
+          </div>
+          <div>
+            <strong>Account Notice: Primary Account Frozen</strong>
+            <p>
+              Your account has been temporarily frozen by Bank Management. Outgoing payments and fund transfers are paused.
+              Contact customer care or your branch manager to unfreeze your account.
+            </p>
+          </div>
+        </div>
+      )}
 
       {!canBank && (
         <section className="customer-section customer-kyc-pending">
