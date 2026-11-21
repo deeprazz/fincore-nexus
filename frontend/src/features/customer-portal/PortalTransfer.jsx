@@ -139,16 +139,14 @@ export function PortalTransfer() {
           <p>Once your KYC is approved, you’ll be able to send money from here.</p>
         </section>
       ) : activeSaga ? (
-        <section className="customer-section">
-          <CustomerSagaTracker
-            sagaData={activeSaga.data}
-            stageIndex={activeSaga.stageIndex}
-            isFinished={activeSaga.isFinished}
-            errorMessage={activeSaga.errorMessage}
-            onReset={() => setActiveSaga(null)}
-            onViewStatements={() => navigate("/portal/statements")}
-          />
-        </section>
+        <CustomerSagaTracker
+          sagaData={activeSaga.data}
+          stageIndex={activeSaga.stageIndex}
+          isFinished={activeSaga.isFinished}
+          errorMessage={activeSaga.errorMessage}
+          onReset={() => setActiveSaga(null)}
+          onViewStatements={() => navigate("/portal/statements")}
+        />
       ) : (
         <>
           <section className="customer-section">

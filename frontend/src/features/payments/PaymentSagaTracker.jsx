@@ -298,6 +298,18 @@ export default function PaymentSagaTracker({
     }
   };
 
+  const STEP_LABELS = [
+    "Received",
+    "Auth",
+    "Limits",
+    "Fraud",
+    "Debit",
+    "Clearing",
+    "Settlement",
+    "Finalized",
+    "Advice",
+  ];
+
   const completedStagesCount = timelineStages.filter((s) => s.state === "COMPLETED").length;
   const progressPercent = isSettled
     ? 100
@@ -323,30 +335,30 @@ export default function PaymentSagaTracker({
   };
 
   return (
-    <div className="saga-tracker-container space-y-6" style={{ maxWidth: "780px" }}>
+    <div className="saga-tracker-container" style={{ maxWidth: "880px" }}>
       {/* Dynamic Status Header */}
       <div className={`saga-status-banner ${getHeaderBannerClass()}`}>
-        <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
           <div className="saga-status-icon-box">
             {isSettled ? (
-              <CheckCircle2 size={24} style={{ color: "#10b981" }} />
+              <CheckCircle2 size={20} style={{ color: "#10b981" }} />
             ) : isNeftPending ? (
-              <Clock size={24} style={{ color: "#3b82f6" }} />
+              <Clock size={20} style={{ color: "#3b82f6" }} />
             ) : isPendingReview ? (
-              <ShieldAlert size={24} style={{ color: "#f59e0b" }} />
+              <ShieldAlert size={20} style={{ color: "#f59e0b" }} />
             ) : isReversed ? (
-              <RotateCcw size={24} style={{ color: "#a855f7" }} />
+              <RotateCcw size={20} style={{ color: "#a855f7" }} />
             ) : isFailed ? (
-              <XCircle size={24} style={{ color: "#ef4444" }} />
+              <XCircle size={20} style={{ color: "#ef4444" }} />
             ) : (
-              <Loader2 size={24} className="animate-spin" style={{ color: "#3b82f6" }} />
+              <Loader2 size={20} className="animate-spin" style={{ color: "#3b82f6" }} />
             )}
           </div>
           <div>
-            <h2 style={{ fontSize: "17px", fontWeight: "800", margin: 0, letterSpacing: "-0.01em" }}>
+            <h2 style={{ fontSize: "15px", fontWeight: "800", margin: 0, letterSpacing: "-0.01em" }}>
               {getHeaderTitle()}
             </h2>
-            <p style={{ fontSize: "12px", opacity: 0.9, margin: "3px 0 0 0" }}>
+            <p style={{ fontSize: "11px", opacity: 0.9, margin: "2px 0 0 0" }}>
               {p.failureReason ||
                 (isNeftPending
                   ? "NEFT transfer credited. Half-hourly batch clearing will settle finality."
@@ -392,36 +404,17 @@ export default function PaymentSagaTracker({
         </div>
       </div>
 
-      {/* Vertical Ordered Saga Timeline Tracker */}
-      <div className="saga-timeline-wrapper">
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
-          <div>
-            <h3 className="saga-timeline-heading" style={{ margin: 0 }}>
-              Distributed Payment Saga Execution Timeline
-            </h3>
-            <p style={{ fontSize: "12px", color: "var(--saga-text-muted)", margin: "2px 0 0 0" }}>
-              Real-time trace of all 9 transactional stages across microservice boundaries
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={fetchStatus}
-            className="saga-btn-secondary"
-            style={{ padding: "6px 12px", fontSize: "11.5px" }}
-            title="Refresh Saga state"
-          >
-            <RefreshCw size={12} className={polling ? "animate-spin" : ""} />
-            Poll
-          </button>
+      {/* Horizontal Stepper Progress Track */}
+      <div className="saga-stepper-horizontal">
+        <div className="saga-stepper-track-wrap">
+          <div className="saga-stepper-track-line" />
+          <div
+            className="saga-stepper-fill-line"
+            style={{ width: `calc(${progressPercent}% * 0.94)` }}
+          />
         </div>
 
-        <div className="saga-stages-list">
-          {/* Animated Green/Blue progress fill line */}
-          <div
-            className="saga-connector-fill"
-            style={{ height: `${progressPercent}%` }}
-          />
-
+        <div className="saga-stepper-nodes-row">
           {timelineStages.map((step, idx) => {
             const isCompleted = step.state === "COMPLETED";
             const isCurrent = step.state === "IN_PROGRESS";
@@ -430,14 +423,9 @@ export default function PaymentSagaTracker({
             const isReversedStep = step.state === "COMPENSATING" || step.state === "REVERSED";
 
             return (
-              <div
-                key={step.id}
-                className="saga-stage-item"
-                style={{ animationDelay: `${idx * 30}ms` }}
-              >
-                {/* Node indicator */}
+              <div key={step.id} className="saga-stepper-item" style={{ width: "52px" }}>
                 <div
-                  className={`saga-node-dot ${
+                  className={`saga-stepper-node ${
                     isCompleted
                       ? "completed"
                       : isCurrent
@@ -452,85 +440,115 @@ export default function PaymentSagaTracker({
                   }`}
                 >
                   {isCompleted ? (
-                    <CheckCircle2 size={13} strokeWidth={2.5} />
+                    <CheckCircle2 size={11} strokeWidth={2.5} />
                   ) : isCurrent ? (
-                    <Loader2 size={13} className="animate-spin" strokeWidth={2.5} />
+                    <Loader2 size={11} className="animate-spin" strokeWidth={2.5} />
                   ) : isReview ? (
-                    <ShieldAlert size={13} strokeWidth={2.5} />
+                    <ShieldAlert size={11} strokeWidth={2.5} />
                   ) : isReversedStep ? (
-                    <RotateCcw size={13} strokeWidth={2.5} />
+                    <RotateCcw size={11} strokeWidth={2.5} />
                   ) : isFailedStep ? (
-                    <XCircle size={13} strokeWidth={2.5} />
+                    <XCircle size={11} strokeWidth={2.5} />
                   ) : (
                     <span>{step.id}</span>
                   )}
                 </div>
-
-                {/* Node content */}
-                <div className={`saga-stage-content ${isCurrent ? "active" : ""}`}>
-                  <div className="saga-stage-header">
-                    <div className="saga-stage-title-wrap">
-                      <span style={{ fontSize: "11px", fontFamily: "monospace", color: "var(--saga-text-muted)" }}>
-                        Stage {step.id}:
-                      </span>
-                      <strong
-                        className={`saga-stage-title ${
-                          isCompleted
-                            ? "completed"
-                            : isCurrent
-                            ? "active"
-                            : isFailedStep
-                            ? "failed"
-                            : ""
-                        }`}
-                      >
-                        {step.title}
-                      </strong>
-                    </div>
-
-                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                      {step.detail && (
-                        <span
-                          className="saga-stage-badge"
-                          style={{
-                            background: "var(--saga-account-pill-bg)",
-                            color: "var(--saga-text-muted)",
-                            border: "1px solid var(--saga-border)",
-                          }}
-                        >
-                          {step.detail}
-                        </span>
-                      )}
-                      {step.timestamp && (
-                        <span style={{ fontSize: "11px", color: "var(--saga-text-muted)" }}>
-                          {step.timestamp}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-
-                  <p className="saga-stage-desc">{step.desc}</p>
-                </div>
+                <span
+                  className={`saga-stepper-label ${
+                    isCompleted ? "completed" : isCurrent ? "active" : ""
+                  }`}
+                >
+                  {STEP_LABELS[idx]}
+                </span>
               </div>
             );
           })}
         </div>
-
-        {/* Reversal / Compensation Box when applicable */}
-        {(isReversed || isCompPending) && (
-          <div className="saga-comp-alert">
-            <div style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: "700", marginBottom: "4px" }}>
-              <RotateCcw size={16} />
-              Saga Compensation Action Executed
-            </div>
-            <p style={{ margin: 0 }}>
-              When destination bank clearing failed, the Saga Orchestrator triggered a compensating credit command to Core Banking.
-              {isReversed && " The source account balance has been restored."}
-              {isCompPending && " Notice: Core Banking refund failed and is staged in COMPENSATION_PENDING for operator retry."}
-            </p>
-          </div>
-        )}
       </div>
+
+      {/* 2-Column Stages Grid */}
+      <div className="saga-stages-grid-2col">
+        {timelineStages.map((step) => {
+          const isCompleted = step.state === "COMPLETED";
+          const isCurrent = step.state === "IN_PROGRESS";
+          const isReview = step.state === "REVIEW";
+          const isFailedStep = step.state === "FAILED";
+          const isReversedStep = step.state === "COMPENSATING" || step.state === "REVERSED";
+
+          return (
+            <div
+              key={step.id}
+              className={`saga-compact-stage-card ${isCurrent ? "active" : ""}`}
+            >
+              <div className="saga-stage-left">
+                <div className="saga-stage-icon-wrap">
+                  {isCompleted ? (
+                    <CheckCircle2 size={14} style={{ color: "var(--saga-badge-success-text)" }} />
+                  ) : isCurrent ? (
+                    <Loader2 size={14} className="animate-spin" style={{ color: "var(--saga-badge-active-text)" }} />
+                  ) : isReview ? (
+                    <ShieldAlert size={14} style={{ color: "var(--saga-badge-review-text)" }} />
+                  ) : isReversedStep ? (
+                    <RotateCcw size={14} style={{ color: "#a855f7" }} />
+                  ) : isFailedStep ? (
+                    <XCircle size={14} style={{ color: "var(--saga-badge-error-text)" }} />
+                  ) : (
+                    <span style={{ fontSize: "10px", fontWeight: "700", color: "var(--saga-text-muted)" }}>
+                      {step.id}
+                    </span>
+                  )}
+                </div>
+                <div className="saga-stage-text-block">
+                  <div
+                    className={`saga-stage-title-compact ${
+                      isCompleted
+                        ? "completed"
+                        : isCurrent
+                        ? "active"
+                        : isFailedStep
+                        ? "failed"
+                        : ""
+                    }`}
+                  >
+                    {step.title}
+                  </div>
+                  <div className="saga-stage-desc-compact">{step.desc}</div>
+                </div>
+              </div>
+
+              <div>
+                {isCompleted && (
+                  <span className="saga-stage-badge verified">VERIFIED</span>
+                )}
+                {isCurrent && (
+                  <span className="saga-stage-badge processing">PROCESSING</span>
+                )}
+                {isReview && (
+                  <span className="saga-stage-badge failed">REVIEW</span>
+                )}
+                {isFailedStep && (
+                  <span className="saga-stage-badge failed">FAILED</span>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Reversal / Compensation Box when applicable */}
+      {(isReversed || isCompPending) && (
+        <div className="saga-comp-alert">
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: "700", marginBottom: "4px" }}>
+            <RotateCcw size={15} />
+            Saga Compensation Action Executed
+          </div>
+          <p style={{ margin: 0 }}>
+            When destination bank clearing failed, the Saga Orchestrator triggered a compensating credit command to Core Banking.
+            {isReversed && " The source account balance has been restored."}
+            {isCompPending && " Notice: Core Banking refund failed and is staged in COMPENSATION_PENDING for operator retry."}
+          </p>
+        </div>
+      )}
 
       {/* Fraud Check Inspection Pill */}
       {p.fraudScore != null && (
@@ -550,7 +568,7 @@ export default function PaymentSagaTracker({
               onClick={() => onViewReceipt(p)}
               className="saga-btn-primary"
             >
-              <FileText size={15} />
+              <FileText size={14} />
               View Printable Receipt / Advice
             </button>
           )}
@@ -564,6 +582,17 @@ export default function PaymentSagaTracker({
               Make Another Transfer
             </button>
           )}
+
+          <button
+            type="button"
+            onClick={fetchStatus}
+            className="saga-btn-secondary"
+            style={{ padding: "8px 12px", fontSize: "11px" }}
+            title="Refresh Saga state"
+          >
+            <RefreshCw size={12} className={polling ? "animate-spin" : ""} />
+            Poll
+          </button>
         </div>
 
         {onViewHistory && (

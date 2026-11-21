@@ -85,7 +85,18 @@ export default function CustomerSagaTracker({
     },
   ];
 
-  // Calculate connector line progress fill percentage
+  const STEP_LABELS = [
+    "Initiated",
+    "PIN Auth",
+    "Limits",
+    "Fraud Check",
+    "Debited",
+    "Credited",
+    "Settled",
+    "Advice",
+  ];
+
+  // Calculate connector line progress fill percentage across 8 nodes
   const totalSteps = STAGES.length;
   let progressPercent = 0;
   if (isFinished) {
@@ -135,69 +146,64 @@ export default function CustomerSagaTracker({
 
   return (
     <div className="saga-tracker-container">
-      {/* Header with live status */}
-      <div className="saga-header-bar">
-        <div>
-          <div className="saga-eyebrow">Transfer Orchestration</div>
-          <div className="saga-utr-code">{utr}</div>
-          <div className="saga-timestamp">
+      {/* 1. Integrated Header Strip (Identity + Amount + Status) */}
+      <div className="saga-compact-header">
+        <div className="saga-header-left">
+          <span className="saga-eyebrow">Transfer Orchestration</span>
+          <span className="saga-utr-code">{utr}</span>
+          <span className="saga-timestamp">
             {new Date(timestamp).toLocaleDateString("en-IN", {
               day: "numeric",
               month: "short",
               year: "numeric",
               hour: "2-digit",
               minute: "2-digit",
-              second: "2-digit",
             })}
+          </span>
+        </div>
+
+        <div className="saga-route-strip">
+          <span className="saga-route-amount">
+            ₹{numAmount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+          </span>
+          <div className="saga-route-accounts">
+            <span>From:</span>
+            <span className="saga-route-pill">{fromAccount}</span>
+            <span>→</span>
+            <span>To:</span>
+            <span className="saga-route-pill">{toAccount}</span>
           </div>
         </div>
 
         <div>
           {isFailed ? (
             <span className="saga-pill-badge failed">
-              <XCircle size={14} />
+              <XCircle size={13} />
               FAILED
             </span>
           ) : isFinished ? (
             <span className="saga-pill-badge success">
-              <CheckCircle2 size={14} />
+              <CheckCircle2 size={13} />
               SETTLED
             </span>
           ) : (
             <span className="saga-pill-badge active">
-              <Loader2 size={14} className="animate-spin" />
+              <Loader2 size={13} className="animate-spin" />
               EXECUTING SAGA
             </span>
           )}
         </div>
       </div>
 
-      {/* Amount and Account Hero Card */}
-      <div className="saga-hero-card">
-        <div>
-          <span className="saga-hero-label">Transfer Amount</span>
-          <span className="saga-hero-amount">
-            ₹{numAmount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
-          </span>
-        </div>
-        <div className="saga-hero-accounts">
-          <div className="saga-account-row">
-            <span>From:</span>
-            <span className="saga-account-pill">{fromAccount}</span>
-          </div>
-          <div className="saga-account-row">
-            <span>To:</span>
-            <span className="saga-account-pill">{toAccount}</span>
-          </div>
-        </div>
-      </div>
-
       {/* Error banner if failed */}
       {isFailed && (
-        <div className="saga-error-banner">
-          <AlertTriangle size={20} className="shrink-0" />
-          <div>
-            <strong style={{ display: "block", marginBottom: "2px" }}>
+        <div
+          className="saga-error-banner"
+          style={{ margin: "2px 0", padding: "8px 12px" }}
+        >
+          <AlertTriangle size={18} className="shrink-0" />
+          <div style={{ fontSize: "12px" }}>
+            <strong style={{ display: "block", marginBottom: "1px" }}>
               Transfer Execution Failed
             </strong>
             <span>{errorMessage}</span>
@@ -205,33 +211,26 @@ export default function CustomerSagaTracker({
         </div>
       )}
 
-      {/* Vertical Ordered Saga Timeline */}
-      <div className="saga-timeline-wrapper">
-        <div className="saga-timeline-heading">
-          Distributed Transaction Stages
+      {/* 2. Horizontal Flow Stepper Track */}
+      <div className="saga-stepper-horizontal">
+        <div className="saga-stepper-track-wrap">
+          <div className="saga-stepper-track-line" />
+          <div
+            className="saga-stepper-fill-line"
+            style={{ width: `calc(${progressPercent}% * 0.94)` }}
+          />
         </div>
 
-        <div className="saga-stages-list">
-          {/* Animated Green/Blue progress fill line */}
-          <div
-            className="saga-connector-fill"
-            style={{ height: `${progressPercent}%` }}
-          />
-
+        <div className="saga-stepper-nodes-row">
           {STAGES.map((s, idx) => {
             const isStepDone = isFinished ? true : stageIndex > s.id;
             const isStepActive = !isFinished && !isFailed && stageIndex === s.id;
             const isStepFailed = isFailed && stageIndex === s.id;
 
             return (
-              <div
-                key={s.id}
-                className="saga-stage-item"
-                style={{ animationDelay: `${idx * 40}ms` }}
-              >
-                {/* Node Status Dot on timeline */}
+              <div key={s.id} className="saga-stepper-item">
                 <div
-                  className={`saga-node-dot ${
+                  className={`saga-stepper-node ${
                     isStepFailed
                       ? "failed"
                       : isStepDone
@@ -242,64 +241,88 @@ export default function CustomerSagaTracker({
                   }`}
                 >
                   {isStepFailed ? (
-                    <XCircle size={13} strokeWidth={2.5} />
+                    <XCircle size={12} strokeWidth={2.5} />
                   ) : isStepDone ? (
-                    <CheckCircle2 size={13} strokeWidth={2.5} />
+                    <CheckCircle2 size={12} strokeWidth={2.5} />
                   ) : isStepActive ? (
-                    <Loader2 size={13} className="animate-spin" strokeWidth={2.5} />
+                    <Loader2 size={12} className="animate-spin" strokeWidth={2.5} />
                   ) : (
                     <span>{s.id}</span>
                   )}
                 </div>
-
-                {/* Stage Content Card */}
-                <div
-                  className={`saga-stage-content ${
-                    isStepActive ? "active" : ""
+                <span
+                  className={`saga-stepper-label ${
+                    isStepDone ? "completed" : isStepActive ? "active" : ""
                   }`}
                 >
-                  <div className="saga-stage-header">
-                    <div className="saga-stage-title-wrap">
-                      <span
-                        className={`saga-stage-title ${
-                          isStepFailed
-                            ? "failed"
-                            : isStepDone
-                            ? "completed"
-                            : isStepActive
-                            ? "active"
-                            : ""
-                        }`}
-                      >
-                        {s.title}
-                      </span>
-                    </div>
-
-                    {isStepDone && (
-                      <span className="saga-stage-badge verified">
-                        VERIFIED
-                      </span>
-                    )}
-                    {isStepActive && (
-                      <span className="saga-stage-badge processing">
-                        PROCESSING
-                      </span>
-                    )}
-                    {isStepFailed && (
-                      <span className="saga-stage-badge failed">
-                        FAILED
-                      </span>
-                    )}
-                  </div>
-                  <p className="saga-stage-desc">{s.desc}</p>
-                </div>
+                  {STEP_LABELS[idx]}
+                </span>
               </div>
             );
           })}
         </div>
       </div>
 
-      {/* Action Buttons */}
+      {/* 3. 2-Column x 4-Row Compact Stages Grid */}
+      <div className="saga-stages-grid-2col">
+        {STAGES.map((s) => {
+          const isStepDone = isFinished ? true : stageIndex > s.id;
+          const isStepActive = !isFinished && !isFailed && stageIndex === s.id;
+          const isStepFailed = isFailed && stageIndex === s.id;
+          const IconComponent = s.icon;
+
+          return (
+            <div
+              key={s.id}
+              className={`saga-compact-stage-card ${isStepActive ? "active" : ""}`}
+            >
+              <div className="saga-stage-left">
+                <div className="saga-stage-icon-wrap">
+                  {isStepFailed ? (
+                    <XCircle size={15} style={{ color: "var(--saga-badge-error-text)" }} />
+                  ) : isStepDone ? (
+                    <CheckCircle2 size={15} style={{ color: "var(--saga-badge-success-text)" }} />
+                  ) : isStepActive ? (
+                    <Loader2 size={15} className="animate-spin" style={{ color: "var(--saga-badge-active-text)" }} />
+                  ) : (
+                    <IconComponent size={14} style={{ opacity: 0.5, color: "var(--saga-text-muted)" }} />
+                  )}
+                </div>
+                <div className="saga-stage-text-block">
+                  <div
+                    className={`saga-stage-title-compact ${
+                      isStepFailed
+                        ? "failed"
+                        : isStepDone
+                        ? "completed"
+                        : isStepActive
+                        ? "active"
+                        : ""
+                    }`}
+                  >
+                    {s.title}
+                  </div>
+                  <div className="saga-stage-desc-compact">{s.desc}</div>
+                </div>
+              </div>
+
+              <div>
+                {isStepDone && (
+                  <span className="saga-stage-badge verified">VERIFIED</span>
+                )}
+                {isStepActive && (
+                  <span className="saga-stage-badge processing">PROCESSING</span>
+                )}
+                {isStepFailed && (
+                  <span className="saga-stage-badge failed">FAILED</span>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* 4. Action Buttons Footer */}
       <div className="saga-actions-bar">
         <div className="saga-btn-group">
           {onReset && (
@@ -308,7 +331,7 @@ export default function CustomerSagaTracker({
               onClick={onReset}
               className="saga-btn-secondary"
             >
-              <RotateCcw size={14} />
+              <RotateCcw size={13} />
               {isFailed ? "Try Again" : "Make Another Transfer"}
             </button>
           )}
@@ -319,7 +342,7 @@ export default function CustomerSagaTracker({
               onClick={downloadReceipt}
               className="saga-btn-primary"
             >
-              <Download size={14} />
+              <Download size={13} />
               Download PDF Receipt
             </button>
           )}

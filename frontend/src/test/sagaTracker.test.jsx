@@ -133,7 +133,6 @@ describe("PaymentSagaTracker Component", () => {
     render(<PaymentSagaTracker payment={samplePayment} />);
 
     expect(screen.getByText("Payment Successful & Settled")).toBeInTheDocument();
-    expect(screen.getByText("Distributed Payment Saga Execution Timeline")).toBeInTheDocument();
     expect(screen.getByText("₹500.00")).toBeInTheDocument();
     expect(screen.getByText("UPI")).toBeInTheDocument();
     expect(screen.getByText("FINC999888")).toBeInTheDocument();
