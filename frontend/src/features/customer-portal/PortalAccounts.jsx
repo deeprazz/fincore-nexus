@@ -1,8 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Wallet, RotateCw, AlertTriangle, Snowflake } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { useMoney } from "../../hooks/useMoney";
-import { subscribeToAccountChanges } from "../../utils/syncChannel";
 
 export function PortalAccounts() {
   const { customerPortal, refreshPortalData } = useAuth();
@@ -14,20 +13,6 @@ export function PortalAccounts() {
   const hasFrozen = customerAccounts.some(
     (a) => String(a.status).toUpperCase() === "FROZEN"
   );
-
-  // Real-time updates: initial mount fetch + instant cross-tab event subscription (0ms push)
-  useEffect(() => {
-    if (!canBank || !refreshPortalData) return;
-    refreshPortalData();
-
-    const unsubscribe = subscribeToAccountChanges(() => {
-      refreshPortalData();
-    });
-
-    return () => {
-      unsubscribe();
-    };
-  }, [canBank, refreshPortalData]);
 
   async function handleRefresh() {
     if (!refreshPortalData) return;

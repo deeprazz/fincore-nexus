@@ -1,12 +1,11 @@
-import React, { useEffect } from "react";
+import React from "react";
 import { Link } from "react-router-dom";
 import { Wallet, LayoutDashboard, ShieldCheck, AlertTriangle } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { useMoney } from "../../hooks/useMoney";
-import { subscribeToAccountChanges } from "../../utils/syncChannel";
 
 export function PortalDashboard() {
-  const { auth, customerPortal, refreshPortalData } = useAuth();
+  const { auth, customerPortal } = useAuth();
   const money = useMoney();
 
   const customerAccounts = customerPortal?.accounts || [];
@@ -17,17 +16,6 @@ export function PortalDashboard() {
     (sum, account) => sum + Number(account.balance || 0),
     0
   );
-
-  useEffect(() => {
-    if (!canBank || !refreshPortalData) return;
-    refreshPortalData();
-    const unsubscribe = subscribeToAccountChanges(() => {
-      refreshPortalData();
-    });
-    return () => {
-      unsubscribe();
-    };
-  }, [canBank, refreshPortalData]);
 
   return (
     <>

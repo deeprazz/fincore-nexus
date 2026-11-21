@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 import Keycloak from "keycloak-js";
 import { API_BASE_URL } from "../utils/constants";
 import { setLatencyListener } from "../api/client";
@@ -315,7 +315,7 @@ export function AuthProvider({ children }) {
     sessionStorage.removeItem("fincore_auth");
   }
 
-  async function refreshPortalData() {
+  const refreshPortalData = useCallback(async () => {
     if (!auth || auth.role !== "CUSTOMER") return null;
     const headers = auth.token
       ? { Authorization: `Bearer ${auth.token}`, "Cache-Control": "no-cache" }
@@ -343,7 +343,7 @@ export function AuthProvider({ children }) {
       // Ignore background refresh errors
     }
     return null;
-  }
+  }, [auth]);
 
   return (
     <AuthContext.Provider
