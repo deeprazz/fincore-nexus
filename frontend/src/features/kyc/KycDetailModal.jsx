@@ -65,13 +65,13 @@ export default function KycDetailModal({ application, onClose, onActionComplete 
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-slate-200">
+      <div className="modal-content rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-slate-200 sticky top-0 bg-white/95 backdrop-blur z-10">
+        <div className="flex items-center justify-between p-6 border-b sticky top-0 backdrop-blur z-10" style={{ borderColor: "var(--border-color, #1f293d)", background: "var(--panel, #111827)" }}>
           <div>
             <div className="flex items-center space-x-2">
               <UserCheck className="w-6 h-6 text-indigo-600" />
-              <h2 className="text-xl font-bold text-slate-900">{fullName}</h2>
+              <h2 className="text-xl font-bold" style={{ color: "var(--text-primary, #f8fafc)" }}>{fullName}</h2>
               <span
                 className={`text-xs px-2.5 py-0.5 rounded-full font-semibold border ${
                   status === "APPROVED"

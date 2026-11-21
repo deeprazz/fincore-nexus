@@ -66,12 +66,12 @@ export default function KycPage() {
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2" style={{ color: "#f8fafc" }}>
+          <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2 page-title">
             <UserCheck className="w-7 h-7 text-indigo-400" />
-            KYC & Identity Verification Hub
+            KYC &amp; Identity Verification Hub
           </h1>
-          <p className="text-xs text-muted mt-1">
-            Automated onboarding, neural OCR, biometric liveness, PEP/sanctions screening & dual Maker-Checker authorization
+          <p className="text-xs text-muted mt-1 page-subtitle">
+            Automated onboarding, neural OCR, biometric liveness, PEP/sanctions screening &amp; dual Maker-Checker authorization
           </p>
         </div>
 
@@ -231,35 +231,14 @@ export default function KycPage() {
                       <button
                         type="button"
                         onClick={() => handleVerifyCoreCustomer(cust.id, "VERIFIED")}
-                        style={{
-                          background: "rgba(16, 185, 129, 0.15)",
-                          border: "1px solid rgba(16, 185, 129, 0.4)",
-                          color: "#10b981",
-                          padding: "6px 14px",
-                          borderRadius: "6px",
-                          fontSize: "12px",
-                          fontWeight: 700,
-                          cursor: "pointer",
-                          display: "inline-flex",
-                          alignItems: "center",
-                          gap: "4px",
-                        }}
+                        className="btn-kyc-confirm"
                       >
                         <CheckCircle2 size={14} /> Confirm KYC
                       </button>
                       <button
                         type="button"
                         onClick={() => handleVerifyCoreCustomer(cust.id, "REJECTED")}
-                        style={{
-                          background: "rgba(239, 68, 68, 0.15)",
-                          border: "1px solid rgba(239, 68, 68, 0.4)",
-                          color: "#ef4444",
-                          padding: "6px 14px",
-                          borderRadius: "6px",
-                          fontSize: "12px",
-                          fontWeight: 700,
-                          cursor: "pointer",
-                        }}
+                        className="btn-kyc-reject"
                       >
                         Reject
                       </button>

@@ -154,16 +154,15 @@ export default function PaymentsPage() {
       </div>
 
       {feedbackMessage && (
-        <div className={`p-3 rounded text-sm flex items-center justify-between border ${
-          feedbackMessage.type === "success" ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400" :
-          feedbackMessage.type === "warning" ? "bg-amber-500/10 border-amber-500/30 text-amber-400" :
-          "bg-red-500/10 border-red-500/30 text-red-400"
-        }`}>
+        <div
+          className={`alert-${feedbackMessage.type === "success" ? "success" : feedbackMessage.type === "warning" ? "warning" : "error"}`}
+          style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}
+        >
           <span>{feedbackMessage.text}</span>
           <button
             type="button"
             onClick={() => setFeedbackMessage(null)}
-            className="text-xs ml-4 underline opacity-75 hover:opacity-100"
+            style={{ background: "none", border: "none", color: "inherit", textDecoration: "underline", cursor: "pointer", fontSize: "12px", marginLeft: "16px" }}
           >
             Dismiss
           </button>

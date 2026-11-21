@@ -49,24 +49,22 @@ export function PendingApprovalsPage() {
 
   if (isTeller) {
     return (
-      <div className="space-y-6">
-        <div className="p-6 rounded-lg border border-amber-500/30 bg-amber-500/10 text-center max-w-xl mx-auto space-y-4">
-          <div className="w-12 h-12 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center mx-auto">
-            <ShieldAlert size={26} />
-          </div>
-          <div>
-            <h3 className="text-lg font-bold text-amber-200">Manager Authorization Required</h3>
-            <p className="text-sm text-muted mt-1">
-              Under FinCore Dual-Control policy, reviewing and approving pending operations (withdrawals, transfers, limit adjustments) requires <strong>MANAGER</strong> or <strong>ADMIN</strong> authorization.
-            </p>
-          </div>
-          <div className="text-xs text-muted font-mono bg-surface p-2.5 rounded border border-border">
-            Current Session: {auth?.username || "teller"} (Role: {auth?.role})
-          </div>
-          <p className="text-xs text-muted">
-            Please authenticate using an authorized Manager (<code>manager / Manager@123</code>) account to authorize or reject operations.
+      <div className="auth-restricted-card">
+        <div className="auth-restricted-icon-box">
+          <ShieldAlert size={28} />
+        </div>
+        <div>
+          <h3 className="auth-restricted-title">Manager Authorization Required</h3>
+          <p className="auth-restricted-desc">
+            Under FinCore Dual-Control policy, reviewing and approving pending operations (withdrawals, transfers, limit adjustments) requires <strong>MANAGER</strong> or <strong>ADMIN</strong> authorization.
           </p>
         </div>
+        <div className="auth-restricted-session-pill">
+          Current Session: {auth?.username || "teller"} (Role: {auth?.role})
+        </div>
+        <p className="auth-restricted-hint">
+          Please authenticate using an authorized Manager (<code>manager / Manager@123</code>) account to authorize or reject operations.
+        </p>
       </div>
     );
   }
@@ -184,10 +182,10 @@ export function PendingApprovalsPage() {
           </p>
         </div>
       ) : (
-        <div className="panel" style={{ borderRadius: "10px", overflow: "hidden" }}>
+        <div className="panel table-wrap" style={{ borderRadius: "10px", overflow: "hidden" }}>
           <table className="data-table" style={{ width: "100%", borderCollapse: "collapse" }}>
             <thead>
-              <tr style={{ background: "rgba(255, 255, 255, 0.02)", textAlign: "left", fontSize: "0.8rem", color: "var(--text-muted)" }}>
+              <tr style={{ textAlign: "left", fontSize: "0.8rem" }}>
                 <th style={{ padding: "12px 16px" }}>Operation</th>
                 <th style={{ padding: "12px 16px" }}>Amount</th>
                 <th style={{ padding: "12px 16px" }}>Accounts</th>
@@ -203,7 +201,7 @@ export function PendingApprovalsPage() {
                 const isPending = item.status === "PENDING_APPROVAL";
 
                 return (
-                  <tr key={item.id} style={{ borderTop: "1px solid rgba(255, 255, 255, 0.05)" }}>
+                  <tr key={item.id} style={{ borderTop: "1px solid var(--border-color, #1f293d)" }}>
                     <td style={{ padding: "14px 16px" }}>
                       <span className={`transaction-type ${item.operationType?.toLowerCase()}`} style={{ fontWeight: 600, fontSize: "0.8rem", padding: "4px 8px", borderRadius: "4px" }}>
                         {item.operationType}

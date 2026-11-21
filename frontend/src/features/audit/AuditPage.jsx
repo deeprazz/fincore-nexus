@@ -59,25 +59,23 @@ export function AuditPage() {
 
   if (isTeller) {
     return (
-      <section className="panel p-6">
-        <div className="p-6 rounded-lg border border-amber-500/30 bg-amber-500/10 text-center max-w-xl mx-auto space-y-4">
-          <div className="w-12 h-12 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center mx-auto">
-            <ShieldCheck size={26} />
-          </div>
-          <div>
-            <h3 className="text-lg font-bold text-amber-200">Manager Authorization Required</h3>
-            <p className="text-sm text-muted mt-1">
-              Under FinCore Security & Governance policy, inspecting cryptographic audit trails and verifying SHA-256 hash chains requires <strong>MANAGER</strong> or <strong>ADMIN</strong> authorization.
-            </p>
-          </div>
-          <div className="text-xs text-muted font-mono bg-surface p-2.5 rounded border border-border">
-            Current Session: {auth?.username || "teller"} (Role: {auth?.role})
-          </div>
-          <p className="text-xs text-muted">
-            Please authenticate using an authorized Manager (<code>manager / Manager@123</code>) or Admin (<code>admin / Admin@123</code>) account to view immutable audit trails.
+      <div className="auth-restricted-card">
+        <div className="auth-restricted-icon-box">
+          <ShieldCheck size={28} />
+        </div>
+        <div>
+          <h3 className="auth-restricted-title">Manager Authorization Required</h3>
+          <p className="auth-restricted-desc">
+            Under FinCore Security & Governance policy, inspecting cryptographic audit trails and verifying SHA-256 hash chains requires <strong>MANAGER</strong> or <strong>ADMIN</strong> authorization.
           </p>
         </div>
-      </section>
+        <div className="auth-restricted-session-pill">
+          Current Session: {auth?.username || "teller"} (Role: {auth?.role})
+        </div>
+        <p className="auth-restricted-hint">
+          Please authenticate using an authorized Manager (<code>manager / Manager@123</code>) or Admin (<code>admin / Admin@123</code>) account to view immutable audit trails.
+        </p>
+      </div>
     );
   }
 
@@ -111,19 +109,7 @@ export function AuditPage() {
       </div>
 
       {verification && (
-        <div
-          style={{
-            margin: "0 0 16px 0",
-            padding: "12px 16px",
-            borderRadius: "8px",
-            display: "flex",
-            alignItems: "center",
-            gap: "12px",
-            backgroundColor: verification.valid ? "#dcfce7" : "#fee2e2",
-            border: `1px solid ${verification.valid ? "#86efac" : "#fca5a5"}`,
-            color: verification.valid ? "#14532d" : "#7f1d1d",
-          }}
-        >
+        <div className={`audit-verify-banner ${verification.valid ? "valid" : "invalid"}`}>
           {verification.valid ? (
             <ShieldCheck size={20} color="#16a34a" />
           ) : (

@@ -22,30 +22,8 @@ export default function KycReviewQueue({ applications = [], onRefresh, onNewAppl
   return (
     <div className="space-y-4">
       {/* Top Filter and Search Bar */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          gap: "16px",
-          background: "#111827",
-          padding: "16px",
-          borderRadius: "12px",
-          border: "1px solid #1f293d",
-          flexWrap: "wrap",
-        }}
-      >
-        <div
-          style={{
-            display: "inline-flex",
-            gap: "6px",
-            background: "#0b1329",
-            padding: "5px",
-            borderRadius: "10px",
-            border: "1px solid #1f293d",
-            flexWrap: "wrap",
-          }}
-        >
+      <div className="kyc-filter-bar">
+        <div className="kyc-filter-tabs">
           {[
             { id: "PENDING_REVIEW", label: "Review Queue", icon: Clock },
             { id: "ALL", label: "All Records", icon: UserCheck },
@@ -59,21 +37,7 @@ export default function KycReviewQueue({ applications = [], onRefresh, onNewAppl
                 key={tab.id}
                 type="button"
                 onClick={() => setFilter(tab.id)}
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "6px",
-                  padding: "7px 14px",
-                  borderRadius: "7px",
-                  fontSize: "12px",
-                  fontWeight: active ? 600 : 500,
-                  cursor: "pointer",
-                  transition: "all 0.15s ease",
-                  background: active ? "#2563eb" : "transparent",
-                  color: active ? "#ffffff" : "#94a3b8",
-                  border: active ? "1px solid #3b82f6" : "1px solid transparent",
-                  boxShadow: active ? "0 2px 6px rgba(37,99,235,0.3)" : "none",
-                }}
+                className={`kyc-filter-tab-btn ${active ? "active" : ""}`}
               >
                 <Icon size={14} />
                 <span>{tab.label}</span>
@@ -86,23 +50,14 @@ export default function KycReviewQueue({ applications = [], onRefresh, onNewAppl
           <div style={{ position: "relative", minWidth: "240px" }}>
             <Search
               size={14}
-              style={{ position: "absolute", left: "12px", top: "11px", color: "#64748b" }}
+              style={{ position: "absolute", left: "12px", top: "11px", color: "var(--muted, #64748b)" }}
             />
             <input
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Search applicant or PAN..."
-              style={{
-                width: "100%",
-                padding: "8px 12px 8px 34px",
-                background: "#0c121b",
-                border: "1px solid #28374d",
-                color: "#f8fafc",
-                borderRadius: "8px",
-                fontSize: "12px",
-                outline: "none",
-              }}
+              className="kyc-search-input"
             />
           </div>
           {onNewApplication && (
@@ -122,74 +77,81 @@ export default function KycReviewQueue({ applications = [], onRefresh, onNewAppl
       {filtered.length === 0 ? (
         <EmptyState message={`No ${filter === "ALL" ? "" : filter.toLowerCase()} KYC applications found.`} />
       ) : (
-        <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
-          <table className="w-full text-left text-xs text-slate-600">
-            <thead className="bg-slate-50 border-b border-slate-200 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
-              <tr>
-                <th className="px-4 py-3">Applicant Name</th>
-                <th className="px-4 py-3">Government PAN</th>
-                <th className="px-4 py-3">Aadhaar (Last 4)</th>
-                <th className="px-4 py-3">OCR Status</th>
-                <th className="px-4 py-3">Biometrics</th>
-                <th className="px-4 py-3">Risk Level</th>
-                <th className="px-4 py-3">Status</th>
-                <th className="px-4 py-3 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {filtered.map((app) => (
-                <tr key={app.id} className="hover:bg-slate-50/80 transition-colors">
-                  <td className="px-4 py-3 font-semibold text-slate-900">
-                    <div>{app.fullName}</div>
-                    <div className="text-[10px] text-slate-400 font-mono">
-                      {new Date(app.createdAt).toLocaleDateString()}
-                    </div>
-                  </td>
-                  <td className="px-4 py-3 font-mono font-medium text-slate-700">
-                    {app.panNumberMasked}
-                  </td>
-                  <td className="px-4 py-3 font-mono text-slate-600">
-                    {app.aadhaarMasked}
-                  </td>
-                  <td className="px-4 py-3">
-                    <span className="inline-flex items-center text-[11px] font-medium text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-100">
-                      {app.ocrStatus} ({Number(app.ocrConfidence).toFixed(0)}%)
-                    </span>
-                  </td>
-                  <td className="px-4 py-3">
-                    <span className="inline-flex items-center text-[11px] font-medium text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-100">
-                      {app.faceMatchStatus} ({Number(app.faceMatchConfidence).toFixed(0)}%)
-                    </span>
-                  </td>
-                  <td className="px-4 py-3">
-                    <RiskBadge level={app.riskLevel} />
-                  </td>
-                  <td className="px-4 py-3">
-                    <span
-                      className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold border ${
-                        app.status === "APPROVED"
-                          ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                          : app.status === "REJECTED"
-                          ? "bg-rose-50 text-rose-700 border-rose-200"
-                          : "bg-amber-50 text-amber-700 border-amber-200"
-                      }`}
-                    >
-                      {app.status}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-right">
-                    <button
-                      onClick={() => setSelectedApp(app)}
-                      className="inline-flex items-center space-x-1 px-2.5 py-1 text-xs font-semibold text-indigo-600 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 rounded-md transition-colors"
-                    >
-                      <Eye className="w-3.5 h-3.5" />
-                      <span>Inspect</span>
-                    </button>
-                  </td>
+        <div className="panel" style={{ padding: 0, overflow: "hidden", borderRadius: "12px" }}>
+          <div className="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Applicant Name</th>
+                  <th>Government PAN</th>
+                  <th>Aadhaar (Last 4)</th>
+                  <th>OCR Status</th>
+                  <th>Biometrics</th>
+                  <th>Risk Level</th>
+                  <th>Status</th>
+                  <th style={{ textAlign: "right" }}>Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {filtered.map((app) => (
+                  <tr key={app.id}>
+                    <td>
+                      <div style={{ fontWeight: 600 }}>{app.fullName}</div>
+                      <div style={{ fontSize: "11px", color: "var(--muted, #64748b)", fontFamily: "monospace" }}>
+                        {new Date(app.createdAt).toLocaleDateString()}
+                      </div>
+                    </td>
+                    <td style={{ fontFamily: "monospace", fontWeight: 600 }}>
+                      {app.panNumberMasked}
+                    </td>
+                    <td style={{ fontFamily: "monospace" }}>
+                      {app.aadhaarMasked}
+                    </td>
+                    <td>
+                      <span style={{ color: "#3b82f6", background: "rgba(59, 130, 246, 0.12)", border: "1px solid rgba(59, 130, 246, 0.25)", padding: "3px 8px", borderRadius: "6px", fontSize: "11px", fontWeight: 600 }}>
+                        {app.ocrStatus} ({Number(app.ocrConfidence).toFixed(0)}%)
+                      </span>
+                    </td>
+                    <td>
+                      <span style={{ color: "#10b981", background: "rgba(16, 185, 129, 0.12)", border: "1px solid rgba(16, 185, 129, 0.25)", padding: "3px 8px", borderRadius: "6px", fontSize: "11px", fontWeight: 600 }}>
+                        {app.faceMatchStatus} ({Number(app.faceMatchConfidence).toFixed(0)}%)
+                      </span>
+                    </td>
+                    <td>
+                      <RiskBadge level={app.riskLevel} />
+                    </td>
+                    <td>
+                      <span
+                        style={{
+                          display: "inline-block",
+                          padding: "3px 9px",
+                          borderRadius: "9999px",
+                          fontSize: "11px",
+                          fontWeight: 700,
+                          background: app.status === "APPROVED" ? "rgba(16, 185, 129, 0.12)" : app.status === "REJECTED" ? "rgba(239, 68, 68, 0.12)" : "rgba(245, 158, 11, 0.12)",
+                          color: app.status === "APPROVED" ? "#10b981" : app.status === "REJECTED" ? "#ef4444" : "#f59e0b",
+                          border: `1px solid ${app.status === "APPROVED" ? "rgba(16, 185, 129, 0.3)" : app.status === "REJECTED" ? "rgba(239, 68, 68, 0.3)" : "rgba(245, 158, 11, 0.3)"}`,
+                        }}
+                      >
+                        {app.status}
+                      </span>
+                    </td>
+                    <td style={{ textAlign: "right" }}>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedApp(app)}
+                        className="secondary-button"
+                        style={{ display: "inline-flex", alignItems: "center", gap: "4px", padding: "5px 10px", fontSize: "11px" }}
+                      >
+                        <Eye size={13} />
+                        <span>Inspect</span>
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 

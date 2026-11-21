@@ -67,20 +67,7 @@ export function CustomerList() {
           </button>
         </div>
 
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "10px",
-            padding: "10px 14px",
-            background: "rgba(37, 99, 235, 0.08)",
-            border: "1px solid rgba(37, 99, 235, 0.25)",
-            borderRadius: "8px",
-            marginBottom: "16px",
-            fontSize: "12px",
-            color: "#60a5fa",
-          }}
-        >
+        <div className="teller-notice-banner">
           <UserCheck size={16} style={{ flexShrink: 0 }} />
           <span>
             <strong>Teller Verification Station:</strong> Review customer Aadhaar, PAN, and Phone records. Click <strong>Confirm KYC</strong> on any PENDING record to verify the customer and immediately unlock bank account opening.

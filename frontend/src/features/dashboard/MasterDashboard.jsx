@@ -148,14 +148,14 @@ export default function MasterDashboard() {
   const renderStatusBadge = (status) => {
     if (status === "restricted") {
       return (
-        <span className="badge badge-warning text-[10px] font-semibold px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40">
+        <span className="badge-warning">
           Restricted (Manager+)
         </span>
       );
     }
     if (status === "unauthorized") {
       return (
-        <span className="badge badge-error text-[10px] font-semibold px-2 py-0.5 rounded bg-red-500/20 text-red-300 border border-red-500/40">
+        <span className="badge-error">
           Auth Required
         </span>
       );

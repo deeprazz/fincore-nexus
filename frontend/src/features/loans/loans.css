@@ -960,6 +960,26 @@
   color: #0f172a;
 }
 
+[data-theme="light"] .loans-nav-tabs {
+  background: #f1f5f9 !important;
+  border-color: #e2e8f0 !important;
+}
+
+[data-theme="light"] .loans-nav-tabs .tab-btn {
+  color: #64748b !important;
+}
+
+[data-theme="light"] .loans-nav-tabs .tab-btn:hover {
+  background: #ffffff !important;
+  color: #0f172a !important;
+}
+
+[data-theme="light"] .loans-nav-tabs .tab-btn.active {
+  background: #2563eb !important;
+  border-color: #3b82f6 !important;
+  color: #ffffff !important;
+}
+
 [data-theme="light"] .search-box {
   background: #ffffff !important;
   border-color: #cbd5e1 !important;

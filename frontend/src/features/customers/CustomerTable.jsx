@@ -73,20 +73,7 @@ export function CustomerTable({
                           disabled={disabled}
                           onClick={() => onKycAction(customer.id, "VERIFIED")}
                           title="Confirm KYC for this customer"
-                          style={{
-                            display: "inline-flex",
-                            alignItems: "center",
-                            gap: "4px",
-                            background: "rgba(16, 185, 129, 0.15)",
-                            border: "1px solid rgba(16, 185, 129, 0.4)",
-                            color: "#34d399",
-                            padding: "6px 12px",
-                            borderRadius: "6px",
-                            fontSize: "12px",
-                            fontWeight: 700,
-                            cursor: "pointer",
-                            transition: "all 0.15s ease",
-                          }}
+                          className="btn-kyc-confirm"
                         >
                           <CheckCircle2 size={14} /> Confirm KYC
                         </button>
@@ -95,20 +82,7 @@ export function CustomerTable({
                           disabled={disabled}
                           onClick={() => onKycAction(customer.id, "REJECTED")}
                           title="Reject KYC"
-                          style={{
-                            display: "inline-flex",
-                            alignItems: "center",
-                            gap: "4px",
-                            background: "rgba(239, 68, 68, 0.15)",
-                            border: "1px solid rgba(239, 68, 68, 0.4)",
-                            color: "#f87171",
-                            padding: "6px 12px",
-                            borderRadius: "6px",
-                            fontSize: "12px",
-                            fontWeight: 700,
-                            cursor: "pointer",
-                            transition: "all 0.15s ease",
-                          }}
+                          className="btn-kyc-reject"
                         >
                           <XCircle size={14} /> Reject
                         </button>

@@ -107,7 +107,7 @@ export function Sidebar({ sidebarOpen, setSidebarOpen, role = "TELLER" }) {
                   <Icon size={18} />
                   <span>{label}</span>
                   {badge && role === "TELLER" && (
-                    <span className="text-[10px] font-semibold px-1.5 py-0.2 rounded bg-amber-500/10 text-amber-400 border border-amber-500/30 ml-auto">
+                    <span className="sidebar-role-badge">
                       {badge}
                     </span>
                   )}
