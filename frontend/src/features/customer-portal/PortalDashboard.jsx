@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { Wallet, LayoutDashboard, ShieldCheck, AlertTriangle } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { useMoney } from "../../hooks/useMoney";
+import { subscribeToAccountChanges } from "../../utils/syncChannel";
 
 export function PortalDashboard() {
   const { auth, customerPortal, refreshPortalData } = useAuth();
@@ -18,9 +19,16 @@ export function PortalDashboard() {
   );
 
   useEffect(() => {
-    if (!canBank) return;
-    const id = setInterval(() => refreshPortalData(), 3000);
-    return () => clearInterval(id);
+    if (!canBank || !refreshPortalData) return;
+    refreshPortalData();
+    const id = setInterval(() => refreshPortalData(), 1200);
+    const unsubscribe = subscribeToAccountChanges(() => {
+      refreshPortalData();
+    });
+    return () => {
+      clearInterval(id);
+      unsubscribe();
+    };
   }, [canBank, refreshPortalData]);
 
   return (

@@ -18,6 +18,7 @@ import {
 import { Metric } from "../../components/ui/Metric";
 import { StatusBadge } from "../../components/ui/StatusBadge";
 import { getAccounts, getAccountDetail, freezeAccount, unfreezeAccount } from "../../api/accounts";
+import { broadcastAccountChange } from "../../utils/syncChannel";
 import { getCustomers } from "../../api/customers";
 import { getDashboardSummary } from "../../api/dashboard";
 import { getAuditLogsForEntity } from "../../api/audit";
@@ -103,9 +104,11 @@ export function TellerDashboard() {
       if (isFrozen) {
         await unfreezeAccount(selectedAccount.id, auth);
         setSuccess(`Account ${selectedAccount.accountNumber} unfrozen.`);
+        broadcastAccountChange(selectedAccount.id, "ACTIVE", { accountNumber: selectedAccount.accountNumber });
       } else {
         await freezeAccount(selectedAccount.id, auth);
         setSuccess(`Account ${selectedAccount.accountNumber} frozen.`);
+        broadcastAccountChange(selectedAccount.id, "FROZEN", { accountNumber: selectedAccount.accountNumber });
       }
       await loadData();
       await loadAccountDetail(selectedAccount.id);

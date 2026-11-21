@@ -15,6 +15,8 @@ import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.util.Comparator;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.http.CacheControl;
 import org.springframework.security.core.Authentication;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
@@ -49,7 +51,7 @@ public class CustomerPortalController {
 
     @GetMapping("/me")
     @Transactional(readOnly = true)
-    public PortalResponse me(Authentication authentication) {
+    public ResponseEntity<PortalResponse> me(Authentication authentication) {
         Customer customer = currentCustomer(authentication);
         List<AccountResponse> ownAccounts = customer.getKycStatus() == KycStatus.VERIFIED
                 ? accounts.findByCustomer_Id(customer.getId()).stream()
@@ -61,8 +63,28 @@ public class CustomerPortalController {
                             a.getStatus() != null ? a.getStatus().name() : "ACTIVE"))
                     .toList()
                 : List.of();
-        return new PortalResponse(customer.getId(), customer.getName(), customer.getEmail(),
+        PortalResponse body = new PortalResponse(customer.getId(), customer.getName(), customer.getEmail(),
                 customer.getKycStatus(), ownAccounts, customer.hasTransactionPin());
+        return ResponseEntity.ok()
+                .cacheControl(CacheControl.noStore().mustRevalidate())
+                .body(body);
+    }
+
+    @GetMapping("/accounts")
+    @Transactional(readOnly = true)
+    public ResponseEntity<List<AccountResponse>> accounts(Authentication authentication) {
+        Customer customer = requireVerifiedCustomer(authentication);
+        List<AccountResponse> ownAccounts = accounts.findByCustomer_Id(customer.getId()).stream()
+                .map(a -> new AccountResponse(
+                        a.getId(),
+                        a.getAccountNumber(),
+                        a.getBalance(),
+                        customer.getId(),
+                        a.getStatus() != null ? a.getStatus().name() : "ACTIVE"))
+                .toList();
+        return ResponseEntity.ok()
+                .cacheControl(CacheControl.noStore().mustRevalidate())
+                .body(ownAccounts);
     }
 
     @GetMapping("/transactions")

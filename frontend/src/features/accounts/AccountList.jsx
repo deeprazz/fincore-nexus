@@ -8,6 +8,7 @@ import { getCustomers } from "../../api/customers";
 import { useAuth } from "../../context/AuthContext";
 import { useToast } from "../../context/ToastContext";
 import { useMoney } from "../../hooks/useMoney";
+import { subscribeToAccountChanges } from "../../utils/syncChannel";
 
 export function AccountList() {
   const [accounts, setAccounts] = useState([]);
@@ -39,9 +40,15 @@ export function AccountList() {
 
   useEffect(() => {
     loadData();
-    // Live polling every 3.5s so freeze/unfreeze actions sync live
-    const interval = setInterval(() => loadData(true), 3500);
-    return () => clearInterval(interval);
+    // Live polling every 2s + instant cross-tab broadcast subscription
+    const interval = setInterval(() => loadData(true), 2000);
+    const unsubscribe = subscribeToAccountChanges(() => {
+      loadData(true);
+    });
+    return () => {
+      clearInterval(interval);
+      unsubscribe();
+    };
   }, [loadData]);
 
   const customerMap = useMemo(() => {

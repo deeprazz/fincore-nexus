@@ -3,6 +3,7 @@ import { freezeAccount, unfreezeAccount, closeAccount } from "../../api/accounts
 import { useAuth } from "../../context/AuthContext";
 import { useToast } from "../../context/ToastContext";
 import { ConfirmDialog } from "../../components/ui/ConfirmDialog";
+import { broadcastAccountChange } from "../../utils/syncChannel";
 
 export function AccountActions({ account, onActionComplete }) {
   const [confirmModal, setConfirmModal] = useState(null); // 'FREEZE' | 'UNFREEZE' | 'CLOSE'
@@ -23,12 +24,15 @@ export function AccountActions({ account, onActionComplete }) {
       if (confirmModal === "FREEZE") {
         await freezeAccount(account.id, auth);
         setSuccess(`Account ${account.accountNumber} has been frozen.`);
+        broadcastAccountChange(account.id, "FROZEN", { accountNumber: account.accountNumber });
       } else if (confirmModal === "UNFREEZE") {
         await unfreezeAccount(account.id, auth);
         setSuccess(`Account ${account.accountNumber} has been unfrozen.`);
+        broadcastAccountChange(account.id, "ACTIVE", { accountNumber: account.accountNumber });
       } else if (confirmModal === "CLOSE") {
         await closeAccount(account.id, auth);
         setSuccess(`Account ${account.accountNumber} has been closed.`);
+        broadcastAccountChange(account.id, "CLOSED", { accountNumber: account.accountNumber });
       }
       setConfirmModal(null);
       if (onActionComplete) onActionComplete();

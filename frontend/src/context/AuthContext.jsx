@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 import Keycloak from "keycloak-js";
 import { API_BASE_URL } from "../utils/constants";
 import { setLatencyListener } from "../api/client";
+import { subscribeToAccountChanges } from "../utils/syncChannel";
 
 const AuthContext = createContext(null);
 
@@ -99,19 +100,23 @@ export function AuthProvider({ children }) {
     }
   }, [auth]);
 
-  // On mount and whenever a customer is logged in, load portal data immediately and poll every 2.5 seconds for live updates
+  // On mount and whenever a customer is logged in, load portal data immediately,
+  // subscribe to real-time cross-tab broadcast events, and poll every 1.5 seconds for instant live updates
   useEffect(() => {
     if (!auth || auth.role !== "CUSTOMER") return;
 
     let isMounted = true;
     const fetchPortal = async () => {
       const headers = auth.token
-        ? { Authorization: `Bearer ${auth.token}` }
+        ? { Authorization: `Bearer ${auth.token}`, "Cache-Control": "no-cache" }
         : auth.username && auth.password
-        ? { Authorization: `Basic ${btoa(`${auth.username}:${auth.password}`)}` }
-        : {};
+        ? { Authorization: `Basic ${btoa(`${auth.username}:${auth.password}`)}`, "Cache-Control": "no-cache" }
+        : { "Cache-Control": "no-cache" };
       try {
-        const res = await fetch(`${API_BASE_URL}/customer-portal/me`, { headers });
+        const res = await fetch(`${API_BASE_URL}/customer-portal/me?_t=${Date.now()}`, {
+          headers,
+          cache: "no-store",
+        });
         if (res.ok && isMounted) {
           const data = await res.json();
           const normalized = data
@@ -129,10 +134,30 @@ export function AuthProvider({ children }) {
     };
 
     fetchPortal();
-    const intervalId = setInterval(fetchPortal, 2500);
+    const intervalId = setInterval(fetchPortal, 1500);
+
+    // Cross-tab real-time listener: instant push update when manager freezes/unfreezes
+    const unsubscribe = subscribeToAccountChanges((event) => {
+      if (!isMounted) return;
+      // Optimistic instant state update in 0ms
+      setCustomerPortal((prev) => {
+        if (!prev || !prev.accounts) return prev;
+        const updatedAccounts = prev.accounts.map((acc) => {
+          if (acc.id === event.accountId || acc.accountNumber === event.accountNumber) {
+            return { ...acc, status: event.status };
+          }
+          return acc;
+        });
+        return { ...prev, accounts: updatedAccounts };
+      });
+      // Immediately verify with backend
+      fetchPortal();
+    });
+
     return () => {
       isMounted = false;
       clearInterval(intervalId);
+      unsubscribe();
     };
   }, [auth]);
 
@@ -266,12 +291,15 @@ export function AuthProvider({ children }) {
   async function refreshPortalData() {
     if (!auth || auth.role !== "CUSTOMER") return null;
     const headers = auth.token
-      ? { Authorization: `Bearer ${auth.token}` }
+      ? { Authorization: `Bearer ${auth.token}`, "Cache-Control": "no-cache" }
       : auth.username && auth.password
-      ? { Authorization: `Basic ${btoa(`${auth.username}:${auth.password}`)}` }
-      : {};
+      ? { Authorization: `Basic ${btoa(`${auth.username}:${auth.password}`)}`, "Cache-Control": "no-cache" }
+      : { "Cache-Control": "no-cache" };
     try {
-      const res = await fetch(`${API_BASE_URL}/customer-portal/me`, { headers });
+      const res = await fetch(`${API_BASE_URL}/customer-portal/me?_t=${Date.now()}`, {
+        headers,
+        cache: "no-store",
+      });
       if (res.ok) {
         const data = await res.json();
         const normalized = data

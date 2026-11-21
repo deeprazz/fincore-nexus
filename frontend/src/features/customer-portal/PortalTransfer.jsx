@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeftRight, AlertTriangle } from "lucide-react";
 import { PinSettings } from "./PinSettings";
@@ -7,6 +7,7 @@ import { portalTransfer } from "../../api/portal";
 import { useAuth } from "../../context/AuthContext";
 import { useToast } from "../../context/ToastContext";
 import { useMoney } from "../../hooks/useMoney";
+import { subscribeToAccountChanges } from "../../utils/syncChannel";
 
 export function PortalTransfer() {
   const navigate = useNavigate();
@@ -25,6 +26,19 @@ export function PortalTransfer() {
   const primaryAccount = customerAccounts[0];
   const hasPin = Boolean(customerPortal?.hasTransactionPin);
   const isFrozen = String(primaryAccount?.status).toUpperCase() === "FROZEN";
+
+  useEffect(() => {
+    if (!canBank || !refreshPortalData) return;
+    refreshPortalData();
+    const id = setInterval(() => refreshPortalData(), 1200);
+    const unsubscribe = subscribeToAccountChanges(() => {
+      refreshPortalData();
+    });
+    return () => {
+      clearInterval(id);
+      unsubscribe();
+    };
+  }, [canBank, refreshPortalData]);
 
   const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
