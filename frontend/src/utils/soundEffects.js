@@ -79,6 +79,8 @@ export function playValidationTick(step = 1, volume = 0.09) {
   }
 }
 
+export const playTickSound = playValidationTick;
+
 /**
  * Plays a double "ting-ting" harmonic chord for final settlement completion.
  */

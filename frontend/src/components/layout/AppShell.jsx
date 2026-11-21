@@ -87,7 +87,8 @@ export function AppShell() {
     path.startsWith("/payments") ||
     path.startsWith("/kyc") ||
     path.startsWith("/compliance") ||
-    path.startsWith("/master");
+    path.startsWith("/master") ||
+    path.startsWith("/milestones");
 
   return (
     <div className="app-shell">

@@ -20,9 +20,11 @@ spring:
       group-id: core-banking-loan-group
       auto-offset-reset: earliest
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
       properties:
-        spring.json.trusted.packages: "com.fincore.*"
+        spring.deserializer.value.delegate.class: org.springframework.kafka.support.serializer.JsonDeserializer
+        spring.json.trusted.packages: "*"
+        spring.json.value.default.type: "java.util.Map"
         spring.json.type.mapping: "com.fincore.loan_service.event.LoanApprovedEvent:com.fincore.core_banking_services.events.LoanApprovedCommand,com.fincore.loan_service.event.EmiDebitRequestedEvent:com.fincore.core_banking_services.events.EmiDebitCommand"
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
