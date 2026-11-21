@@ -31,6 +31,29 @@
 * {
   box-sizing: border-box;
 }
+
+/* Universal Link and Text Underline Reset */
+a,
+a:hover,
+a:focus,
+a:active,
+a:visited,
+nav a,
+.nav-item,
+.nav-item *,
+.customer-nav-item,
+.customer-nav-item *,
+.sidebar a,
+.customer-sidebar a,
+.domain-card-link,
+.domain-card-link:hover,
+.text-button,
+.text-button:hover,
+button,
+button * {
+  text-decoration: none !important;
+}
+
 body {
   margin: 0;
   min-width: 320px;
@@ -297,6 +320,7 @@ select:focus-visible {
   font-size: 13px;
   position: relative;
   transition: 0.15s;
+  text-decoration: none !important;
 }
 .nav-item:hover {
   background: #1a2637;
@@ -939,7 +963,7 @@ tbody tr:hover {
   padding: 0;
   cursor: pointer;
   font: inherit;
-  text-decoration: underline;
+  text-decoration: none !important;
 }
 
 /* Customer banking portal - Milestone 1 */
@@ -3223,12 +3247,14 @@ table tr:hover {
 [data-theme="light"] .nav-item,
 [data-theme="light"] .customer-nav-item {
   color: #475569 !important;
+  text-decoration: none !important;
 }
 
 [data-theme="light"] .nav-item:hover,
 [data-theme="light"] .customer-nav-item:hover {
   background: #f1f5f9 !important;
   color: #0f172a !important;
+  text-decoration: none !important;
 }
 
 [data-theme="light"] .nav-item.active,
@@ -3236,6 +3262,8 @@ table tr:hover {
   background: #eff6ff !important;
   color: #2563eb !important;
   border: 1px solid #bfdbfe !important;
+  text-decoration: none !important;
+  font-weight: 600 !important;
 }
 
 [data-theme="light"] .card,
@@ -5789,4 +5817,275 @@ table tr:hover {
 [data-theme="light"] .operation-form label {
   color: #334155 !important;
   font-weight: 600 !important;
+}
+
+/* ==============================================================================
+   Refined Teller & Manager UI (Modern Fintech Design & Zero Underlines)
+   ============================================================================== */
+
+/* 1. Global Link & Text Underline Elimination */
+a, a:hover, a:focus, a:active, a:visited,
+.nav-item, .nav-item:hover, .nav-item.active,
+.customer-nav-item, .customer-nav-item:hover, .customer-nav-item.active,
+.sidebar a, .customer-sidebar a,
+.domain-card-link, .domain-card-link:hover,
+.text-button, .text-button:hover,
+button, button * {
+  text-decoration: none !important;
+}
+
+/* 2. Modern Sidebar Refinements */
+.sidebar {
+  background: var(--surface-color, #0c121b);
+  border-right: 1px solid var(--border-color, #1f293d);
+}
+
+.sidebar nav {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.nav-item {
+  text-decoration: none !important;
+  color: #94a3b8;
+  font-size: 13.5px;
+  font-weight: 500;
+  padding: 10px 14px;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  transition: all 0.15s ease;
+  border: 1px solid transparent;
+  position: relative;
+}
+
+.nav-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: #f8fafc;
+  text-decoration: none !important;
+}
+
+.nav-item.active {
+  background: rgba(37, 99, 235, 0.12);
+  border: 1px solid rgba(59, 130, 246, 0.28);
+  color: #60a5fa;
+  font-weight: 600;
+  text-decoration: none !important;
+}
+
+.active-indicator {
+  position: absolute;
+  left: 0;
+  top: 6px;
+  bottom: 6px;
+  width: 3.5px;
+  border-radius: 0 4px 4px 0;
+  background: #3b82f6;
+  box-shadow: 0 0 8px rgba(59, 130, 246, 0.6);
+}
+
+/* Light Mode Sidebar */
+[data-theme="light"] .sidebar {
+  background: #ffffff !important;
+  border-right: 1px solid #e2e8f0 !important;
+}
+
+[data-theme="light"] .nav-item {
+  color: #475569 !important;
+  text-decoration: none !important;
+}
+
+[data-theme="light"] .nav-item:hover {
+  background: #f1f5f9 !important;
+  color: #0f172a !important;
+  text-decoration: none !important;
+}
+
+[data-theme="light"] .nav-item.active {
+  background: #eff6ff !important;
+  border: 1px solid #bfdbfe !important;
+  color: #1d4ed8 !important;
+  font-weight: 600 !important;
+  text-decoration: none !important;
+  box-shadow: 0 1px 3px rgba(37, 99, 235, 0.08);
+}
+
+[data-theme="light"] .active-indicator {
+  background: #2563eb !important;
+  box-shadow: 0 0 6px rgba(37, 99, 235, 0.4) !important;
+}
+
+/* 3. Teller Dashboard Metrics Grid */
+.metrics-grid {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)) !important;
+  gap: 16px !important;
+  margin-bottom: 24px !important;
+}
+
+.metric-card {
+  background: var(--panel, #121923);
+  border: 1px solid var(--border-color, #1f293d);
+  border-radius: 12px;
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.metric-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+}
+
+.metric-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 12px;
+  background: rgba(59, 130, 246, 0.12);
+  border: 1px solid rgba(59, 130, 246, 0.25);
+  color: #38bdf8;
+}
+
+.metric-label {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--muted, #94a3b8);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.metric-value {
+  font-size: 1.55rem;
+  font-weight: 800;
+  color: var(--text-primary, #f8fafc);
+  margin-top: 4px;
+  letter-spacing: -0.5px;
+  font-feature-settings: "tnum";
+}
+
+.metric-hint {
+  font-size: 11px;
+  color: #38bdf8;
+  margin-top: 4px;
+  font-weight: 500;
+}
+
+[data-theme="light"] .metric-card {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.02) !important;
+}
+
+[data-theme="light"] .metric-card:hover {
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08) !important;
+  border-color: #cbd5e1 !important;
+}
+
+[data-theme="light"] .metric-icon {
+  background: #eff6ff !important;
+  border-color: #bfdbfe !important;
+  color: #2563eb !important;
+}
+
+[data-theme="light"] .metric-label {
+  color: #64748b !important;
+}
+
+[data-theme="light"] .metric-value {
+  color: #0f172a !important;
+}
+
+[data-theme="light"] .metric-hint {
+  color: #2563eb !important;
+}
+
+/* 4. Live Account Detail Panel */
+.account-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 14px;
+  padding: 20px;
+  background: var(--surface-color, #0c121b);
+  border-radius: 12px;
+  border: 1px solid var(--border-color, #1f293d);
+}
+
+.detail-item {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 9px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+}
+
+[data-theme="light"] .account-detail-grid {
+  background: #f8fafc !important;
+  border-color: #e2e8f0 !important;
+}
+
+[data-theme="light"] .detail-item {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03) !important;
+}
+
+/* 5. Master Telemetry (Manager Dashboard) Refinements */
+.telemetry-page {
+  gap: 20px;
+}
+
+.domain-card-link {
+  text-decoration: none !important;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #2563eb;
+  transition: all 0.15s ease;
+}
+
+.domain-card-link:hover {
+  text-decoration: none !important;
+  color: #1d4ed8;
+  gap: 9px;
+}
+
+[data-theme="light"] .telemetry-domain-card {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+}
+
+[data-theme="light"] .telemetry-domain-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08) !important;
+}
+
+[data-theme="light"] .domain-card-bottom {
+  border-top-color: #e2e8f0 !important;
+}
+
+[data-theme="light"] .telemetry-audit-card {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+}
+
+[data-theme="light"] .telemetry-audit-title {
+  color: #0f172a !important;
+}
+
+[data-theme="light"] .telemetry-audit-subtitle {
+  color: #64748b !important;
 }

@@ -657,7 +657,7 @@
 }
 
 .saga-link-action:hover {
-  text-decoration: underline;
+  text-decoration: none !important;
   opacity: 0.85;
 }
 

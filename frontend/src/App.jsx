@@ -13,7 +13,6 @@ const LoginPage = lazy(() => import("./features/auth/LoginPage").then(m => ({ de
 const RegisterPage = lazy(() => import("./features/auth/RegisterPage").then(m => ({ default: m.RegisterPage })));
 const TellerDashboard = lazy(() => import("./features/dashboard/TellerDashboard").then(m => ({ default: m.TellerDashboard })));
 const MasterDashboard = lazy(() => import("./features/dashboard/MasterDashboard"));
-const MilestonesPage = lazy(() => import("./features/milestones/MilestonesPage"));
 const AccountList = lazy(() => import("./features/accounts/AccountList").then(m => ({ default: m.AccountList })));
 const LoansPage = lazy(() => import("./features/loans/LoansPage").then(m => ({ default: m.LoansPage })));
 const PaymentsPage = lazy(() => import("./features/payments/PaymentsPage"));
@@ -61,7 +60,6 @@ export function App() {
                   }
                 >
                   <Route path="/" element={<TellerDashboard />} />
-                  <Route path="/milestones" element={<MilestonesPage />} />
                   <Route path="/master" element={<MasterDashboard />} />
                   <Route path="/accounts" element={<AccountList />} />
                   <Route path="/payments" element={<PaymentsPage />} />

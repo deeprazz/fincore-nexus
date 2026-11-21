@@ -154,14 +154,14 @@ export function PendingApprovalsPage() {
         </div>
         <div className="panel" style={{ padding: "16px", borderRadius: "10px" }}>
           <div style={{ fontSize: "0.8rem", color: "var(--text-muted, #94a3b8)", textTransform: "uppercase" }}>Security Rule</div>
-          <div style={{ fontSize: "1.1rem", fontWeight: 600, color: "var(--text-main, #f8fafc)", marginTop: "4px" }}>
+          <div style={{ fontSize: "1.1rem", fontWeight: 600, color: "var(--text-primary, #0f172a)", marginTop: "4px" }}>
             Maker ≠ Checker
           </div>
-          <small style={{ color: "var(--text-muted, #94a3b8)" }}>Initiator cannot approve own transfer</small>
+          <small style={{ color: "var(--text-muted, #64748b)" }}>Initiator cannot approve own transfer</small>
         </div>
         <div className="panel" style={{ padding: "16px", borderRadius: "10px" }}>
-          <div style={{ fontSize: "0.8rem", color: "var(--text-muted, #94a3b8)", textTransform: "uppercase" }}>Threshold</div>
-          <div style={{ fontSize: "1.1rem", fontWeight: 600, color: "var(--text-main, #f8fafc)", marginTop: "4px" }}>
+          <div style={{ fontSize: "0.8rem", color: "var(--text-muted, #64748b)", textTransform: "uppercase" }}>Threshold</div>
+          <div style={{ fontSize: "1.1rem", fontWeight: 600, color: "var(--text-primary, #0f172a)", marginTop: "4px" }}>
             {money(200000)}
           </div>
           <small style={{ color: "var(--text-muted, #94a3b8)" }}>Configurable fincore.approval.threshold</small>

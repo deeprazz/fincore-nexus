@@ -13,7 +13,6 @@ import {
   Send,
   UserCheck,
   ShieldAlert,
-  Layers,
 } from "lucide-react";
 
 export function Sidebar({ sidebarOpen, setSidebarOpen, role = "TELLER" }) {
@@ -64,7 +63,6 @@ export function Sidebar({ sidebarOpen, setSidebarOpen, role = "TELLER" }) {
 
   const staffNav = [
     { label: "Dashboard", to: "/", icon: LayoutDashboard },
-    { label: "Milestones (M1-M4)", to: "/milestones", icon: Layers, badge: "Spec" },
     { label: "Master Telemetry", to: "/master", icon: Activity },
     { label: "Accounts", to: "/accounts", icon: Wallet },
     { label: "Payments", to: "/payments", icon: Send },
