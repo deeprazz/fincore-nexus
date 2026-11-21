@@ -1,14 +1,38 @@
-import React, { createContext, useContext, useState, useCallback } from "react";
+import React, { createContext, useContext, useState, useCallback, useRef } from "react";
 
 const ToastContext = createContext(null);
 
 export function ToastProvider({ children }) {
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
+  const [error, setErrorState] = useState("");
+  const [success, setSuccessState] = useState("");
+  const errTimerRef = useRef(null);
+  const succTimerRef = useRef(null);
+
+  const setError = useCallback((msg) => {
+    setErrorState(msg || "");
+    if (errTimerRef.current) clearTimeout(errTimerRef.current);
+    if (msg) {
+      errTimerRef.current = setTimeout(() => {
+        setErrorState("");
+      }, 5000);
+    }
+  }, []);
+
+  const setSuccess = useCallback((msg) => {
+    setSuccessState(msg || "");
+    if (succTimerRef.current) clearTimeout(succTimerRef.current);
+    if (msg) {
+      succTimerRef.current = setTimeout(() => {
+        setSuccessState("");
+      }, 5000);
+    }
+  }, []);
 
   const clearMessages = useCallback(() => {
-    setError("");
-    setSuccess("");
+    if (errTimerRef.current) clearTimeout(errTimerRef.current);
+    if (succTimerRef.current) clearTimeout(succTimerRef.current);
+    setErrorState("");
+    setSuccessState("");
   }, []);
 
   return (

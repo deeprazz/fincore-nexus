@@ -30,12 +30,10 @@ export function PortalTransfer() {
   useEffect(() => {
     if (!canBank || !refreshPortalData) return;
     refreshPortalData();
-    const id = setInterval(() => refreshPortalData(), 1200);
     const unsubscribe = subscribeToAccountChanges(() => {
       refreshPortalData();
     });
     return () => {
-      clearInterval(id);
       unsubscribe();
     };
   }, [canBank, refreshPortalData]);

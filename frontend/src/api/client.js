@@ -151,7 +151,9 @@ export async function apiRequestWithResponse(path, options = {}, auth = null) {
       message = `${serviceName} is currently unavailable (HTTP ${response.status}). Please verify the service is running.`;
     }
 
-    if (response.status === 403 && (message === "Forbidden" || message === "Access Denied" || !message)) {
+    if (response.status === 429) {
+      message = "Rate limit briefly reached. Please wait a few seconds and try again.";
+    } else if (response.status === 403 && (message === "Forbidden" || message === "Access Denied" || !message)) {
       if (path.includes("/approve") || path.includes("/reject")) {
         message = "Authorization Required: Loan approvals require the MANAGER or ADMIN role under FinCore Dual-Control policy. Please authenticate as a Manager (manager / Manager@123) to authorize credit facilities.";
       } else {

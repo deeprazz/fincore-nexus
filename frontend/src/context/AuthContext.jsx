@@ -101,12 +101,18 @@ export function AuthProvider({ children }) {
   }, [auth]);
 
   // On mount and whenever a customer is logged in, load portal data immediately,
-  // subscribe to real-time cross-tab broadcast events, and poll every 1.5 seconds for instant live updates
+  // subscribe to real-time cross-tab broadcast events (0ms push), and poll gently with visibility-awareness
   useEffect(() => {
     if (!auth || auth.role !== "CUSTOMER") return;
 
     let isMounted = true;
+    let isRateLimited = false;
+
     const fetchPortal = async () => {
+      // Don't waste requests if tab is in the background or currently backed off
+      if (typeof document !== "undefined" && document.hidden) return;
+      if (isRateLimited) return;
+
       const headers = auth.token
         ? { Authorization: `Bearer ${auth.token}`, "Cache-Control": "no-cache" }
         : auth.username && auth.password
@@ -118,6 +124,7 @@ export function AuthProvider({ children }) {
           cache: "no-store",
         });
         if (res.ok && isMounted) {
+          isRateLimited = false;
           const data = await res.json();
           const normalized = data
             ? {
@@ -127,6 +134,12 @@ export function AuthProvider({ children }) {
               }
             : null;
           setCustomerPortal(normalized);
+        } else if (res.status === 429) {
+          // Temporarily back off for 10 seconds to allow bucket refill
+          isRateLimited = true;
+          setTimeout(() => {
+            isRateLimited = false;
+          }, 10000);
         }
       } catch {
         // Ignore background polling errors
@@ -134,7 +147,18 @@ export function AuthProvider({ children }) {
     };
 
     fetchPortal();
-    const intervalId = setInterval(fetchPortal, 1500);
+    // Gentle 6-second background interval (0ms push events handle freeze/unfreeze instantly)
+    const intervalId = setInterval(fetchPortal, 6000);
+
+    // Refresh immediately when user switches back to this tab
+    const handleVisibility = () => {
+      if (typeof document !== "undefined" && !document.hidden && isMounted) {
+        fetchPortal();
+      }
+    };
+    if (typeof document !== "undefined") {
+      document.addEventListener("visibilitychange", handleVisibility);
+    }
 
     // Cross-tab real-time listener: instant push update when manager freezes/unfreezes
     const unsubscribe = subscribeToAccountChanges((event) => {
@@ -157,6 +181,9 @@ export function AuthProvider({ children }) {
     return () => {
       isMounted = false;
       clearInterval(intervalId);
+      if (typeof document !== "undefined") {
+        document.removeEventListener("visibilitychange", handleVisibility);
+      }
       unsubscribe();
     };
   }, [auth]);

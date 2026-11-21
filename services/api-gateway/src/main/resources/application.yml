@@ -25,4 +25,4 @@ gateway:
     notification: ${NOTIFICATION_SERVICE_URL:http://localhost:8085}
   rate-limit:
     enabled: true
-    requests-per-minute: 120
+    requests-per-minute: ${GATEWAY_RATE_LIMIT_RPM:600}

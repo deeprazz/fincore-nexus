@@ -40,8 +40,12 @@ export function AccountList() {
 
   useEffect(() => {
     loadData();
-    // Live polling every 2s + instant cross-tab broadcast subscription
-    const interval = setInterval(() => loadData(true), 2000);
+    // Gentle 8s background poll + instant cross-tab broadcast subscription (0ms push)
+    const interval = setInterval(() => {
+      if (typeof document !== "undefined" && !document.hidden) {
+        loadData(true);
+      }
+    }, 8000);
     const unsubscribe = subscribeToAccountChanges(() => {
       loadData(true);
     });

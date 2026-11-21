@@ -53,12 +53,20 @@ public class GatewayProxyController {
 
     @RequestMapping("/api/**")
     public void proxy(HttpServletRequest request, HttpServletResponse response) throws Exception {
-        String clientIp = getClientIdentifier(request);
-        if (!rateLimiterService.isAllowed(clientIp)) {
-            response.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
-            response.setHeader("Retry-After", "60");
-            response.getWriter().write("{\"error\": \"Rate limit exceeded. Try again later.\"}");
-            return;
+        // OPTIONS preflight requests do not consume rate limit tokens
+        if (!"OPTIONS".equalsIgnoreCase(request.getMethod())) {
+            String clientIp = getClientIdentifier(request);
+            RateLimiterService.RateLimitStatus rateLimit = rateLimiterService.checkRateLimit(clientIp);
+            response.setHeader("X-RateLimit-Limit", String.valueOf(rateLimit.limit()));
+            response.setHeader("X-RateLimit-Remaining", String.valueOf(rateLimit.remaining()));
+
+            if (!rateLimit.allowed()) {
+                response.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
+                response.setHeader("Retry-After", String.valueOf(Math.max(1, rateLimit.retryAfterSeconds())));
+                response.setContentType("application/json");
+                response.getWriter().write("{\"error\": \"Rate limit exceeded. Try again in " + Math.max(1, rateLimit.retryAfterSeconds()) + " seconds.\"}");
+                return;
+            }
         }
 
         String path = request.getRequestURI();

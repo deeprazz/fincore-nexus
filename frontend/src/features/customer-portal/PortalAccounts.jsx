@@ -15,20 +15,16 @@ export function PortalAccounts() {
     (a) => String(a.status).toUpperCase() === "FROZEN"
   );
 
-  // Instant real-time updates: 1.2s polling + immediate cross-tab event subscription
+  // Real-time updates: initial mount fetch + instant cross-tab event subscription (0ms push)
   useEffect(() => {
     if (!canBank || !refreshPortalData) return;
     refreshPortalData();
-    const intervalId = setInterval(() => {
-      refreshPortalData();
-    }, 1200);
 
     const unsubscribe = subscribeToAccountChanges(() => {
       refreshPortalData();
     });
 
     return () => {
-      clearInterval(intervalId);
       unsubscribe();
     };
   }, [canBank, refreshPortalData]);

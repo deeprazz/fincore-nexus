@@ -18,16 +18,18 @@ public class RateLimiterService {
     @Value("${gateway.rate-limit.enabled:true}")
     private boolean enabled;
 
-    @Value("${gateway.rate-limit.requests-per-minute:120}")
+    @Value("${gateway.rate-limit.requests-per-minute:600}")
     private long requestsPerMinute;
 
     public RateLimiterService(StringRedisTemplate redisTemplate) {
         this.redisTemplate = redisTemplate;
     }
 
-    public boolean isAllowed(String clientIdentifier) {
+    public record RateLimitStatus(boolean allowed, long remaining, long limit, long retryAfterSeconds) {}
+
+    public RateLimitStatus checkRateLimit(String clientIdentifier) {
         if (!enabled) {
-            return true;
+            return new RateLimitStatus(true, requestsPerMinute, requestsPerMinute, 0);
         }
 
         try {
@@ -35,12 +37,28 @@ public class RateLimiterService {
             Long count = redisTemplate.opsForValue().increment(key);
             if (count != null && count == 1) {
                 redisTemplate.expire(key, Duration.ofMinutes(1));
+            } else if (count != null && count > 1) {
+                Long ttl = redisTemplate.getExpire(key);
+                if (ttl != null && ttl < 0) {
+                    redisTemplate.expire(key, Duration.ofMinutes(1));
+                }
             }
-            return count == null || count <= requestsPerMinute;
+
+            long current = count != null ? count : 1;
+            boolean allowed = current <= requestsPerMinute;
+            long remaining = Math.max(0, requestsPerMinute - current);
+            Long ttlSeconds = redisTemplate.getExpire(key);
+            long retryAfter = (ttlSeconds != null && ttlSeconds > 0) ? ttlSeconds : 5;
+
+            return new RateLimitStatus(allowed, remaining, requestsPerMinute, retryAfter);
         } catch (Exception e) {
             log.warn("Rate limiter Redis check failed (failing open for resilience): {}", e.getMessage());
-            return true;
+            return new RateLimitStatus(true, requestsPerMinute, requestsPerMinute, 0);
         }
+    }
+
+    public boolean isAllowed(String clientIdentifier) {
+        return checkRateLimit(clientIdentifier).allowed();
     }
 
     public long getRequestsPerMinute() {
